@@ -1,0 +1,720 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+
+
+<title>Introduction to aidR</title>
+
+<script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
+// be compatible with the behavior of Pandoc < 2.8).
+document.addEventListener('DOMContentLoaded', function(e) {
+  var hs = document.querySelectorAll("div.section[class*='level'] > :first-child");
+  var i, h, a;
+  for (i = 0; i < hs.length; i++) {
+    h = hs[i];
+    if (!/^h[1-6]$/i.test(h.tagName)) continue;  // it should be a header h1-h6
+    a = h.attributes;
+    while (a.length > 0) h.removeAttribute(a[0].name);
+  }
+});
+</script>
+
+<style type="text/css">
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+span.underline{text-decoration: underline;}
+div.column{display: inline-block; vertical-align: top; width: 50%;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+</style>
+
+
+
+<style type="text/css">
+code {
+white-space: pre;
+}
+.sourceCode {
+overflow: visible;
+}
+</style>
+<style type="text/css" data-origin="pandoc">
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+{ counter-reset: source-line 0; }
+pre.numberSource code > span
+{ position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+{ content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-khtml-user-select: none; -moz-user-select: none;
+-ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #aaaaaa;
+}
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa; padding-left: 4px; }
+div.sourceCode
+{ }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } 
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.at { color: #7d9029; } 
+code span.bn { color: #40a070; } 
+code span.bu { color: #008000; } 
+code span.cf { color: #007020; font-weight: bold; } 
+code span.ch { color: #4070a0; } 
+code span.cn { color: #880000; } 
+code span.co { color: #60a0b0; font-style: italic; } 
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.do { color: #ba2121; font-style: italic; } 
+code span.dt { color: #902000; } 
+code span.dv { color: #40a070; } 
+code span.er { color: #ff0000; font-weight: bold; } 
+code span.ex { } 
+code span.fl { color: #40a070; } 
+code span.fu { color: #06287e; } 
+code span.im { color: #008000; font-weight: bold; } 
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.kw { color: #007020; font-weight: bold; } 
+code span.op { color: #666666; } 
+code span.ot { color: #007020; } 
+code span.pp { color: #bc7a00; } 
+code span.sc { color: #4070a0; } 
+code span.ss { color: #bb6688; } 
+code span.st { color: #4070a0; } 
+code span.va { color: #19177c; } 
+code span.vs { color: #4070a0; } 
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } 
+</style>
+<script>
+// apply pandoc div.sourceCode style to pre.sourceCode instead
+(function() {
+  var sheets = document.styleSheets;
+  for (var i = 0; i < sheets.length; i++) {
+    if (sheets[i].ownerNode.dataset["origin"] !== "pandoc") continue;
+    try { var rules = sheets[i].cssRules; } catch (e) { continue; }
+    var j = 0;
+    while (j < rules.length) {
+      var rule = rules[j];
+      // check if there is a div.sourceCode rule
+      if (rule.type !== rule.STYLE_RULE || rule.selectorText !== "div.sourceCode") {
+        j++;
+        continue;
+      }
+      var style = rule.style.cssText;
+      // check if color or background-color is set
+      if (rule.style.color === '' && rule.style.backgroundColor === '') {
+        j++;
+        continue;
+      }
+      // replace div.sourceCode by a pre.sourceCode rule
+      sheets[i].deleteRule(j);
+      sheets[i].insertRule('pre.sourceCode{' + style + '}', j);
+    }
+  }
+})();
+</script>
+
+
+
+
+<style type="text/css">body {
+background-color: #fff;
+margin: 1em auto;
+max-width: 700px;
+overflow: visible;
+padding-left: 2em;
+padding-right: 2em;
+font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+font-size: 14px;
+line-height: 1.35;
+}
+#TOC {
+clear: both;
+margin: 0 0 10px 10px;
+padding: 4px;
+width: 400px;
+border: 1px solid #CCCCCC;
+border-radius: 5px;
+background-color: #f6f6f6;
+font-size: 13px;
+line-height: 1.3;
+}
+#TOC .toctitle {
+font-weight: bold;
+font-size: 15px;
+margin-left: 5px;
+}
+#TOC ul {
+padding-left: 40px;
+margin-left: -1.5em;
+margin-top: 5px;
+margin-bottom: 5px;
+}
+#TOC ul ul {
+margin-left: -2em;
+}
+#TOC li {
+line-height: 16px;
+}
+table {
+margin: 1em auto;
+border-width: 1px;
+border-color: #DDDDDD;
+border-style: outset;
+border-collapse: collapse;
+}
+table th {
+border-width: 2px;
+padding: 5px;
+border-style: inset;
+}
+table td {
+border-width: 1px;
+border-style: inset;
+line-height: 18px;
+padding: 5px 5px;
+}
+table, table th, table td {
+border-left-style: none;
+border-right-style: none;
+}
+table thead, table tr.even {
+background-color: #f7f7f7;
+}
+p {
+margin: 0.5em 0;
+}
+blockquote {
+background-color: #f6f6f6;
+padding: 0.25em 0.75em;
+}
+hr {
+border-style: solid;
+border: none;
+border-top: 1px solid #777;
+margin: 28px 0;
+}
+dl {
+margin-left: 0;
+}
+dl dd {
+margin-bottom: 13px;
+margin-left: 13px;
+}
+dl dt {
+font-weight: bold;
+}
+ul {
+margin-top: 0;
+}
+ul li {
+list-style: circle outside;
+}
+ul ul {
+margin-bottom: 0;
+}
+pre, code {
+background-color: #f7f7f7;
+border-radius: 3px;
+color: #333;
+white-space: pre-wrap; 
+}
+pre {
+border-radius: 3px;
+margin: 5px 0px 10px 0px;
+padding: 10px;
+}
+pre:not([class]) {
+background-color: #f7f7f7;
+}
+code {
+font-family: Consolas, Monaco, 'Courier New', monospace;
+font-size: 85%;
+}
+p > code, li > code {
+padding: 2px 0px;
+}
+div.figure {
+text-align: center;
+}
+img {
+background-color: #FFFFFF;
+padding: 2px;
+border: 1px solid #DDDDDD;
+border-radius: 3px;
+border: 1px solid #CCCCCC;
+margin: 0 5px;
+}
+h1 {
+margin-top: 0;
+font-size: 35px;
+line-height: 40px;
+}
+h2 {
+border-bottom: 4px solid #f7f7f7;
+padding-top: 10px;
+padding-bottom: 2px;
+font-size: 145%;
+}
+h3 {
+border-bottom: 2px solid #f7f7f7;
+padding-top: 10px;
+font-size: 120%;
+}
+h4 {
+border-bottom: 1px solid #f7f7f7;
+margin-left: 8px;
+font-size: 105%;
+}
+h5, h6 {
+border-bottom: 1px solid #ccc;
+font-size: 105%;
+}
+a {
+color: #0033dd;
+text-decoration: none;
+}
+a:hover {
+color: #6666ff; }
+a:visited {
+color: #800080; }
+a:visited:hover {
+color: #BB00BB; }
+a[href^="http:"] {
+text-decoration: underline; }
+a[href^="https:"] {
+text-decoration: underline; }
+
+code > span.kw { color: #555; font-weight: bold; } 
+code > span.dt { color: #902000; } 
+code > span.dv { color: #40a070; } 
+code > span.bn { color: #d14; } 
+code > span.fl { color: #d14; } 
+code > span.ch { color: #d14; } 
+code > span.st { color: #d14; } 
+code > span.co { color: #888888; font-style: italic; } 
+code > span.ot { color: #007020; } 
+code > span.al { color: #ff0000; font-weight: bold; } 
+code > span.fu { color: #900; font-weight: bold; } 
+code > span.er { color: #a61717; background-color: #e3d2d2; } 
+</style>
+
+
+
+
+</head>
+
+<body>
+
+
+
+
+<h1 class="title toc-ignore">Introduction to aidR</h1>
+
+
+
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a><span class="fu">library</span>(aidR)</span>
+<span id="cb1-2"><a href="#cb1-2" tabindex="-1"></a><span class="fu">library</span>(dplyr)</span></code></pre></div>
+<div id="overview" class="section level2">
+<h2>Overview</h2>
+<p>Automated insulin delivery (AID) systems (hybrid closed-loop insulin
+pumps) report their data through a variety of vendor and third-party
+platforms. Every platform exports data in its own file format, with its
+own column names, units, and quirks. <strong>aidR</strong> takes these
+heterogeneous exports and turns them into a small set of standardized,
+tidy data frames – one each for continuous glucose monitoring (CGM),
+basal insulin, bolus insulin, and carbohydrate intake – so that
+downstream analysis code can be written once, regardless of which
+platform a participant’s data came from.</p>
+<p>The typical workflow has four steps:</p>
+<ol style="list-style-type: decimal">
+<li><strong>Read and clean</strong> every export file belonging to one
+participant (<code>parse_data()</code>, which internally calls the
+<code>clean()</code> generic).</li>
+<li><strong>Merge per participant</strong>, combining all files
+belonging to one person into one data frame per data type, and removing
+duplicate or invalid entries (<code>merge_per_id()</code>,
+<code>remove_duplicates()</code>).</li>
+<li><strong>Check completeness</strong> of the merged data, e.g. to flag
+missing data types or missing days before an analysis
+(<code>check_completeness()</code>,
+<code>check_completeness_range()</code>).</li>
+<li><strong>Merge across participants</strong> into one long-format data
+set for the whole study population (<code>merge_all()</code>).</li>
+</ol>
+<p>The rest of this vignette walks through each step, describes the
+supported export formats, and shows how to filter the resulting
+data.</p>
+</div>
+<div id="supported-export-formats" class="section level2">
+<h2>Supported export formats</h2>
+<p><code>parse_data()</code> figures out, from the <em>content</em> of
+each file, which platform it came from – not from its file name. This
+means you can drop files from several participants and several platforms
+into one folder (or a <code>.zip</code> archive, including nested zips)
+and <code>parse_data()</code> will dispatch every file to the right
+reader automatically. Files with irrelevant extensions
+(<code>.png</code>, <code>.pdf</code>, <code>.jpg</code>,
+<code>.jpeg</code>, <code>.txt</code>, <code>.json</code>,
+<code>.bib</code>) are silently ignored, as are macOS metadata files
+such as <code>.DS_Store</code> and <code>__MACOSX</code>.</p>
+<p>aidR currently supports five export formats:</p>
+<table>
+<colgroup>
+<col width="25%" />
+<col width="25%" />
+<col width="25%" />
+<col width="25%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>Platform</th>
+<th>Typical file type</th>
+<th>Detected by</th>
+<th><code>clean()</code> method</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><a href="https://www.glooko.com">Glooko</a></td>
+<td>one CSV per data type</td>
+<td>first line matching
+<code>Name:...,Date Range:&lt;date&gt; - &lt;date&gt;</code></td>
+<td><code>clean.glooko()</code></td>
+</tr>
+<tr class="even">
+<td>CareLink (Medtronic)</td>
+<td>single <code>.xlsx</code>/<code>.csv</code> export</td>
+<td>sheet/column layout of a CareLink export</td>
+<td><code>clean.carelink()</code></td>
+</tr>
+<tr class="odd">
+<td>mylife (Ypsomed)</td>
+<td>single semicolon-delimited CSV</td>
+<td>lines matching a <code>;dd.mm.yy;</code> timestamp pattern</td>
+<td><code>clean.mylife()</code></td>
+</tr>
+<tr class="even">
+<td><a href="https://www.tidepool.org">Tidepool</a></td>
+<td>single multi-sheet <code>.xlsx</code></td>
+<td>presence of a <code>CGM</code> sheet</td>
+<td><code>clean.tidepool()</code></td>
+</tr>
+<tr class="odd">
+<td>YourLoops (Diabeloop)</td>
+<td>one CSV per data type</td>
+<td>exact column header match against a known lookup table</td>
+<td><code>clean.yourloops()</code></td>
+</tr>
+</tbody>
+</table>
+<p>Each reader (<code>read_glooko()</code>,
+<code>read_carelink()</code>, <code>read_mylife()</code>,
+<code>read_tidepool()</code>, <code>read_yourloops()</code>) returns the
+data types found in that particular file, tagged with an S3 class
+matching the platform. <code>clean()</code> is an S3 generic dispatching
+on that class, and standardizes each recognized data type to a common
+column layout:</p>
+<ul>
+<li><strong><code>cgm</code></strong>: <code>timestamp</code>,
+<code>value</code> (mg/dL)</li>
+<li><strong><code>basal</code></strong>: <code>timestamp</code>,
+<code>duration</code>, <code>amount</code>, <code>rate</code></li>
+<li><strong><code>bolus</code></strong>: <code>timestamp</code>,
+<code>type</code>, <code>sub_type</code>, <code>duration</code>,
+<code>extended</code>, <code>normal</code></li>
+<li><strong><code>carbs</code></strong>: <code>timestamp</code>,
+<code>carbs_grams</code>, <code>label</code>,
+<code>estimated_absorption_duration</code></li>
+</ul>
+<p>Platforms often report additional data beyond these four core types
+(e.g. CareLink also exposes sensor calibrations, alerts, temp basal and
+device change events; Tidepool exposes pump settings sheets; Glooko
+exposes total daily insulin, SMBG and alarms). These extra types are
+preserved in the output under their own name, just not standardized
+across platforms, since their availability and structure vary by
+platform.</p>
+<p>Not every platform reports every core type: for example, mylife
+exports only contain <code>bolus</code> and <code>carbs</code>
+entries.</p>
+</div>
+<div id="reading-and-cleaning-data-for-one-participant" class="section level2">
+<h2>Reading and cleaning data for one participant</h2>
+<p><code>parse_data()</code> takes a participant ID and one or more
+paths (files, folders, or zip archives) and returns a named list, one
+entry per file found, with the cleaned data for that file:</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a>path <span class="ot">&lt;-</span> <span class="fu">system.file</span>(<span class="st">&quot;extdata&quot;</span>, <span class="st">&quot;1_cycle_1_arm_1_ms_aid_data_1.xlsx&quot;</span>, <span class="at">package =</span> <span class="st">&quot;aidR&quot;</span>)</span>
+<span id="cb2-2"><a href="#cb2-2" tabindex="-1"></a></span>
+<span id="cb2-3"><a href="#cb2-3" tabindex="-1"></a>data_101 <span class="ot">&lt;-</span> <span class="fu">parse_data</span>(<span class="at">id =</span> <span class="st">&quot;101&quot;</span>, <span class="at">paths =</span> path)</span>
+<span id="cb2-4"><a href="#cb2-4" tabindex="-1"></a><span class="co">#&gt; Parsing data for id 101...</span></span>
+<span id="cb2-5"><a href="#cb2-5" tabindex="-1"></a><span class="fu">str</span>(data_101, <span class="at">max.level =</span> <span class="dv">1</span>)</span>
+<span id="cb2-6"><a href="#cb2-6" tabindex="-1"></a><span class="co">#&gt; List of 1</span></span>
+<span id="cb2-7"><a href="#cb2-7" tabindex="-1"></a><span class="co">#&gt;  $ /private/var/folders/dn/mw54r8qj6q50bx64bxfjmv0r0000gn/T/RtmpkdH2HA/temp_libpath2bb47ab28e10/aidR/extdata/1_cycle_1_arm_1_ms_aid_data_1.xlsx:List of 13</span></span>
+<span id="cb2-8"><a href="#cb2-8" tabindex="-1"></a><span class="fu">str</span>(data_101[[<span class="dv">1</span>]], <span class="at">max.level =</span> <span class="dv">1</span>)</span>
+<span id="cb2-9"><a href="#cb2-9" tabindex="-1"></a><span class="co">#&gt; List of 13</span></span>
+<span id="cb2-10"><a href="#cb2-10" tabindex="-1"></a><span class="co">#&gt;  $ cgm                  : tibble [16,645 × 2] (S3: tbl_df/tbl/data.frame)</span></span>
+<span id="cb2-11"><a href="#cb2-11" tabindex="-1"></a><span class="co">#&gt;  $ basal                : tibble [3,774 × 4] (S3: tbl_df/tbl/data.frame)</span></span>
+<span id="cb2-12"><a href="#cb2-12" tabindex="-1"></a><span class="co">#&gt;  $ bolus                : tibble [3,347 × 6] (S3: tbl_df/tbl/data.frame)</span></span>
+<span id="cb2-13"><a href="#cb2-13" tabindex="-1"></a><span class="co">#&gt;  $ device_event         : tibble [184 × 28] (S3: tbl_df/tbl/data.frame)</span></span>
+<span id="cb2-14"><a href="#cb2-14" tabindex="-1"></a><span class="co">#&gt;  $ food                 : tibble [151 × 14] (S3: tbl_df/tbl/data.frame)</span></span>
+<span id="cb2-15"><a href="#cb2-15" tabindex="-1"></a><span class="co">#&gt;  $ bolus_calculator     : NULL</span></span>
+<span id="cb2-16"><a href="#cb2-16" tabindex="-1"></a><span class="co">#&gt;  $ basal_schedules      : tibble [160 × 22] (S3: tbl_df/tbl/data.frame)</span></span>
+<span id="cb2-17"><a href="#cb2-17" tabindex="-1"></a><span class="co">#&gt;  $ bg_targets           : tibble [40 × 27] (S3: tbl_df/tbl/data.frame)</span></span>
+<span id="cb2-18"><a href="#cb2-18" tabindex="-1"></a><span class="co">#&gt;  $ carb_ratios          : tibble [60 × 24] (S3: tbl_df/tbl/data.frame)</span></span>
+<span id="cb2-19"><a href="#cb2-19" tabindex="-1"></a><span class="co">#&gt;  $ insulin_sensitivities: tibble [60 × 24] (S3: tbl_df/tbl/data.frame)</span></span>
+<span id="cb2-20"><a href="#cb2-20" tabindex="-1"></a><span class="co">#&gt;  $ smbg                 : NULL</span></span>
+<span id="cb2-21"><a href="#cb2-21" tabindex="-1"></a><span class="co">#&gt;  $ upload               : NULL</span></span>
+<span id="cb2-22"><a href="#cb2-22" tabindex="-1"></a><span class="co">#&gt;  $ carbs                : tibble [151 × 4] (S3: tbl_df/tbl/data.frame)</span></span></code></pre></div>
+<p>Here, <code>path</code> happens to be a single Tidepool export, so
+<code>data_101</code> has one entry, containing the standardized
+<code>cgm</code>, <code>basal</code>, <code>bolus</code> and
+<code>carbs</code> data frames alongside Tidepool-specific extras
+(<code>device_event</code>, <code>food</code>,
+<code>basal_schedules</code>, …).</p>
+<p>Passing <code>clean_files = FALSE</code> returns the raw,
+unstandardized data as read from the file, tagged with its platform
+class – useful for debugging a parser or inspecting a platform’s raw
+layout.</p>
+</div>
+<div id="merging-data-per-participant" class="section level2">
+<h2>Merging data per participant</h2>
+<p>A participant’s data commonly spans several files (e.g. repeated
+exports over time, or exports from more than one platform).
+<code>merge_per_id()</code> binds all files belonging to one participant
+together, by data type, and sorts each resulting data frame by
+<code>timestamp</code>:</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a>merged_101 <span class="ot">&lt;-</span> <span class="fu">merge_per_id</span>(data_101)</span>
+<span id="cb3-2"><a href="#cb3-2" tabindex="-1"></a><span class="fu">str</span>(merged_101, <span class="at">max.level =</span> <span class="dv">1</span>)</span>
+<span id="cb3-3"><a href="#cb3-3" tabindex="-1"></a><span class="co">#&gt; List of 10</span></span>
+<span id="cb3-4"><a href="#cb3-4" tabindex="-1"></a><span class="co">#&gt;  $ cgm                  : tibble [16,645 × 2] (S3: tbl_df/tbl/data.frame)</span></span>
+<span id="cb3-5"><a href="#cb3-5" tabindex="-1"></a><span class="co">#&gt;  $ basal                : tibble [3,774 × 4] (S3: tbl_df/tbl/data.frame)</span></span>
+<span id="cb3-6"><a href="#cb3-6" tabindex="-1"></a><span class="co">#&gt;  $ bolus                : tibble [3,347 × 6] (S3: tbl_df/tbl/data.frame)</span></span>
+<span id="cb3-7"><a href="#cb3-7" tabindex="-1"></a><span class="co">#&gt;  $ device_event         : tibble [184 × 28] (S3: tbl_df/tbl/data.frame)</span></span>
+<span id="cb3-8"><a href="#cb3-8" tabindex="-1"></a><span class="co">#&gt;  $ food                 : tibble [151 × 14] (S3: tbl_df/tbl/data.frame)</span></span>
+<span id="cb3-9"><a href="#cb3-9" tabindex="-1"></a><span class="co">#&gt;  $ basal_schedules      : tibble [160 × 22] (S3: tbl_df/tbl/data.frame)</span></span>
+<span id="cb3-10"><a href="#cb3-10" tabindex="-1"></a><span class="co">#&gt;  $ bg_targets           : tibble [40 × 27] (S3: tbl_df/tbl/data.frame)</span></span>
+<span id="cb3-11"><a href="#cb3-11" tabindex="-1"></a><span class="co">#&gt;  $ carb_ratios          : tibble [60 × 24] (S3: tbl_df/tbl/data.frame)</span></span>
+<span id="cb3-12"><a href="#cb3-12" tabindex="-1"></a><span class="co">#&gt;  $ insulin_sensitivities: tibble [60 × 24] (S3: tbl_df/tbl/data.frame)</span></span>
+<span id="cb3-13"><a href="#cb3-13" tabindex="-1"></a><span class="co">#&gt;  $ carbs                : tibble [151 × 4] (S3: tbl_df/tbl/data.frame)</span></span>
+<span id="cb3-14"><a href="#cb3-14" tabindex="-1"></a><span class="fu">head</span>(merged_101<span class="sc">$</span>cgm)</span>
+<span id="cb3-15"><a href="#cb3-15" tabindex="-1"></a><span class="co">#&gt; # A tibble: 6 × 2</span></span>
+<span id="cb3-16"><a href="#cb3-16" tabindex="-1"></a><span class="co">#&gt;   timestamp           value</span></span>
+<span id="cb3-17"><a href="#cb3-17" tabindex="-1"></a><span class="co">#&gt;   &lt;dttm&gt;              &lt;dbl&gt;</span></span>
+<span id="cb3-18"><a href="#cb3-18" tabindex="-1"></a><span class="co">#&gt; 1 2025-10-16 22:00:56  160.</span></span>
+<span id="cb3-19"><a href="#cb3-19" tabindex="-1"></a><span class="co">#&gt; 2 2025-10-16 22:00:56  160.</span></span>
+<span id="cb3-20"><a href="#cb3-20" tabindex="-1"></a><span class="co">#&gt; 3 2025-10-16 22:05:56  157.</span></span>
+<span id="cb3-21"><a href="#cb3-21" tabindex="-1"></a><span class="co">#&gt; 4 2025-10-16 22:05:57  157.</span></span>
+<span id="cb3-22"><a href="#cb3-22" tabindex="-1"></a><span class="co">#&gt; 5 2025-10-16 22:10:56  151.</span></span>
+<span id="cb3-23"><a href="#cb3-23" tabindex="-1"></a><span class="co">#&gt; 6 2025-10-16 22:10:56  151.</span></span></code></pre></div>
+<p>Raw merged data commonly still contains duplicate or implausible
+entries – for instance, overlapping exports reporting the same CGM
+reading twice, or sensor noise outside the physiologically plausible
+range. <code>remove_duplicates()</code> removes exact duplicate rows
+from every data type, and additionally applies CGM-specific cleanup:
+truncating implausible values and downsampling to a regular time
+interval (5 minutes by default) when the same period is covered by more
+than one reading:</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a><span class="fu">nrow</span>(merged_101<span class="sc">$</span>cgm)</span>
+<span id="cb4-2"><a href="#cb4-2" tabindex="-1"></a><span class="co">#&gt; [1] 16645</span></span>
+<span id="cb4-3"><a href="#cb4-3" tabindex="-1"></a></span>
+<span id="cb4-4"><a href="#cb4-4" tabindex="-1"></a>clean_101 <span class="ot">&lt;-</span> <span class="fu">remove_duplicates</span>(merged_101)</span>
+<span id="cb4-5"><a href="#cb4-5" tabindex="-1"></a><span class="fu">nrow</span>(clean_101<span class="sc">$</span>cgm)</span>
+<span id="cb4-6"><a href="#cb4-6" tabindex="-1"></a><span class="co">#&gt; [1] 8328</span></span></code></pre></div>
+<p>All three thresholds can be adjusted or disabled
+(<code>truncate_min_cgm</code>, <code>truncate_max_cgm</code>,
+<code>min_minutes_difference_cgm</code>; set to <code>NULL</code> to
+skip that particular step).</p>
+</div>
+<div id="checking-data-completeness" class="section level2">
+<h2>Checking data completeness</h2>
+<p>Before running an analysis, it is often useful to verify that a
+participant actually has data of every type you need, and that it is not
+missing entire days. <code>check_completeness()</code> warns if a data
+type is absent, or present but empty:</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a><span class="fu">check_completeness</span>(<span class="st">&quot;101&quot;</span>, clean_101)</span></code></pre></div>
+<p><code>check_completeness_range()</code> goes a step further and
+checks, for a given date range, which specific days have no data at all
+for each type – handy for spotting gaps such as a sensor or pump
+disconnecting for a few days:</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" tabindex="-1"></a>date_range <span class="ot">&lt;-</span> <span class="fu">range</span>(<span class="fu">as.Date</span>(clean_101<span class="sc">$</span>cgm<span class="sc">$</span>timestamp))</span>
+<span id="cb6-2"><a href="#cb6-2" tabindex="-1"></a>date_range</span>
+<span id="cb6-3"><a href="#cb6-3" tabindex="-1"></a><span class="co">#&gt; [1] &quot;2025-10-16&quot; &quot;2025-11-14&quot;</span></span>
+<span id="cb6-4"><a href="#cb6-4" tabindex="-1"></a></span>
+<span id="cb6-5"><a href="#cb6-5" tabindex="-1"></a><span class="fu">check_completeness_range</span>(</span>
+<span id="cb6-6"><a href="#cb6-6" tabindex="-1"></a>  <span class="st">&quot;101&quot;</span>, clean_101,</span>
+<span id="cb6-7"><a href="#cb6-7" tabindex="-1"></a>  <span class="at">first_date =</span> <span class="fu">as.character</span>(date_range[<span class="dv">1</span>]),</span>
+<span id="cb6-8"><a href="#cb6-8" tabindex="-1"></a>  <span class="at">last_date  =</span> <span class="fu">as.character</span>(date_range[<span class="dv">2</span>])</span>
+<span id="cb6-9"><a href="#cb6-9" tabindex="-1"></a>)</span>
+<span id="cb6-10"><a href="#cb6-10" tabindex="-1"></a><span class="co">#&gt; Warning in check_completeness_range(&quot;101&quot;, clean_101, first_date =</span></span>
+<span id="cb6-11"><a href="#cb6-11" tabindex="-1"></a><span class="co">#&gt; as.character(date_range[1]), : Id 101: No data of type &#39;carbs&#39; found for day</span></span>
+<span id="cb6-12"><a href="#cb6-12" tabindex="-1"></a><span class="co">#&gt; 2025-10-16!</span></span></code></pre></div>
+<p>Both functions accept a <code>necessary_types</code> argument to
+restrict (or extend) which data types are checked, and
+<code>allow_total_insulin_instead_of_basal</code>, which avoids spurious
+warnings for pumps (e.g. Omnipod) that only report
+<code>total_insulin</code> rather than <code>basal</code> rates while in
+manual mode.</p>
+</div>
+<div id="merging-data-across-participants" class="section level2">
+<h2>Merging data across participants</h2>
+<p>Once every participant’s data has been parsed, merged and cleaned,
+<code>merge_all()</code> combines them into one long-format data set per
+data type, adding an <code>id</code> column so participants can be told
+apart:</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a><span class="co"># For illustration, we reuse the same sample export for a second participant</span></span>
+<span id="cb7-2"><a href="#cb7-2" tabindex="-1"></a>data_102  <span class="ot">&lt;-</span> <span class="fu">parse_data</span>(<span class="at">id =</span> <span class="st">&quot;102&quot;</span>, <span class="at">paths =</span> path)</span>
+<span id="cb7-3"><a href="#cb7-3" tabindex="-1"></a><span class="co">#&gt; Parsing data for id 102...</span></span>
+<span id="cb7-4"><a href="#cb7-4" tabindex="-1"></a>clean_102 <span class="ot">&lt;-</span> <span class="fu">remove_duplicates</span>(<span class="fu">merge_per_id</span>(data_102))</span>
+<span id="cb7-5"><a href="#cb7-5" tabindex="-1"></a></span>
+<span id="cb7-6"><a href="#cb7-6" tabindex="-1"></a>all_data <span class="ot">&lt;-</span> <span class="fu">list</span>(<span class="st">&quot;101&quot;</span> <span class="ot">=</span> clean_101, <span class="st">&quot;102&quot;</span> <span class="ot">=</span> clean_102)</span>
+<span id="cb7-7"><a href="#cb7-7" tabindex="-1"></a>combined <span class="ot">&lt;-</span> <span class="fu">merge_all</span>(all_data)</span>
+<span id="cb7-8"><a href="#cb7-8" tabindex="-1"></a></span>
+<span id="cb7-9"><a href="#cb7-9" tabindex="-1"></a><span class="fu">str</span>(combined, <span class="at">max.level =</span> <span class="dv">1</span>)</span>
+<span id="cb7-10"><a href="#cb7-10" tabindex="-1"></a><span class="co">#&gt; List of 4</span></span>
+<span id="cb7-11"><a href="#cb7-11" tabindex="-1"></a><span class="co">#&gt;  $ cgm  : tibble [16,656 × 3] (S3: tbl_df/tbl/data.frame)</span></span>
+<span id="cb7-12"><a href="#cb7-12" tabindex="-1"></a><span class="co">#&gt;  $ basal: tibble [7,548 × 5] (S3: tbl_df/tbl/data.frame)</span></span>
+<span id="cb7-13"><a href="#cb7-13" tabindex="-1"></a><span class="co">#&gt;  $ bolus: tibble [6,694 × 7] (S3: tbl_df/tbl/data.frame)</span></span>
+<span id="cb7-14"><a href="#cb7-14" tabindex="-1"></a><span class="co">#&gt;  $ carbs: tibble [302 × 5] (S3: tbl_df/tbl/data.frame)</span></span>
+<span id="cb7-15"><a href="#cb7-15" tabindex="-1"></a><span class="fu">head</span>(combined<span class="sc">$</span>cgm)</span>
+<span id="cb7-16"><a href="#cb7-16" tabindex="-1"></a><span class="co">#&gt; # A tibble: 6 × 3</span></span>
+<span id="cb7-17"><a href="#cb7-17" tabindex="-1"></a><span class="co">#&gt;      id timestamp           value</span></span>
+<span id="cb7-18"><a href="#cb7-18" tabindex="-1"></a><span class="co">#&gt;   &lt;int&gt; &lt;dttm&gt;              &lt;dbl&gt;</span></span>
+<span id="cb7-19"><a href="#cb7-19" tabindex="-1"></a><span class="co">#&gt; 1   101 2025-10-16 22:00:56  160.</span></span>
+<span id="cb7-20"><a href="#cb7-20" tabindex="-1"></a><span class="co">#&gt; 2   101 2025-10-16 22:05:56  157.</span></span>
+<span id="cb7-21"><a href="#cb7-21" tabindex="-1"></a><span class="co">#&gt; 3   101 2025-10-16 22:10:56  151.</span></span>
+<span id="cb7-22"><a href="#cb7-22" tabindex="-1"></a><span class="co">#&gt; 4   101 2025-10-16 22:15:55  149.</span></span>
+<span id="cb7-23"><a href="#cb7-23" tabindex="-1"></a><span class="co">#&gt; 5   101 2025-10-16 22:20:55  145.</span></span>
+<span id="cb7-24"><a href="#cb7-24" tabindex="-1"></a><span class="co">#&gt; 6   101 2025-10-16 22:25:55  148.</span></span></code></pre></div>
+<p><code>merge_all()</code> always returns the four core types
+(<code>cgm</code>, <code>basal</code>, <code>bolus</code>,
+<code>carbs</code>); a participant missing one of them simply
+contributes no rows to that type.</p>
+</div>
+<div id="filtering-data" class="section level2">
+<h2>Filtering data</h2>
+<p>Because every standardized data type is a plain tibble with a
+<code>timestamp</code> column, filtering uses ordinary
+<code>dplyr</code>/base R tools – no special aidR function is required.
+A few common cases:</p>
+<p><strong>Filter to one participant</strong> (after
+<code>merge_all()</code>):</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" tabindex="-1"></a>combined<span class="sc">$</span>cgm <span class="sc">%&gt;%</span></span>
+<span id="cb8-2"><a href="#cb8-2" tabindex="-1"></a>  <span class="fu">filter</span>(id <span class="sc">==</span> <span class="st">&quot;101&quot;</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb8-3"><a href="#cb8-3" tabindex="-1"></a>  <span class="fu">head</span>()</span>
+<span id="cb8-4"><a href="#cb8-4" tabindex="-1"></a><span class="co">#&gt; # A tibble: 6 × 3</span></span>
+<span id="cb8-5"><a href="#cb8-5" tabindex="-1"></a><span class="co">#&gt;      id timestamp           value</span></span>
+<span id="cb8-6"><a href="#cb8-6" tabindex="-1"></a><span class="co">#&gt;   &lt;int&gt; &lt;dttm&gt;              &lt;dbl&gt;</span></span>
+<span id="cb8-7"><a href="#cb8-7" tabindex="-1"></a><span class="co">#&gt; 1   101 2025-10-16 22:00:56  160.</span></span>
+<span id="cb8-8"><a href="#cb8-8" tabindex="-1"></a><span class="co">#&gt; 2   101 2025-10-16 22:05:56  157.</span></span>
+<span id="cb8-9"><a href="#cb8-9" tabindex="-1"></a><span class="co">#&gt; 3   101 2025-10-16 22:10:56  151.</span></span>
+<span id="cb8-10"><a href="#cb8-10" tabindex="-1"></a><span class="co">#&gt; 4   101 2025-10-16 22:15:55  149.</span></span>
+<span id="cb8-11"><a href="#cb8-11" tabindex="-1"></a><span class="co">#&gt; 5   101 2025-10-16 22:20:55  145.</span></span>
+<span id="cb8-12"><a href="#cb8-12" tabindex="-1"></a><span class="co">#&gt; 6   101 2025-10-16 22:25:55  148.</span></span></code></pre></div>
+<p><strong>Filter to a date range</strong>, e.g. the first three days of
+CGM data:</p>
+<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" tabindex="-1"></a>combined<span class="sc">$</span>cgm <span class="sc">%&gt;%</span></span>
+<span id="cb9-2"><a href="#cb9-2" tabindex="-1"></a>  <span class="fu">filter</span>(timestamp <span class="sc">&gt;=</span> <span class="fu">min</span>(timestamp), timestamp <span class="sc">&lt;</span> <span class="fu">min</span>(timestamp) <span class="sc">+</span> lubridate<span class="sc">::</span><span class="fu">ddays</span>(<span class="dv">3</span>)) <span class="sc">%&gt;%</span></span>
+<span id="cb9-3"><a href="#cb9-3" tabindex="-1"></a>  <span class="fu">nrow</span>()</span>
+<span id="cb9-4"><a href="#cb9-4" tabindex="-1"></a><span class="co">#&gt; [1] 1718</span></span></code></pre></div>
+<p><strong>Filter by a value condition</strong>, e.g. hypoglycemic CGM
+readings (&lt; 70 mg/dL):</p>
+<div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" tabindex="-1"></a>combined<span class="sc">$</span>cgm <span class="sc">%&gt;%</span></span>
+<span id="cb10-2"><a href="#cb10-2" tabindex="-1"></a>  <span class="fu">filter</span>(value <span class="sc">&lt;</span> <span class="dv">70</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb10-3"><a href="#cb10-3" tabindex="-1"></a>  <span class="fu">head</span>()</span>
+<span id="cb10-4"><a href="#cb10-4" tabindex="-1"></a><span class="co">#&gt; # A tibble: 6 × 3</span></span>
+<span id="cb10-5"><a href="#cb10-5" tabindex="-1"></a><span class="co">#&gt;      id timestamp           value</span></span>
+<span id="cb10-6"><a href="#cb10-6" tabindex="-1"></a><span class="co">#&gt;   &lt;int&gt; &lt;dttm&gt;              &lt;dbl&gt;</span></span>
+<span id="cb10-7"><a href="#cb10-7" tabindex="-1"></a><span class="co">#&gt; 1   101 2025-10-21 06:50:55  60.0</span></span>
+<span id="cb10-8"><a href="#cb10-8" tabindex="-1"></a><span class="co">#&gt; 2   101 2025-10-28 19:02:43  69.0</span></span>
+<span id="cb10-9"><a href="#cb10-9" tabindex="-1"></a><span class="co">#&gt; 3   101 2025-10-28 19:07:43  68.5</span></span>
+<span id="cb10-10"><a href="#cb10-10" tabindex="-1"></a><span class="co">#&gt; 4   102 2025-10-21 06:50:55  60.0</span></span>
+<span id="cb10-11"><a href="#cb10-11" tabindex="-1"></a><span class="co">#&gt; 5   102 2025-10-28 19:02:43  69.0</span></span>
+<span id="cb10-12"><a href="#cb10-12" tabindex="-1"></a><span class="co">#&gt; 6   102 2025-10-28 19:07:43  68.5</span></span></code></pre></div>
+<p><strong>Filter by category</strong>, e.g. only automated
+(closed-loop) boluses:</p>
+<div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" tabindex="-1"></a>combined<span class="sc">$</span>bolus <span class="sc">%&gt;%</span></span>
+<span id="cb11-2"><a href="#cb11-2" tabindex="-1"></a>  <span class="fu">filter</span>(type <span class="sc">==</span> <span class="st">&quot;automated&quot;</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb11-3"><a href="#cb11-3" tabindex="-1"></a>  <span class="fu">head</span>()</span>
+<span id="cb11-4"><a href="#cb11-4" tabindex="-1"></a><span class="co">#&gt; # A tibble: 6 × 7</span></span>
+<span id="cb11-5"><a href="#cb11-5" tabindex="-1"></a><span class="co">#&gt;      id timestamp           type      sub_type duration extended normal</span></span>
+<span id="cb11-6"><a href="#cb11-6" tabindex="-1"></a><span class="co">#&gt;   &lt;int&gt; &lt;dttm&gt;              &lt;chr&gt;     &lt;chr&gt;    &lt;lgl&gt;    &lt;lgl&gt;     &lt;dbl&gt;</span></span>
+<span id="cb11-7"><a href="#cb11-7" tabindex="-1"></a><span class="co">#&gt; 1   101 2025-10-16 22:31:04 automated standard NA       NA         0.05</span></span>
+<span id="cb11-8"><a href="#cb11-8" tabindex="-1"></a><span class="co">#&gt; 2   101 2025-10-16 22:36:02 automated standard NA       NA         0.05</span></span>
+<span id="cb11-9"><a href="#cb11-9" tabindex="-1"></a><span class="co">#&gt; 3   101 2025-10-16 22:56:03 automated standard NA       NA         0.05</span></span>
+<span id="cb11-10"><a href="#cb11-10" tabindex="-1"></a><span class="co">#&gt; 4   101 2025-10-16 23:01:03 automated standard NA       NA         0.25</span></span>
+<span id="cb11-11"><a href="#cb11-11" tabindex="-1"></a><span class="co">#&gt; 5   101 2025-10-16 23:06:00 automated standard NA       NA         0.35</span></span>
+<span id="cb11-12"><a href="#cb11-12" tabindex="-1"></a><span class="co">#&gt; 6   101 2025-10-16 23:11:12 automated standard NA       NA         0.4</span></span></code></pre></div>
+<p>CGM-specific filtering that is common enough to warrant a dedicated
+implementation (truncating out-of-range values and downsampling to a
+regular interval) is already built into
+<code>remove_duplicates()</code>, described above.</p>
+</div>
+<div id="putting-it-all-together" class="section level2">
+<h2>Putting it all together</h2>
+<p>A typical study-level pipeline combines all of the above for every
+participant in a loop:</p>
+<div class="sourceCode" id="cb12"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" tabindex="-1"></a>ids   <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">&quot;101&quot;</span>, <span class="st">&quot;102&quot;</span>)           <span class="co"># participant IDs</span></span>
+<span id="cb12-2"><a href="#cb12-2" tabindex="-1"></a>paths <span class="ot">&lt;-</span> <span class="fu">list</span>(                      <span class="co"># one or more export paths per participant</span></span>
+<span id="cb12-3"><a href="#cb12-3" tabindex="-1"></a>  <span class="st">&quot;101&quot;</span> <span class="ot">=</span> <span class="st">&quot;path/to/participant_101_export.zip&quot;</span>,</span>
+<span id="cb12-4"><a href="#cb12-4" tabindex="-1"></a>  <span class="st">&quot;102&quot;</span> <span class="ot">=</span> <span class="st">&quot;path/to/participant_102_export.zip&quot;</span></span>
+<span id="cb12-5"><a href="#cb12-5" tabindex="-1"></a>)</span>
+<span id="cb12-6"><a href="#cb12-6" tabindex="-1"></a></span>
+<span id="cb12-7"><a href="#cb12-7" tabindex="-1"></a>all_data <span class="ot">&lt;-</span> <span class="fu">list</span>()</span>
+<span id="cb12-8"><a href="#cb12-8" tabindex="-1"></a><span class="cf">for</span> (id <span class="cf">in</span> ids) {</span>
+<span id="cb12-9"><a href="#cb12-9" tabindex="-1"></a>  parsed          <span class="ot">&lt;-</span> <span class="fu">parse_data</span>(id, paths[[id]])</span>
+<span id="cb12-10"><a href="#cb12-10" tabindex="-1"></a>  merged          <span class="ot">&lt;-</span> <span class="fu">merge_per_id</span>(parsed)</span>
+<span id="cb12-11"><a href="#cb12-11" tabindex="-1"></a>  all_data[[id]]  <span class="ot">&lt;-</span> <span class="fu">remove_duplicates</span>(merged)</span>
+<span id="cb12-12"><a href="#cb12-12" tabindex="-1"></a></span>
+<span id="cb12-13"><a href="#cb12-13" tabindex="-1"></a>  <span class="fu">check_completeness</span>(id, all_data[[id]])</span>
+<span id="cb12-14"><a href="#cb12-14" tabindex="-1"></a>}</span>
+<span id="cb12-15"><a href="#cb12-15" tabindex="-1"></a></span>
+<span id="cb12-16"><a href="#cb12-16" tabindex="-1"></a>combined <span class="ot">&lt;-</span> <span class="fu">merge_all</span>(all_data)</span></code></pre></div>
+<p><code>combined</code> can then be filtered, summarized, or exported
+for statistical analysis exactly as shown in the previous section.</p>
+</div>
+
+
+
+<!-- code folding -->
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>

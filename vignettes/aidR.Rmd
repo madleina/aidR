@@ -1,0 +1,158 @@
+---
+title: "Introduction to aidR"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Introduction to aidR}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup, message = FALSE}
+library(aidR)
+library(dplyr)
+```
+
+## Overview
+
+Data exported from automated insulin delivery (AID) systems are highly heterogeneous, with each platform using its own file format, variable names, data types, or units. 
+The **aidR** package standardizes these exports into a small set of tidy data frames for continuous glucose monitoring (CGM), basal insulin, bolus insulin, carbohydrate data, and potentially other data types. 
+As a result, downstream analyses can be implemented once and applied consistently across data from different AID systems.
+
+The typical workflow has four steps:
+
+1. **Read and clean** every export file belonging to one participant
+   (`parse_data()`).
+3. **Check completeness** of the merged data, e.g. to flag missing data types or missing days (`check_completeness()`, `check_completeness_range()`).
+4. **Merge across participants** into one long-format data set for the whole study population (`merge_all()`).
+
+The rest of this vignette walks through each step, describes the supported export formats, and shows how to filter the resulting data.
+
+## Supported export formats
+
+`parse_data()` figures out, from the *content* of each file, which platform it came from. Importantly, it does not use the file name. 
+This means you can drop files from several participants and several platforms into one folder (or a `.zip` archive, including nested zips) and `parse_data()` will dispatch every file to the right reader automatically. Files with irrelevant extensions (e.g. `.png`, `.pdf`, `.jpg`, `.jpeg`, `.txt`, `.json`) are silently ignored, as are macOS metadata files.
+
+aidR currently supports five export formats:
+
+| Platform | Typical file type | Detected by |
+|---|---|---|---|
+| [Glooko] | one CSV per data type |
+| CareLink (Medtronic) | single `.xlsx`/`.csv` export | 
+| mylife (Ypsomed) | single semicolon-delimited CSV | 
+| Tidepool | single multi-sheet `.xlsx` | 
+| YourLoops (Diabeloop) | one CSV per data type |
+
+
+`parse_data()` takes an argument `clean_files`. If this is set to `TRUE`, the major data types (CGM, basal, bolus and carbohydrates) are standardized to a common column layout:
+
+- **`cgm`**: `timestamp`, `value` (mg/dL)
+- **`basal`**: `timestamp`, `duration`, `amount`, `rate`
+- **`bolus`**: `timestamp`, `type`, `sub_type`, `duration`, `extended`, `normal`
+- **`carbs`**: `timestamp`, `carbs_grams`, `label`, `estimated_absorption_duration`
+
+Platforms often report additional data beyond these four core types (e.g. CareLink also exposes sensor calibrations, alerts, temp basal and device change events; Tidepool exposes pump settings sheets; Glooko exposes total daily insulin, SMBG and alarms). These extra types are preserved in the output under their own name, just not standardized across platforms, since their availability and structure vary by platform.
+
+Not every platform reports every core type: for example, mylife exports only contain `bolus` and `carbs` entries.
+
+## Reading and cleaning data for one participant
+
+`parse_data()` takes a participant ID and one or more paths (files, folders, or zip archives) and returns a named list, one entry per file found, with the cleaned data for that file:
+
+```{r}
+path <- system.file("extdata", "1_cycle_1_arm_1_ms_aid_data_1.xlsx", package = "aidR")
+
+data_101 <- parse_data(id = "101", paths = path)
+str(data_101, max.level = 1)
+str(data_101[[1]], max.level = 1)
+```
+
+Here, `path` happens to be a single Tidepool export, so `data_101` has one entry, containing the standardized `cgm`, `basal`, `bolus` and `carbs` data frames alongside Tidepool-specific extras (`device_event`, `food`, `basal_schedules`, ...).
+
+Note that if a participant's data spans several files (e.g. repeated exports over time, or exports from more than one platform), all files belonging to one participant together, by data type, and sorts each resulting data frame by `timestamp`:
+In addition, exact duplicate rows from every data type are removed.
+
+Passing `clean_files = FALSE` returns the raw, unstandardized data as read from the file, tagged with its platform class -- useful for debugging a parser or inspecting a platform's raw layout.
+
+## Merging data per participant
+CGM-specific cleanup: truncating implausible values and downsampling to a regular time interval (5 minutes by default) when the same period is covered by more than one reading:
+
+```{r}
+nrow(data_101$cgm)
+
+clean_101 <- filter_CGM(data_101)
+nrow(clean_101$cgm)
+```
+
+All three thresholds can be adjusted or disabled (`truncate_min_cgm`, `truncate_max_cgm`, `min_minutes_difference_cgm`; set to `NULL` to skip that particular step).
+
+## Checking data completeness
+
+Before running an analysis, it is often useful to verify that a participant actually has data of every type you need, and that it is not missing entire days. `check_completeness()` warns if a data type is absent, or present but empty:
+
+```{r}
+check_completeness("101", clean_101)
+```
+
+`check_completeness_range()` goes a step further and checks, for a given date range, which specific days have no data at all for each type -- handy for spotting gaps such as a sensor or pump disconnecting for a few days:
+
+```{r}
+date_range <- range(as.Date(clean_101$cgm$timestamp))
+date_range
+
+check_completeness_range(
+  "101", clean_101,
+  first_date = as.character(date_range[1]),
+  last_date  = as.character(date_range[2])
+)
+```
+
+Both functions accept a `necessary_types` argument to restrict (or extend) which data types are checked, and `allow_total_insulin_instead_of_basal`, which avoids spurious warnings for pumps (e.g. Omnipod) that only report `total_insulin` rather than `basal` rates while in manual mode.
+
+## Merging data across participants
+
+Once every participant's data has been parsed, merged and cleaned, `merge_all()` combines them into one long-format data set per data type, adding an `id` column so participants can be told apart:
+
+```{r}
+# For illustration, we reuse the same sample export for a second participant
+data_102  <- parse_data(id = "102", paths = path)
+clean_102 <- filter_CGM(data_102)
+
+all_data <- list("101" = clean_101, "102" = clean_102)
+combined <- merge_all(all_data)
+
+str(combined, max.level = 1)
+head(combined$cgm)
+```
+
+`merge_all()` always returns the four core types (`cgm`, `basal`, `bolus`, `carbs`); a participant missing one of them simply contributes no rows to that type.
+
+## Putting it all together
+
+A typical study-level pipeline combines all of the above for every participant in a loop:
+
+```{r, eval = FALSE}
+ids   <- c("101", "102")           # participant IDs
+paths <- list(                      # one or more export paths per participant
+  "101" = "path/to/participant_101_export.zip",
+  "102" = "path/to/participant_102_export.zip"
+)
+
+all_data <- list()
+for (id in ids) {
+  all_data[[id]]          <- parse_data(id, paths[[id]])
+  all_data[[id]]          <- filter_CGM(all_data[[id]])
+
+  check_completeness(id, all_data[[id]])
+}
+
+combined <- merge_all(all_data)
+```
+
+`combined` can then be filtered, summarized, or exported for statistical analysis exactly as shown in the previous section.

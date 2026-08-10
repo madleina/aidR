@@ -1,0 +1,35 @@
+Package: aidR
+Type: Package
+Title: Parsing and standardizing file formats for AID data
+Version: 0.0.0
+Authors@R: c(person("Madleina", "Caduff", 
+                     role = c("aut"),
+                     email = "madleina.caduff@dcberne.com"),
+             person("Aritz", "Lizoain",
+                     role = c("aut", "cre"),
+                     email = "aritz.lizoain@dcberne.com")
+             )
+Maintainer: Madleina Caduff <madleina.caduff@dcberne.com>
+Description: Parses data from automated insulin delivery (AID) systems from various platforms and allows to merge and standardize CGM, basal, bolus and carbohydrate data.
+License: GPL-3
+Encoding: UTF-8
+Depends: R (>= 4.1.0)
+Imports:
+    readxl,
+    tools,
+    dplyr,
+    lubridate,
+    rjson,
+    tidyr,
+    stringr,
+    utils,
+    rlang,
+    iglu,
+    archive
+Config/roxygen2/version: 8.0.0
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 8.0.0
+Suggests: 
+    knitr,
+    rmarkdown
+VignetteBuilder: knitr
