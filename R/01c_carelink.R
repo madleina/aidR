@@ -16,13 +16,14 @@
 #' @return An instance of class \code{carelink}.
 read_carelink <- function(id, filename){
   # Read raw: 3 data frames with (1) many different informations, (2) daily aggregated insulin and (3) CGM measurement data.
-  dfs_new <- .read_carelink_raw.aidR(id, filename)
-
+  raw <- .read_carelink_raw.aidR(id, filename)
+  dfs_new <- raw$dfs
+    
   # First df: contains all sorts of info -> split
   SMBG <- .get_carelink_SMBG.aidR(dfs_new[[1]])
-  basal_rates <- .get_carelink_basal_rates.aidR(dfs_new[[1]])
-  temp_basal <- .get_carelink_temp_basal.aidR(dfs_new[[1]])
-  bolus <- .get_carelink_bolus.aidR(dfs_new[[1]])
+  basal_rates <- .get_carelink_basal_rates.aidR(dfs_new[[1]], raw$pump_name)
+  temp_basal <- .get_carelink_temp_basal.aidR(dfs_new[[1]], raw$pump_name)
+  bolus <- .get_carelink_bolus.aidR(dfs_new[[1]], raw$pump_name)
   prime <- .get_carelink_prime.aidR(dfs_new[[1]])
   alerts <- .get_carelink_alerts.aidR(dfs_new[[1]])
   corr_bolus_info <- .get_carelink_correction_bolus_info.aidR(dfs_new[[1]])
@@ -48,7 +49,7 @@ read_carelink <- function(id, filename){
   data$aggr_daily_insulin <- aggr_daily_insulin
   
   # Third df: contains sensor (CGM) data
-  data$cgm <- .get_carelink_CGM.aidR(dfs_new[[3]])
+  data$cgm <- .get_carelink_CGM.aidR(dfs_new[[3]], raw$sensor_name)
   data$sensor_exceptions <- .get_carelink_sensor_exceptions.aidR(dfs_new[[3]])
   
   class(data) <- "carelink"
@@ -86,7 +87,7 @@ clean.carelink <- function(data, ...){
 #' Read file from a Carelink export
 #'
 #' @param id Character or numeric participant identifier.
-#' @param filename Character string corresponding to the filename of the Glooko export.
+#' @param filename Character string corresponding to the filename of the Carelink export.
 #'
 #' @return A list of three data frames containing (1) many different information, (2) daily aggregated insulin and (3) CGM measurement data.
 #'
@@ -99,8 +100,18 @@ clean.carelink <- function(data, ...){
   # Split by section (-------)
   dfs <- split(data, f = cumsum(grepl("-------", data$V1)))
   
+  sensor_name <- NA
+  pump_name <- NA
   if (length(dfs) > 3){
-    # Ignore first df: contains patient info and versions, not relevant (and not always available)
+    # First df: contains patient info and versions (not always available)
+    # Read pump name
+    pump_name <- strsplit(dfs[[1]][1,], sep)[[1]][8]
+    
+    # Read sensor name
+    tmp <- strsplit(dfs[[1]][3,], sep)[[1]]
+    sensor_name <- tmp[length(tmp)]
+    
+    # Not relevant for further analysis
     dfs <- dfs[2:length(dfs)]
   }
   
@@ -174,7 +185,7 @@ clean.carelink <- function(data, ...){
     stop("Expected 3 sub-frames, found ", length(dfs_new))
   }
   
-  return(dfs_new)
+  return(list(dfs = dfs_new, sensor_name = sensor_name, pump_name = pump_name))
 }
 
 #' Check if a file corresponds to a file from a Carelink export.
@@ -379,11 +390,12 @@ clean.carelink <- function(data, ...){
 #' Parse all entries corresponding to basal rates in a Carelink export.
 #'
 #' @param df A data frame obtained from reading a Carelink file.
-#'
+#' @param pump_name A string denoting the name of the pump, NA if unknown.
+#' 
 #' @return A data frame containing the target entries
 #'
 #' @keywords internal
-.get_carelink_basal_rates.aidR <- function(df){
+.get_carelink_basal_rates.aidR <- function(df, pump_name){
   basal_rates <- df %>% 
     select("Index", "timestamp", "Basal Rate (U/h)", "Suspend", "Rewind") %>% 
     filter(if_any(-c(1:2), ~ !is.na(.) & . != ""))
@@ -399,33 +411,43 @@ clean.carelink <- function(data, ...){
     select(-"next_time")
   
   .check_if_missing_columns_with_data.aidR(df, basal_rates)
+  
+  # Add pump name column
+  basal_rates$pump_name <- pump_name
+  
   return(basal_rates)
 }
 
 #' Parse all entries corresponding to temporary basal rates in a Carelink export.
 #'
 #' @param df A data frame obtained from reading a Carelink file.
-#'
+#' @param pump_name A string denoting the name of the pump, NA if unknown.
+#' 
 #' @return A data frame containing the target entries
 #'
 #' @keywords internal
-.get_carelink_temp_basal.aidR <- function(df){
+.get_carelink_temp_basal.aidR <- function(df, pump_name){
   temp_basal <- df %>% 
     select("Index", "timestamp", "Temp Basal Amount", "Temp Basal Type", "Temp Basal Duration (h:mm:ss)", "Preset Temp Basal Name") %>% 
     filter(if_any(-c(1:2), ~ !is.na(.) & . != ""))
   
   .check_if_missing_columns_with_data.aidR(df, temp_basal)
+  
+  # Add pump name column
+  basal_rates$pump_name <- pump_name
+  
   return(temp_basal)
 }
 
 #' Parse all entries corresponding to bolus deliveries in a Carelink export.
 #'
 #' @param df A data frame obtained from reading a Carelink file.
+#' @param pump_name A string denoting the name of the pump, NA if unknown.
 #'
 #' @return A data frame containing the target entries
 #'
 #' @keywords internal
-.get_carelink_bolus.aidR <- function(df){
+.get_carelink_bolus.aidR <- function(df, pump_name){
   bolus <- df %>% 
     select("Index", "timestamp", "Bolus Type", "Bolus Volume Selected (U)", "Bolus Volume Delivered (U)", 
            "Bolus Duration (h:mm:ss)", "Bolus Number", "Bolus Cancellation Reason", "Preset Bolus", "Bolus Source") %>% 
@@ -453,6 +475,10 @@ clean.carelink <- function(data, ...){
     arrange(.data$timestamp)
   
   .check_if_missing_columns_with_data.aidR(df, bolus)
+  
+  # Add pump name column
+  bolus$pump_name <- pump_name
+  
   return(bolus)
 }
 
@@ -625,7 +651,7 @@ clean.carelink <- function(data, ...){
 #' @return A data frame containing the target entries
 #'
 #' @keywords internal
-.get_carelink_CGM.aidR <- function(df){
+.get_carelink_CGM.aidR <- function(df, sensor_name){
   # So far, all Event Markers were Start or End of the day -> we can ignore those
   # But check if there are any others, in case this becomes important
   if (!all(df$`Event Marker` == "Start of the day" | df$`Event Marker` == "End of the day", na.rm = T)){
@@ -636,6 +662,9 @@ clean.carelink <- function(data, ...){
   CGM <- df %>% 
     select("Index", "timestamp", "Sensor Glucose (mg/dL)", "ISIG Value") %>%
     filter(if_any(-c(1:2), ~ !is.na(.) & . != ""))
+  
+  # Add sensor name column
+  CGM$sensor_name <- sensor_name
   
   return(CGM)
 }
@@ -670,9 +699,10 @@ clean.carelink <- function(data, ...){
   # only keep timestamp and value
   
   cgm <- cgm %>% 
-    select("timestamp", "Sensor Glucose (mg/dL)") %>% 
+    select("timestamp", "Sensor Glucose (mg/dL)", "sensor_name") %>% 
     rename(value = "Sensor Glucose (mg/dL)") |> 
-    mutate(unit = "mg/dL")
+    mutate(timezone_offset = NA, .after = "timestamp") |> 
+    mutate(unit = "mg/dL", .before = "sensor_name")
   
   return(cgm)
 }
@@ -686,8 +716,9 @@ clean.carelink <- function(data, ...){
 #' @keywords internal
 .clean_carelink_basal.aidR <- function(basal){
   basal <- basal %>% 
-    mutate(duration = .data$duration_h * 60) %>% # in minutes
-    select("timestamp", "duration", "delivered_U", "Basal Rate (U/h)") %>%
+    mutate(duration = .data$duration_h * 60,  # in minutes
+           timezone_offset = NA) %>%
+    select("timestamp", "timezone_offset", "duration", "delivered_U", "Basal Rate (U/h)", "pump_name") %>%
     rename(amount = "delivered_U",
            rate = "Basal Rate (U/h)") %>% 
     filter(.data$duration > 0)
@@ -718,9 +749,10 @@ clean.carelink <- function(data, ...){
         sub_type == "standard" ~ as.numeric(.data$`Bolus Volume Delivered (U)`),
         sub_type == "square_wave" ~ NA
       ),
-      type = tolower(.data$`Bolus Type`)
+      type = tolower(.data$`Bolus Type`),
+      timezone_offset = NA
     ) %>% 
-    select("timestamp", "type", "sub_type", "duration", "extended", "normal")
+    select("timestamp", "timezone_offset", "type", "sub_type", "duration", "extended", "normal", "pump_name")
   
   return(bolus)
 }
@@ -736,7 +768,8 @@ clean.carelink <- function(data, ...){
   # Extract carb info from bolus wizard
   
   carbs <- bwz %>% 
-    select("timestamp", "BWZ Carb Input (grams)") %>% 
+    mutate(timezone_offset = NA) |> 
+    select("timestamp", "timezone_offset", "BWZ Carb Input (grams)") %>% 
     mutate(label = NA, 
            estimated_absorption_duration = NA,
            `BWZ Carb Input (grams)` = as.numeric(.data$`BWZ Carb Input (grams)`)) %>% 
@@ -744,15 +777,3 @@ clean.carelink <- function(data, ...){
   
   return(carbs)
 }
-
-
-
-
-
-
-
-
-
-
-
-

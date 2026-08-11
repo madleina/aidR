@@ -1,0 +1,4 @@
+﻿Type,Bolus Type,Bolus Delivery Method,BG (mg/dL),Serial Number,Completion Date Time,Insulin Delivered,Food Delivered,Correction Delivered,Completion Status Desc,Bolex Start Date Time,Bolex Completion Date Time,Bolex Insulin Delivered,Bolex Completion Status Desc,Standard Percent,Duration (mins),Carb Size,Target BG (mg/dL),Correction Factor,Carb Ratio
+Bolus,Food / Correction,Standard,158,1111111,2026-03-05T04:51:44,2.48,1.89,0.59,Completed,,,,,100,0,17,0,0,0
+Bolus,Food / Correction,Standard,159,1111111,2026-03-05T08:02:13,2.96,1.78,1.18,Completed,,,,,100,0,16,0,0,0
+Bolus,Food / Correction,Standard,177,1111111,2026-03-05T12:24:41,1.81,1.67,0.14,Completed,,,,,100,0,15,0,0,0

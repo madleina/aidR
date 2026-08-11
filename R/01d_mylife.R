@@ -126,6 +126,8 @@ clean.mylife <- function(data, ...){
     rename(normal = "amount") %>% 
     select("timestamp", "type", "subtype", "duration", "extended", "normal")
     
+  # Add sensor name: not known for mylife
+  bolus$sensor_name <- NA
     
   return(bolus)
 }
@@ -140,12 +142,13 @@ clean.mylife <- function(data, ...){
 .clean_mylife_carbs.aidR <- function(carbs){
   carbs <- carbs %>% 
     mutate(timestamp = as_datetime(.data$timestamp),
+           timezone_offset = NA,
            amount = as.numeric(gsub(pattern = ",", replacement = ".", .data$amount)),
            estimated_absorption_duration = 60 * 
              as.numeric(str_extract(.data$information, "(?<=\\s)[\\d.]+(?=h)"))) %>% 
     rename(carbs_grams = "amount",
            label = "type") %>% 
-    select("timestamp", "carbs_grams", "label", "estimated_absorption_duration")
+    select("timestamp", "timezone_offset", "carbs_grams", "label", "estimated_absorption_duration")
   
   return(carbs)
 }

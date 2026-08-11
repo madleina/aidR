@@ -1,0 +1,22 @@
+name,value,unit,effectiveDate
+Aggressiveness for breakfast,120,%,2025-04-14T23:29:22Z
+Aggressiveness in hyperglycemia,140,%,2025-04-08T18:14:06Z
+Aggressiveness in normoglycemia,130,%,2025-06-01T02:51:12Z
+Aggressiveness for lunch,110,%,2024-07-17T11:06:49Z
+Weight,83,kg,2024-12-17T06:35:59Z
+Target glucose level,100,mg/dL,2025-09-04T01:51:43Z
+Hypoglycemia threshold,65,mg/dL,2024-01-05T07:11:27Z
+Hyperglycemia threshold,170,mg/dL,2024-01-05T07:11:27Z
+Height,174,cm,2025-01-06T22:59:31Z
+Aggressiveness for dinner,100,%,2025-01-06T22:59:31Z
+INSULIN_TYPE_USED,1,,2025-02-21T16:34:17Z
+Dinner - large,60,g,2025-01-08T16:30:00Z
+Dinner - small,15,g,2025-01-08T16:30:00Z
+Lunch - large,75,g,2025-01-08T16:30:00Z
+Lunch - small,20,g,2025-01-08T16:30:00Z
+Breakfast - large,60,g,2025-01-08T16:30:00Z
+Breakfast - small,15,g,2025-01-08T16:30:00Z
+Total Daily Insulin,75,U,2025-03-31T07:52:38Z
+Dinner - average,45,g,2025-05-06T22:59:31Z
+Lunch - average,65,g,2025-05-06T22:59:31Z
+Breakfast - average,45,g,2025-05-06T22:59:31Z

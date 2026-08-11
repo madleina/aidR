@@ -177,7 +177,8 @@ clean.yourloops <- function(data, ...) {
   cgm <- data.frame(
     timestamp = cgm$timestamp,
     value = cgm$value,
-    unit = "mg/dL"
+    unit = "mg/dL",
+    pump_name = cgm$cgmModel
   )
 
   return(cgm)
@@ -210,6 +211,9 @@ clean.yourloops <- function(data, ...) {
     ) %>%
     select("timestamp", "type", "sub_type", "duration", "extended", "normal")
 
+  # Add pump name to bolus: Not known from exports
+  bolus$pump_name <- NA
+  
   return(bolus)
 }
 
@@ -232,6 +236,10 @@ clean.yourloops <- function(data, ...) {
     ) %>%
     select("timestamp", "duration", "amount", "rate")
 
+  
+  # Add pump name to basal: Not known from exports
+  basal$pump_name <- NA
+  
   return(basal)
 }
 

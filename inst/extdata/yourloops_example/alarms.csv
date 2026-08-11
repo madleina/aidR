@@ -1,0 +1,6 @@
+timestamp,timezoneOffSet,inputTime,type,level,code,acknowledge_status,updateTimestamp
+2025-07-06T08:12:30.203Z,120,2025-07-06T08:12:30.203Z,handset,alert,20102,acknowledged,2025-07-06T10:13:33.312Z
+2025-07-06T10:23:34.583Z,120,2025-07-06T10:23:34.583Z,handset,alert,20100,acknowledged,2025-07-06T11:24:41.826Z
+2025-07-06T15:02:33.116Z,120,2025-07-06T15:02:33.116Z,handset,alert,10117,acknowledged,2025-07-06T17:12:23.001Z
+2025-07-06T17:50:00.552Z,120,2025-07-06T17:50:00.552Z,handset,alert,10113,acknowledged,2025-07-06T19:23:32.827Z
+2025-07-06T23:19:01.920Z,120,2025-07-06T23:19:01.920Z,handset,alert,20100,acknowledged,2025-07-06T23:39:33.123Z

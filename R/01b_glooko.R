@@ -328,8 +328,10 @@ clean.glooko <- function(data, ...) {
 
   data <- data.frame(
     timestamp = data[, 1],
+    timezone_offset = NA,
     value = data[, 2],
-    unit = "mg/dL"
+    unit = "mg/dL",
+    sensor_name = NA # never given in Glooko file
   )
 
   return(data)
@@ -359,6 +361,7 @@ clean.glooko <- function(data, ...) {
     mutate(
       amount = .data$`Duration (minutes)` / 60 * .data$Rate, # Calculate basal insulin as duration (mins) / 60 * rate [units/hour]
       delivery_type = .data$`Insulin Type`,
+      timezone_offset = NA
     ) %>%
     rename(
       timestamp = .data$Timestamp,
@@ -366,7 +369,10 @@ clean.glooko <- function(data, ...) {
       rate = .data$Rate,
       percent = .data$`Percentage (%)`
     ) %>%
-    select("timestamp", "duration", "amount", "rate")
+    select("timestamp", "timezone_offset", "duration", "amount", "rate")
+  
+  # Add sensor name: not known for Glooko (!= Serial number)
+  data$sensor_name <- NA
 
   return(data)
 }
@@ -410,10 +416,14 @@ clean.glooko <- function(data, ...) {
         sub_type == "dual_wave" ~ .data$`Initial Delivery (U)`,
         sub_type == "square_wave" ~ 0
       ),
-      type = NA
+      type = NA,
+      timezone_offset = NA
     ) %>%
-    select("timestamp", "type", "sub_type", "duration", "extended", "normal")
+    select("timestamp", "timezone_offset", "type", "sub_type", "duration", "extended", "normal")
 
+  # Add sensor name: not known for Glooko (!= Serial number)
+  data$sensor_name <- NA
+  
   return(data)
 }
 
@@ -440,9 +450,10 @@ clean.glooko <- function(data, ...) {
       total_bolus = .data$`Total Bolus (U)`,
       total_insulin = .data$`Total Insulin (U)`,
       total_basal = .data$`Total Basal (U)`,
+      timezone_offset = NA
     ) %>%
     rename(timestamp = .data$Timestamp) %>%
-    select("timestamp", "total_bolus", "total_insulin", "total_basal")
+    select("timestamp", "timezone_offset", "total_bolus", "total_insulin", "total_basal")
 
   return(data)
 }
@@ -461,7 +472,9 @@ clean.glooko <- function(data, ...) {
   data <- data.frame(unclass(data))
 
   # 4th column in entered carbs. Filter on non-zero carbs
-  data <- data.frame(timestamp = data[, 1], carbs = data[, 4])
+  data <- data.frame(timestamp = data[, 1],
+                     timezone_offset = NA,
+                     carbs = data[, 4])
 
   data <- data %>%
     filter(.data$carbs > 0) %>%
@@ -497,6 +510,7 @@ clean.glooko <- function(data, ...) {
 
   data <- data.frame(
     timestamp = data[, 1],
+    timezone_offset = NA,
     value = data[, 2],
     manual_reading = data[, 3]
   )
@@ -520,6 +534,7 @@ clean.glooko <- function(data, ...) {
   # drop serial number
   data <- data.frame(
     timestamp = data[, 1],
+    timezone_offset = NA,
     name = data[, 2]
   )
 
@@ -542,6 +557,7 @@ clean.glooko <- function(data, ...) {
   # drop serial number
   data <- data.frame(
     timestamp = data[, 1],
+    timezone_offset = NA,
     name = data[, 2],
     value = data[, 3],
     insulin_type = data[, 4]
@@ -566,6 +582,7 @@ clean.glooko <- function(data, ...) {
   # drop serial number
   data <- data.frame(
     timestamp = data[, 1],
+    timezone_offset = NA,
     name = data[, 2],
     value = data[, 3],
     medication_type = data[, 4]
@@ -593,6 +610,7 @@ clean.glooko <- function(data, ...) {
   # 3th column is carbs
   data <- data.frame(
     timestamp = data[, 1],
+    timezone_offset = NA,
     label = data[, 2],
     carbs = data[, 3]
   )
@@ -620,6 +638,7 @@ clean.glooko <- function(data, ...) {
 
   data <- data.frame(
     timestamp = data[, 1],
+    timezone_offset = NA,
     note = data[, 2]
   )
 
@@ -641,6 +660,7 @@ clean.glooko <- function(data, ...) {
 
   data <- data.frame(
     timestamp = data[, 1],
+    timezone_offset = NA,
     name = data[, 2],
     intensity = data[, 3],
     duration_minutes = data[, 4],

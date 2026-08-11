@@ -166,8 +166,10 @@ clean.tandem_source <- function(data, ...) {
   
   cgm <- data.frame(
     timestamp = as_datetime(cgm$`Event Date Time`),
+    timezone_offset = NA,
     value = cgm$value,
-    unit = "mg/dL"
+    unit = "mg/dL",
+    sensor_name = cgm$`Device Type`
   )
 
   return(cgm)
@@ -206,12 +208,16 @@ clean.tandem_source <- function(data, ...) {
       TRUE ~ .data$`Insulin Delivered`
     )) |> 
     rename(timestamp = "Completion Date Time", duration = "Duration (mins)", type = "Bolus Delivery Method") |> 
-    select("timestamp", "type", "sub_type", "duration", "normal", "extended") |> 
-    mutate(timestamp = as_datetime(.data$timestamp))
-  
+    mutate(timestamp = as_datetime(.data$timestamp),
+           timezone_offset = NA) |> 
+    select("timestamp", "timezone_offset", "type", "sub_type", "duration", "normal", "extended")
+
   if (any(bolus$sub_type != "standard")){
     stop("Double-check extended bolus!")
   }
+  
+  # No information on pump name
+  bolus$pump_name <- NA
   
   return(bolus)
 }
@@ -229,11 +235,13 @@ clean.tandem_source <- function(data, ...) {
 .format_basal_tandem_source.aidR <- function(basal) {
   basal <- basal |> 
     mutate(timestamp = as_datetime(.data$`Event Date Time`),
+           timezone_offset = NA,
            duration = as.numeric(difftime(lead(timestamp), timestamp, units = "mins")),
            amount = .data$`Commanded Basal Dose (units of insulin)`,
            rate = .data$`Commanded Basal Dose (units of insulin)` / duration) |> 
-    select("timestamp", "duration", "amount", "rate")
-
+    rename(pump_name = "Device Type") |> 
+    select("timestamp", "timezone_offset", "duration", "amount", "rate", "pump_name")
+  
   return(basal)
 }
 
@@ -251,10 +259,11 @@ clean.tandem_source <- function(data, ...) {
   carbs <- carbs |> 
     filter(.data$`Carb Size` > 0) |> 
     mutate(timestamp = as_datetime(.data$`Completion Date Time`),
+           timezone_offset = NA,
            label = NA,
            carbs_grams = .data$`Carb Size`,
            estimated_absorption_duration = NA) |> 
-    select("timestamp", "carbs_grams", "label", "estimated_absorption_duration")
+    select("timestamp", "timezone_offset", "carbs_grams", "label", "estimated_absorption_duration")
 
   return(carbs)
 }

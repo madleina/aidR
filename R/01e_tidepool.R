@@ -132,12 +132,25 @@ clean.tidepool <- function(data, ...){
     stop("Local time is NA.")
   }
   
+  # Check if we can find g7 indicator for sensor name
+  sensor_name <- rep(NA, nrow(cgm))
+  if ("Payload" %in% names(cgm)){
+    for (i in 1:nrow(cgm)){
+      y <- fromJSON(cgm$Payload[i])
+      if ("g7" %in% names(y)){
+        if (y$g7){ sensor_name[i] <- "Dexcom G7" }
+      }
+    }
+  }
+  
   # Select columns: timestamp and value
   cgm <- cgm %>%
-    select("Local Time", "Value") %>%
-    mutate(`Local Time` = as_datetime(.data$`Local Time`)) %>% 
-    rename(value = "Value", timestamp = "Local Time") |> 
-    mutate(unit = "mg/dL")
+    select("Local Time", "Timezone Offset", "Value") %>%
+    mutate(`Local Time` = as_datetime(.data$`Local Time`),
+           `Timezone Offset` = .data$`Timezone Offset` / 60) %>% 
+    rename(value = "Value", timestamp = "Local Time", timezone_offset = "Timezone Offset") |> 
+    mutate(unit = "mg/dL",
+           sensor_name = sensor_name)
 
   return(cgm)
 }
@@ -157,10 +170,12 @@ clean.tidepool <- function(data, ...){
     mutate(
       amount = .data$`Duration (mins)` / 60 * .data$`Rate`,
     ) %>%
-    select("Local Time", "Duration (mins)", "amount", "Rate", "Delivery Type") %>%
-    mutate(`Local Time` = as_datetime(.data$`Local Time`)) %>% 
+    select("Local Time", "Timezone Offset", "Duration (mins)", "amount", "Rate", "Delivery Type") %>%
+    mutate(`Local Time` = as_datetime(.data$`Local Time`),
+           `Timezone Offset` = .data$`Timezone Offset` / 60) %>% 
     rename(
       timestamp     = "Local Time", 
+      timezone_offset = "Timezone Offset",
       duration      = "Duration (mins)", 
       rate          = "Rate",
       delivery_type = "Delivery Type"
@@ -190,6 +205,9 @@ clean.tidepool <- function(data, ...){
     ungroup() %>% 
     select(-"delivery_type")
   
+  # Add pump name to basal: Not known from exports
+  basal$pump_name <- NA
+  
   return(basal)
 }
 
@@ -214,10 +232,18 @@ clean.tidepool <- function(data, ...){
              TRUE ~ "standard"
            )
     ) %>%
-    select("Local Time", "Sub Type", "sub_type", "Duration (mins)", "Extended", "Normal") %>%
-    mutate(`Local Time` = as_datetime(.data$`Local Time`)) %>% 
-    rename(timestamp = "Local Time", duration = "Duration (mins)", 
-           extended = "Extended", normal = "Normal", type = "Sub Type")
+    select("Local Time", "Timezone Offset", "Sub Type", "sub_type", "Duration (mins)", "Extended", "Normal") %>%
+    mutate(`Local Time` = as_datetime(.data$`Local Time`),
+           `Timezone Offset` = .data$`Timezone Offset` / 60) %>% 
+    rename(timestamp = "Local Time", 
+           timezone_offset = "Timezone Offset",
+           duration = "Duration (mins)", 
+           extended = "Extended", 
+           normal = "Normal", 
+           type = "Sub Type")
+  
+  # Add pump name to bolus: Not known from exports
+  bolus$pump_name <- NA
   
   return(bolus)
 }
@@ -238,10 +264,13 @@ clean.tidepool <- function(data, ...){
   food$estimated_absorption_duration <- sapply(1:nrow(food), .extract_estimated_absorption_duration_tidepool.aidR, food)
   
   food <- food %>%
-    select("Local Time", "carbs_grams", "Name", "estimated_absorption_duration") %>%
+    select("Local Time", "Timezone Offset", "carbs_grams", "Name", "estimated_absorption_duration") %>%
     mutate(`Local Time` = as_datetime(.data$`Local Time`),
+           `Timezone Offset` = .data$`Timezone Offset` / 60,
            estimated_absorption_duration = .data$estimated_absorption_duration / 60) %>% # convert seconds to minutes 
-    rename(timestamp = "Local Time", label = "Name")
+    rename(timestamp = "Local Time", 
+           timezone_offset = "Timezone Offset",
+           label = "Name")
   
   return(food)
 }
@@ -313,9 +342,12 @@ clean.tidepool <- function(data, ...){
   bolus_calculator <- bolus_calculator %>%
     filter(.data$`Carb Input` > 0) %>%
     mutate(label = NA) %>%
-    mutate(`Local Time` = as_datetime(.data$`Local Time`)) %>% 
-    select("Local Time", "Carb Input", "label") %>%
-    rename(timestamp = "Local Time", carbs_grams = "Carb Input")
+    mutate(`Local Time` = as_datetime(.data$`Local Time`),
+           `Timezone Offset` = .data$`Timezone Offset` / 60) %>% 
+    select("Local Time", "Timezone Offset", "Carb Input", "label") %>%
+    rename(timestamp = "Local Time", 
+           timezone_offset = "Timezone Offset",
+           carbs_grams = "Carb Input")
   
   if (nrow(bolus_calculator) == 0){ return(NULL) }
   
