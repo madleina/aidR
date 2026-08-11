@@ -176,7 +176,8 @@ clean.yourloops <- function(data, ...) {
 
   cgm <- data.frame(
     timestamp = cgm$timestamp,
-    value = cgm$value
+    value = cgm$value,
+    unit = "mg/dL"
   )
 
   return(cgm)

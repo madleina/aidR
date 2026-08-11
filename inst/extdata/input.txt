@@ -1,1 +1,6 @@
-1	inst/extdata/1_cycle_1_arm_1_ms_aid_data_1.xlsx
+1	inst/extdata/carelink_example.csv
+2	inst/extdata/glooko_example.zip
+3	inst/extdata/mylife_example.csv
+4	inst/extdata/tandem_source_example.zip
+5	inst/extdata/tidepool_example.xlsx
+6	inst/extdata/yourloops_example.zip

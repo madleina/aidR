@@ -671,7 +671,8 @@ clean.carelink <- function(data, ...){
   
   cgm <- cgm %>% 
     select("timestamp", "Sensor Glucose (mg/dL)") %>% 
-    rename(value = "Sensor Glucose (mg/dL)")
+    rename(value = "Sensor Glucose (mg/dL)") |> 
+    mutate(unit = "mg/dL")
   
   return(cgm)
 }

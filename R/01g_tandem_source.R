@@ -166,7 +166,8 @@ clean.tandem_source <- function(data, ...) {
   
   cgm <- data.frame(
     timestamp = as_datetime(cgm$`Event Date Time`),
-    value = cgm$value
+    value = cgm$value,
+    unit = "mg/dL"
   )
 
   return(cgm)

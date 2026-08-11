@@ -328,7 +328,8 @@ clean.glooko <- function(data, ...) {
 
   data <- data.frame(
     timestamp = data[, 1],
-    value = data[, 2]
+    value = data[, 2],
+    unit = "mg/dL"
   )
 
   return(data)

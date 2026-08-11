@@ -136,7 +136,8 @@ clean.tidepool <- function(data, ...){
   cgm <- cgm %>%
     select("Local Time", "Value") %>%
     mutate(`Local Time` = as_datetime(.data$`Local Time`)) %>% 
-    rename(value = "Value", timestamp = "Local Time")
+    rename(value = "Value", timestamp = "Local Time") |> 
+    mutate(unit = "mg/dL")
 
   return(cgm)
 }
