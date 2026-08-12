@@ -50,6 +50,8 @@ clean.tandem_source <- function(data, ...) {
   } else if (names(data) == "bolus") {
     return(list(bolus = .format_bolus_tandem_source.aidR(data$bolus),
                 carbs = .format_carbs_tandem_source.aidR(data$bolus)))
+  } else if (names(data) == "bg") {
+    return(list(SMBG = .format_bg_tandem_source.aidR(data$bg)))
   }
 
   # All other formats: just return the way they are
@@ -176,53 +178,6 @@ clean.tandem_source <- function(data, ...) {
 }
 
 #------------------------------
-# Functions for bolus
-#------------------------------
-
-#' Format and clean bolus data from Tandem Source
-#'
-#' @param bolus A data frame containing the bolus data from a Tandem Source file.
-#'
-#' @return A data frame containing the formatted and cleaned bolus data.
-#' @keywords internal
-.format_bolus_tandem_source.aidR <- function(bolus) {
-  # TODO: are extended boluses handled correctly?
-  
-  bolus <- bolus |> 
-    mutate(sub_type = case_when(
-      is.na(.data$`Duration (mins)`) | .data$`Duration (mins)` == 0 ~ "standard",
-      .data$`Duration (mins)` > 0 & .data$`Standard Percent` == 0 ~ "square_wave",
-      .data$`Duration (mins)` > 0 & .data$`Standard Percent` > 0 ~ "dual_wave",
-      TRUE ~ "standard"
-    )) |> 
-    mutate(extended = case_when(
-      .data$sub_type == "standard" ~ 0,
-      .data$sub_type == "square_wave" ~ .data$`Insulin Delivered`,
-      .data$sub_type == "dual_wave" ~ (100 - .data$`Standard Percent`) * .data$`Insulin Delivered`,
-      TRUE ~ 0
-      )) |> 
-    mutate(normal = case_when(
-      .data$sub_type == "standard" ~ .data$`Insulin Delivered`,
-      .data$sub_type == "square_wave" ~ 0,
-      .data$sub_type == "dual_wave" ~ .data$`Standard Percent` * .data$`Insulin Delivered`,
-      TRUE ~ .data$`Insulin Delivered`
-    )) |> 
-    rename(timestamp = "Completion Date Time", duration = "Duration (mins)", type = "Bolus Delivery Method") |> 
-    mutate(timestamp = as_datetime(.data$timestamp),
-           timezone_offset = NA) |> 
-    select("timestamp", "timezone_offset", "type", "sub_type", "duration", "normal", "extended")
-
-  if (any(bolus$sub_type != "standard")){
-    stop("Double-check extended bolus!")
-  }
-  
-  # No information on pump name
-  bolus$pump_name <- NA
-  
-  return(bolus)
-}
-
-#------------------------------
 # Functions for basal
 #------------------------------
 
@@ -233,16 +188,65 @@ clean.tandem_source <- function(data, ...) {
 #' @return A data frame containing the formatted and cleaned basal data.
 #' @keywords internal
 .format_basal_tandem_source.aidR <- function(basal) {
+  
   basal <- basal |> 
-    mutate(timestamp = as_datetime(.data$`Event Date Time`),
-           timezone_offset = NA,
-           duration = as.numeric(difftime(lead(timestamp), timestamp, units = "mins")),
-           amount = .data$`Commanded Basal Dose (units of insulin)`,
-           rate = .data$`Commanded Basal Dose (units of insulin)` / duration) |> 
+    mutate(timestamp = as_datetime(.data$`Event Date Time`)) |> 
+    arrange(timestamp) |> 
+    mutate(timezone_offset = NA,
+           duration = as.numeric(difftime(lead(timestamp), timestamp, units = "hours")),
+           rate = .data$`Commanded Basal Dose (units of insulin)` / duration,
+           unit = "U/h") |> 
     rename(pump_name = "Device Type") |> 
-    select("timestamp", "timezone_offset", "duration", "amount", "rate", "pump_name")
+    select("timestamp", "timezone_offset", "duration", "rate", "unit", "pump_name")
   
   return(basal)
+}
+
+#------------------------------
+# Functions for bolus
+#------------------------------
+
+#' Format and clean bolus data from Tandem Source
+#'
+#' @param bolus A data frame containing the bolus data from a Tandem Source file.
+#'
+#' @return A data frame containing the formatted and cleaned bolus data.
+#' @keywords internal
+.format_bolus_tandem_source.aidR <- function(bolus) {
+  
+  # Decide if a bolus is normal / dual wave / square wave
+  bolus <- bolus |> 
+    mutate(type = case_when(
+      # normal if delivery method is not extended (can be Standard or Auto)
+      .data$`Bolus Delivery Method` != "Extended" ~ "normal",
+      # dual_wave if delivery method is extended and standard > 0
+      .data$`Bolus Delivery Method` == "Extended" & .data$`Standard Percent` > 0 ~ "dual_wave",
+      # square_wave if delivery method is extended and standard == 0
+      .data$`Bolus Delivery Method` == "Extended" & .data$`Standard Percent` == 0 ~ "square_wave",
+      # default: normal
+      TRUE ~ "normal"
+    ))
+  
+  # Add units of total bolus, as well as units of normal and extended bolus
+  bolus <- bolus |> 
+    mutate(
+      total = .data$`Insulin Delivered`,
+      extended = .data$`Bolex Insulin Delivered`,
+      normal   = .data$total - coalesce(.data$extended, 0)
+    )
+  
+  # Select relevant columns
+  bolus <- bolus |> 
+    mutate(timestamp = as_datetime(.data$`Completion Date Time`),
+           timezone_offset = NA,
+           duration_extended = .data$`Duration (mins)` / 60,
+           unit = "U",
+           pump_name = NA
+           ) |> 
+    select("timestamp", "timezone_offset", "type", "total", "normal", 
+           "extended", "unit", "duration_extended", "pump_name")
+  
+  return(bolus)
 }
 
 #------------------------------
@@ -260,11 +264,50 @@ clean.tandem_source <- function(data, ...) {
     filter(.data$`Carb Size` > 0) |> 
     mutate(timestamp = as_datetime(.data$`Completion Date Time`),
            timezone_offset = NA,
+           carbs = .data$`Carb Size`,
+           unit = "g",
            label = NA,
-           carbs_grams = .data$`Carb Size`,
-           estimated_absorption_duration = NA) |> 
-    select("timestamp", "timezone_offset", "carbs_grams", "label", "estimated_absorption_duration")
-
+           estimated_absorption_duration = NA,
+           is_hypo_treatment = NA) |> 
+    select("timestamp", "timezone_offset", "carbs", "unit", "label", "estimated_absorption_duration", "is_hypo_treatment")
+  
   return(carbs)
 }
+
+#------------------------------
+# Functions for SMBG
+#------------------------------
+
+#' Format and clean SMBG data from Tandem Source
+#'
+#' @param cgm A data frame containing the SMBG data from a Tandem Source file.
+#'
+#' @return A data frame containing the formatted and cleaned SMBG data.
+#' @keywords internal
+.format_bg_tandem_source.aidR <- function(bg) {
+  
+  # 5th column contains BG readings
+  # Convert units, if necessary
+  if (grepl("mmol/L", names(bg)[5])){
+    bg$value <- bg[,5] * 18.018
+  } else if (grepl("mg/dL", names(bg)[5])){
+    bg$value <- bg[,5]
+  } else {
+    stop(paste0("Unknown BG units in column ", names(bg)[5], "!"))
+  }
+  
+  bg <- data.frame(
+    timestamp = as_datetime(bg$`Event Date Time`),
+    timezone_offset = NA,
+    value = bg$value,
+    unit = "mg/dL",
+    sensor_name = bg$`Device Type`
+  )
+  
+  return(bg)
+}
+
+
+
+
 

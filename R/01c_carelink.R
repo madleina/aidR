@@ -76,7 +76,8 @@ clean.carelink <- function(data, ...){
   data$basal <- .clean_carelink_basal.aidR(data$basal_rates)
   data$bolus <- .clean_carelink_bolus.aidR(data$bolus)
   data$carbs <- .clean_carelink_carbs.aidR(data$bwz)
-
+  data$SMBG <- .clean_carelink_SMBG.aidR(data$SMBG)
+  
   return(data)
 }
 
@@ -716,10 +717,11 @@ clean.carelink <- function(data, ...){
 #' @keywords internal
 .clean_carelink_basal.aidR <- function(basal){
   basal <- basal %>% 
-    mutate(duration = .data$duration_h * 60,  # in minutes
-           timezone_offset = NA) %>%
-    select("timestamp", "timezone_offset", "duration", "delivered_U", "Basal Rate (U/h)", "pump_name") %>%
-    rename(amount = "delivered_U",
+    mutate(timezone_offset = NA,
+           unit = "U/h") %>%
+    select("timestamp", "timezone_offset", "duration_h", "Basal Rate (U/h)", 
+           "unit", "pump_name") %>%
+    rename(duration = "duration_h",
            rate = "Basal Rate (U/h)") %>% 
     filter(.data$duration > 0)
   
@@ -734,25 +736,38 @@ clean.carelink <- function(data, ...){
 #'
 #' @keywords internal
 .clean_carelink_bolus.aidR <- function(bolus){
+  
+  # Decide if a bolus is normal / square wave (dual wave does not exist in Minimed)
   bolus <- bolus %>% 
     mutate(
-      sub_type = case_when(
-        is.na(.data$`Bolus Duration (h:mm:ss)`) ~ "standard",
+      type = case_when(
+        # normal if no duration
+        is.na(.data$`Bolus Duration (h:mm:ss)`) ~ "normal",
+        # square wave if with duration
         !is.na(.data$`Bolus Duration (h:mm:ss)`) ~ "square_wave",
-        TRUE ~ "standard"
-      ),
-      duration = .data$`Bolus Duration (h:mm:ss)`,
-      extended = ifelse(.data$sub_type != "standard",
-                        as.numeric(.data$`Bolus Volume Delivered (U)`),
-                        NA),
-      normal = case_when(
-        sub_type == "standard" ~ as.numeric(.data$`Bolus Volume Delivered (U)`),
-        sub_type == "square_wave" ~ NA
-      ),
-      type = tolower(.data$`Bolus Type`),
-      timezone_offset = NA
+        # default: normal
+        TRUE ~ "normal"
+      )
+    )
+  
+  # Add units of total bolus, as well as units of normal and extended bolus
+  bolus <- bolus %>% 
+    mutate(
+      total    = as.numeric(.data$`Bolus Volume Delivered (U)`),
+      extended = if_else(.data$type == "normal", NA, .data$total),
+      normal   = if_else(.data$type == "normal", .data$total, NA),
+      duration_extended = time_length(hms(.data$`Bolus Duration (h:mm:ss)`), unit = "hour"),
+      unit = "U",
+      timezone_offset = NA,
+      pump_name = NA
     ) %>% 
-    select("timestamp", "timezone_offset", "type", "sub_type", "duration", "extended", "normal", "pump_name")
+    select("timestamp", "timezone_offset", "type", "total", "normal", 
+           "extended", "unit", "duration_extended", "pump_name")
+  
+  # Remove all boluses where nothing was delivered
+  # Reason: all boluses appear 2x, once with bolus selected and once with delivered
+  bolus <- bolus |> 
+    filter(!is.na(total))
   
   return(bolus)
 }
@@ -765,15 +780,37 @@ clean.carelink <- function(data, ...){
 #'
 #' @keywords internal
 .clean_carelink_carbs.aidR <- function(bwz){
-  # Extract carb info from bolus wizard
   
+  # Extract carb info from bolus wizard
   carbs <- bwz %>% 
-    mutate(timezone_offset = NA) |> 
-    select("timestamp", "timezone_offset", "BWZ Carb Input (grams)") %>% 
-    mutate(label = NA, 
+    mutate(timezone_offset = NA,
+           carbs = as.numeric(.data$`BWZ Carb Input (grams)`),
+           unit = "g",
+           label = NA, 
            estimated_absorption_duration = NA,
-           `BWZ Carb Input (grams)` = as.numeric(.data$`BWZ Carb Input (grams)`)) %>% 
-    rename(carbs_grams = "BWZ Carb Input (grams)")
+           is_hypo_treatment = NA
+    ) %>% 
+    select("timestamp", "timezone_offset", "carbs", "unit", "label", "estimated_absorption_duration", "is_hypo_treatment")
   
   return(carbs)
 }
+
+#' Format and clean SMBG entries of a Carelink export.
+#'
+#' @param bwz A data frame containing the SMBG data from a Carelink file.
+#'
+#' @return A data frame containing the formatted and cleaned SMBG data.
+#'
+#' @keywords internal
+.clean_carelink_SMBG.aidR <- function(SMBG){
+  SMBG <- SMBG %>% 
+    mutate(timezone_offset = NA,
+           value = as.numeric(.data$`BG Reading (mg/dL)`),
+           unit = "mg/dL",
+           sensor_name = NA
+    ) %>% 
+    select("timestamp", "timezone_offset", "value", "unit", "sensor_name")
+  
+  return(SMBG)
+}
+

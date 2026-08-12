@@ -42,7 +42,7 @@ clean.yourloops <- function(data, ...) {
     stop("Expected Yourloops format.")
   }
 
-  # Format if CGM, basal, bolus and carb data
+  # Format if CGM, basal, bolus and carb data (no SMBG given)
   if (names(data) == "cgm") {
     return(list(cgm = .format_cgm_yourloops.aidR(data$cgm)))
   } else if (names(data) == "basal") {
@@ -51,6 +51,8 @@ clean.yourloops <- function(data, ...) {
     return(list(bolus = .format_bolus_yourloops.aidR(data$bolus)))
   } else if (names(data) == "meals") {
     return(list(carbs = .format_carbs_yourloops.aidR(data$meals)))
+  } else if (names(data) == "rescuecarbs") {
+    return(list(carbs = .format_rescuecarbs_yourloops.aidR(data$rescuecarbs)))
   }
 
   # All other formats: just return the way they are
@@ -147,18 +149,25 @@ clean.yourloops <- function(data, ...) {
 .read_yourloops_files.aidR <- function(filename) {
   # Open file(s)
   f <- read.csv(filename)
-
-  # Format timestamp and add timezone (important!)
-  # timestamp is given in Zulu (UTC) time, to get local time, we add timezone
-  if ("timestamp" %in% names(f) && "timezoneOffSet" %in% names(f)) {
-    f$timestamp <- as_datetime(f$timestamp) + minutes(f$timezoneOffSet)
-
-    # Remove offset to avoid future confusion
-    f <- f %>% select(-"timezoneOffSet")
-  }
-
   return(f)
 }
+
+#' Format timestamp to get local (wall-clock) time of a Yourloops export
+#'
+#' @param file A data frame.
+#'
+#' @return A data frame where the timezone has been formatted to local time.
+#' @keywords internal
+.format_timestamp_yourloops.aidR <- function(file) {
+  # Format timestamp and add timezone (important!)
+  # timestamp is given in Zulu (UTC) time, to get local time, we add timezone
+  
+  if ("timestamp" %in% names(file) && "timezoneOffSet" %in% names(file)) {
+    file$timestamp <- as_datetime(file$timestamp) + minutes(file$timezoneOffSet)
+  }
+  return(file)
+}
+
 
 #------------------------
 # Format CGM
@@ -171,50 +180,21 @@ clean.yourloops <- function(data, ...) {
 #' @return A data frame containing the formatted and cleaned CGM data.
 #' @keywords internal
 .format_cgm_yourloops.aidR <- function(cgm) {
+  # Format timestamp
+  cgm <- .format_timestamp_yourloops.aidR(cgm)
+  
   # Convert to mg/dL, if necessary
   cgm[cgm$units != "mg/dL"] <- cgm[cgm$units != "mg/dL"] * 18.018
 
   cgm <- data.frame(
     timestamp = cgm$timestamp,
+    timezone_offset = -cgm$timezoneOffSet / 60, # take -offset as we've added it to timestamp before
     value = cgm$value,
     unit = "mg/dL",
     pump_name = cgm$cgmModel
   )
 
   return(cgm)
-}
-
-#------------------------------
-# Functions for bolus
-#------------------------------
-
-#' Format and clean bolus data from Yourloops
-#'
-#' @param bolus A data frame containing the bolus data from a Yourloops file.
-#'
-#' @return A data frame containing the formatted and cleaned bolus data.
-#' @keywords internal
-.format_bolus_yourloops.aidR <- function(bolus) {
-  bolus <- bolus %>%
-    mutate(
-      sub_type = case_when(
-        .data$type == "normal" ~ "standard",
-        .data$type == "biphasic" ~ "biphasic",
-        TRUE ~ "normal"
-      ),
-      duration = NA,
-      extended = NA,
-      normal = case_when(
-        .data$sub_type == "standard" ~ .data$delivered,
-        .data$sub_type == "biphasic" ~ .data$delivered,
-      ),
-    ) %>%
-    select("timestamp", "type", "sub_type", "duration", "extended", "normal")
-
-  # Add pump name to bolus: Not known from exports
-  bolus$pump_name <- NA
-  
-  return(bolus)
 }
 
 #------------------------------
@@ -228,19 +208,51 @@ clean.yourloops <- function(data, ...) {
 #' @return A data frame containing the formatted and cleaned basal data.
 #' @keywords internal
 .format_basal_yourloops.aidR <- function(basal) {
+  # Format timestamp
+  basal <- .format_timestamp_yourloops.aidR(basal)
+  
   basal <- basal %>%
     mutate(
-      duration = .data$duration_in_milliseconds / (1000 * 60), # convert to minutes
-      amount = .data$duration / 60 * .data$rate,
-      delivery_type = .data$deliveryType,
+      duration = .data$duration_in_milliseconds / (1000 * 3600), # convert to hours
+      unit = "U/h",
+      pump_name = NA # not given in file
     ) %>%
-    select("timestamp", "duration", "amount", "rate")
-
-  
-  # Add pump name to basal: Not known from exports
-  basal$pump_name <- NA
+    mutate(timezone_offset = -.data$timezoneOffSet / 60) |> # take -offset as we've added it to timestamp before
+    select("timestamp", "timezone_offset", "duration", "rate", "unit", "pump_name")
   
   return(basal)
+}
+
+#------------------------------
+# Functions for bolus
+#------------------------------
+
+#' Format and clean bolus data from Yourloops
+#'
+#' @param bolus A data frame containing the bolus data from a Yourloops file.
+#'
+#' @return A data frame containing the formatted and cleaned bolus data.
+#' @keywords internal
+.format_bolus_yourloops.aidR <- function(bolus) {
+  # Format timestamp
+  bolus <- .format_timestamp_yourloops.aidR(bolus)
+  
+  # Note: biphasic boluses are basically two individual normal boluses
+  # -> treat them separate, but still flag them as "biphasic"
+  bolus <- bolus %>%
+    mutate(
+      timezone_offset = -.data$timezoneOffSet / 60, # take -offset as we've added it to timestamp before
+      normal = .data$delivered,
+      total = .data$normal,
+      extended = NA,
+      unit = "U",
+      duration_extended = NA,
+      pump_name = NA
+    ) %>%
+    select("timestamp", "timezone_offset", "type", "total", "normal", 
+           "extended", "unit", "duration_extended", "pump_name")
+  
+  return(bolus)
 }
 
 #------------------------------
@@ -254,13 +266,51 @@ clean.yourloops <- function(data, ...) {
 #' @return A data frame containing the formatted and cleaned carbs data.
 #' @keywords internal
 .format_carbs_yourloops.aidR <- function(carbs) {
+  # Format timestamp
+  carbs <- .format_timestamp_yourloops.aidR(carbs)
+  
   carbs <- carbs %>%
     mutate(
+      timezone_offset = -.data$timezoneOffSet / 60, # take -offset as we've added it to timestamp before
+      carbs = .data$carbsValue,
+      unit = "g",
       label = paste0("is_input_meal_fat_", .data$is_input_meal_fat),
-      carbs_grams = .data$carbsValue,
-      estimated_absorption_duration = NA
+      estimated_absorption_duration = NA,
+      is_hypo_treatment = NA
     ) %>%
-    select("timestamp", "carbs_grams", "label", "estimated_absorption_duration")
-
+    select("timestamp", "timezone_offset", "carbs", "unit", "label", "estimated_absorption_duration", "is_hypo_treatment")
+  
   return(carbs)
 }
+
+#------------------------------
+# Functions for rescuecarbs
+#------------------------------
+
+#' Format and clean rescuecarbs data from Yourloops
+#'
+#' @param carbs A data frame containing the rescuecarbs data from a Yourloops file.
+#'
+#' @return A data frame containing the formatted and cleaned rescuecarbs data.
+#' @keywords internal
+.format_rescuecarbs_yourloops.aidR <- function(carbs) {
+  # Format timestamp
+  carbs <- .format_timestamp_yourloops.aidR(carbs)
+  
+  carbs <- carbs %>%
+    mutate(
+      timezone_offset = -.data$timezoneOffSet / 60, # take -offset as we've added it to timestamp before
+      carbs = .data$confirmedCarbs,
+      unit = "g",
+      label = "rescuecarbs",
+      estimated_absorption_duration = NA,
+      is_hypo_treatment = TRUE
+    ) %>%
+    select("timestamp", "timezone_offset", "carbs", "unit", "label", "estimated_absorption_duration", "is_hypo_treatment")
+  
+  return(carbs)
+}
+
+
+
+

@@ -60,7 +60,8 @@ clean.tidepool <- function(data, ...){
   # Format CGM, basal, bolus and carb data
   data$cgm <- .format_cgm_tidepool.aidR(data$cgm)
   data$basal <- .format_basal_tidepool.aidR(data$basal)
-  data$bolus <- .format_bolus_tidepool.aidR (data$bolus)
+  data$bolus <- .format_bolus_tidepool.aidR(data$bolus)
+  data$SMBG <- .format_SMBG_tidepool.aidR(data$smbg)
   
   if (!is.null(data$food) & !is.null(data$bolus_calculator)){
     stop(paste0("Found both food and bolus calculator data. Figure out which one to keep."))
@@ -166,47 +167,55 @@ clean.tidepool <- function(data, ...){
 #' @return A data frame containing the formatted and cleaned basal data.
 #' @keywords internal
 .format_basal_tidepool.aidR <- function(basal){
+  # Select relevant columns, format time, rename
   basal <- basal %>%
-    mutate(
-      amount = .data$`Duration (mins)` / 60 * .data$`Rate`,
-    ) %>%
-    select("Local Time", "Timezone Offset", "Duration (mins)", "amount", "Rate", "Delivery Type") %>%
+    mutate(pump_name = NA, # not given in sheet
+           duration = .data$`Duration (mins)` / 60, # in hours
+           unit = "U/h") |> # of rate
+    select("Local Time", "Timezone Offset", "duration", "Rate", "unit",
+           "Delivery Type", "pump_name") %>%
     mutate(`Local Time` = as_datetime(.data$`Local Time`),
            `Timezone Offset` = .data$`Timezone Offset` / 60) %>% 
     rename(
-      timestamp     = "Local Time", 
+      timestamp       = "Local Time", 
       timezone_offset = "Timezone Offset",
-      duration      = "Duration (mins)", 
-      rate          = "Rate",
-      delivery_type = "Delivery Type"
+      rate            = "Rate",
+      delivery_type   = "Delivery Type"
     )
   
-  # Set rate and amount for suspend to zero
+  # Remove very short basal rates (artefacts from Loop)
+  # filter out rates that last < 1s
+  basal <- basal |> 
+    filter(duration >= 1/3600)
+  
+  # Set rate for suspend to zero
   # Relevant for open-source AIDs (e.g. Loop), where this is NA
   basal$rate[basal$delivery_type == "suspend"] <- 0
-  basal$amount[basal$delivery_type == "suspend"] <- 0
-  
+
   # Dealing with delivery types
-  # If there is automated and temp at the same time
-  # Take only automated
+  # If "temp" coexists with "automated" and/or "suspend" in the same timestamp, 
+  # keep only the "temp" row(s); otherwise keep everything.
   # Relevant for Open-source AIDs: may contain duplicates
   basal <- basal %>%
     group_by(.data$timestamp) %>%
     dplyr::filter(
-      # Check if there is a combination of type "temp" and "automated" within the same timestamp
-      if (!any(is.na(.data$delivery_type)) & any(.data$delivery_type == "temp") & any(.data$delivery_type == "automated")) {
-        # If the above condition is true, keep only rows with type "temp"
+      if (!any(is.na(.data$delivery_type)) &&
+          any(.data$delivery_type == "temp") &&
+          any(.data$delivery_type %in% c("automated", "suspend"))) {
         .data$delivery_type == "temp"
       } else {
-        # Otherwise, keep all rows as they are
         TRUE
       }
     ) %>%
-    ungroup() %>% 
-    select(-"delivery_type")
+    ungroup() |> 
+  select(-"delivery_type")
   
-  # Add pump name to basal: Not known from exports
-  basal$pump_name <- NA
+  # Check if basal rates are contiguous (one ends when the next one starts)
+  end <- basal$timestamp + seconds(basal$duration * 3600)
+  max_diff <- max(abs(difftime(basal$timestamp, lead(end))), na.rm = T)
+  if (max_diff > 1){
+    stop(paste0("Basal rates are not contiguous (", round(max_diff, 2), " seconds difference)"))
+  }
   
   return(basal)
 }
@@ -222,28 +231,42 @@ clean.tidepool <- function(data, ...){
 #' @return A data frame containing the formatted and cleaned bolus data.
 #' @keywords internal
 .format_bolus_tidepool.aidR <- function(bolus){
-  # Classify: normal, dual_wave and square_wave
+  # Format time
   bolus <- bolus %>%
-    mutate(sub_type = case_when(
-             !("Sub Type" %in% names(bolus)) ~ "standard",
-             is.na(.data$Extended) | .data$Extended == 0 ~ "standard",
-             .data$Extended > 0 & .data$Normal > 0 ~ "dual_wave",
-             .data$Extended > 0 & (is.na(.data$Normal) | .data$Normal == 0) ~ "square_wave",
-             TRUE ~ "standard"
-           )
-    ) %>%
-    select("Local Time", "Timezone Offset", "Sub Type", "sub_type", "Duration (mins)", "Extended", "Normal") %>%
     mutate(`Local Time` = as_datetime(.data$`Local Time`),
-           `Timezone Offset` = .data$`Timezone Offset` / 60) %>% 
-    rename(timestamp = "Local Time", 
-           timezone_offset = "Timezone Offset",
-           duration = "Duration (mins)", 
-           extended = "Extended", 
-           normal = "Normal", 
-           type = "Sub Type")
+           `Timezone Offset` = .data$`Timezone Offset` / 60
+           )
+    
+  # Decide if a bolus is normal / dual wave / square wave
+  bolus <- bolus %>%
+    mutate(type = case_when(
+             !("Sub Type" %in% names(bolus)) ~ "normal",
+             # normal if there extended = 0
+             is.na(.data$Extended) | .data$Extended == 0 ~ "normal",
+             # dual_wave if normal > 0 and extended > 0
+             .data$Extended > 0 & .data$Normal > 0 ~ "dual_wave",
+             # square wave if normal = 0 and extended > 0
+             .data$Extended > 0 & (is.na(.data$Normal) | .data$Normal == 0) ~ "square_wave",
+             TRUE ~ "normal"
+           )
+    )
   
-  # Add pump name to bolus: Not known from exports
-  bolus$pump_name <- NA
+  # Add units of total bolus, as well as units of normal and extended bolus
+  bolus <- bolus %>%
+    mutate(normal = Normal,
+           extended = Extended,
+           total = coalesce(.data$extended, 0) + coalesce(.data$normal, 0)
+    )
+  
+  # Select relevant columns
+  bolus <- bolus %>%
+    mutate(unit = "U",
+           pump_name = NA,
+           duration_extended = .data$`Duration (mins)` / 60) |> 
+    rename(timestamp = "Local Time", 
+           timezone_offset = "Timezone Offset") |> 
+    select("timestamp", "timezone_offset", "type", "total", "normal", 
+         "extended", "unit", "duration_extended", "pump_name")
   
   return(bolus)
 }
@@ -260,17 +283,17 @@ clean.tidepool <- function(data, ...){
 #' @keywords internal
 .format_food_tidepool.aidR <- function(food){
   # Extract net carbs and estimated absorption duration
-  food$carbs_grams <- sapply(food$Nutrition, .extract_net_carbs_tidepool.aidR)
+  food$carbs <- sapply(food$Nutrition, .extract_net_carbs_tidepool.aidR)
   food$estimated_absorption_duration <- sapply(1:nrow(food), .extract_estimated_absorption_duration_tidepool.aidR, food)
   
   food <- food %>%
-    select("Local Time", "Timezone Offset", "carbs_grams", "Name", "estimated_absorption_duration") %>%
-    mutate(`Local Time` = as_datetime(.data$`Local Time`),
-           `Timezone Offset` = .data$`Timezone Offset` / 60,
-           estimated_absorption_duration = .data$estimated_absorption_duration / 60) %>% # convert seconds to minutes 
-    rename(timestamp = "Local Time", 
-           timezone_offset = "Timezone Offset",
-           label = "Name")
+    mutate(timestamp = as_datetime(.data$`Local Time`),
+           timezone_offset = .data$`Timezone Offset` / 60,
+           estimated_absorption_duration = .data$estimated_absorption_duration / 3600, # convert seconds to hours 
+           unit = "g",
+           is_hypo_treatment = NA) %>% 
+    rename(label = "Name") |> 
+    select("timestamp", "timezone_offset", "carbs", "unit", "label", "estimated_absorption_duration", "is_hypo_treatment")
   
   return(food)
 }
@@ -338,23 +361,57 @@ clean.tidepool <- function(data, ...){
 #' @return A data frame containing the formatted and cleaned carbohydrates from bolus calculator data.
 #' @keywords internal
 .format_bolus_calculator_tidepool.aidR <- function(bolus_calculator){
-  
   bolus_calculator <- bolus_calculator %>%
     filter(.data$`Carb Input` > 0) %>%
-    mutate(label = NA) %>%
-    mutate(`Local Time` = as_datetime(.data$`Local Time`),
-           `Timezone Offset` = .data$`Timezone Offset` / 60) %>% 
-    select("Local Time", "Timezone Offset", "Carb Input", "label") %>%
-    rename(timestamp = "Local Time", 
-           timezone_offset = "Timezone Offset",
-           carbs_grams = "Carb Input")
+    mutate(timestamp = as_datetime(.data$`Local Time`),
+           timezone_offset = .data$`Timezone Offset` / 60,
+           unit = "g",
+           label = NA,
+           estimated_absorption_duration = NA,
+           is_hypo_treatment = NA
+           ) %>% 
+    rename(carbs = "Carb Input") |> 
+    select("timestamp", "timezone_offset", "carbs", "unit", "label", "estimated_absorption_duration", "is_hypo_treatment")
   
   if (nrow(bolus_calculator) == 0){ return(NULL) }
   
-  bolus_calculator$estimated_absorption_duration <- NA
-  
   return(bolus_calculator)
 }
+
+#------------------------
+# Format SMBG
+#------------------------
+
+#' Format and clean SMBG data from Tidepool
+#'
+#' @param cgm A data frame containing the SMBG data from a Tidepool file.
+#'
+#' @return A data frame containing the formatted and cleaned SMBG data.
+#' @keywords internal
+.format_SMBG_tidepool.aidR <- function(SMBG){
+  if (is.null(SMBG)){ return(NULL) }
+  
+  # Make sure SMBG is in mg/dl
+  SMBG$Value[SMBG$Units == "mmol/L"] <- SMBG$Value[SMBG$Units == "mmol/L"] * 18.018
+  
+  # Check if we can use local time
+  if (all(is.na(SMBG$`Local Time`))){
+    stop("Local time is NA.")
+  }
+  
+  # Select columns: timestamp and value
+  SMBG <- SMBG %>%
+    mutate(timestamp = as_datetime(.data$`Local Time`),
+           timezone_offset = .data$`Timezone Offset` / 60,
+           value = .data$Value,
+           unit = "mg/dL",
+           sensor_name = NA) %>% 
+    select("timestamp", "timezone_offset", "value", "unit", "sensor_name")
+  
+  return(SMBG)
+}
+
+
 
 
 

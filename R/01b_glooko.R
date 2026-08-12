@@ -356,24 +356,19 @@ clean.glooko <- function(data, ...) {
     "Percentage (%)", "Rate", "Insulin Delivered (U)", "Serial number"
   )
 
-  # Note: keep all "suspend" events for consistency (no insulin delivered)
+  # Select relevant columns, rename
   data <- data %>%
-    mutate(
-      amount = .data$`Duration (minutes)` / 60 * .data$Rate, # Calculate basal insulin as duration (mins) / 60 * rate [units/hour]
-      delivery_type = .data$`Insulin Type`,
-      timezone_offset = NA
-    ) %>%
+    mutate(timezone_offset = NA,
+           duration = .data$`Duration (minutes)` / 60, # in hours
+           unit = "U/h", # rate
+           pump_name = NA # pump name: not known (!= Serial number)
+    ) %>% 
     rename(
       timestamp = .data$Timestamp,
-      duration = .data$`Duration (minutes)`,
-      rate = .data$Rate,
-      percent = .data$`Percentage (%)`
+      rate = .data$Rate
     ) %>%
-    select("timestamp", "timezone_offset", "duration", "amount", "rate")
+    select("timestamp", "timezone_offset", "duration", "rate", "unit", "pump_name")
   
-  # Add sensor name: not known for Glooko (!= Serial number)
-  data$sensor_name <- NA
-
   return(data)
 }
 
@@ -392,37 +387,81 @@ clean.glooko <- function(data, ...) {
 
   # Rename columns (for different languages)
   names(data) <- c(
-    "Timestamp", "Insulin Type", "Blood Glucose Input",
+    "timestamp", "Insulin Type", "Blood Glucose Input",
     "Carbs Input", "Carbs Ratio", "Insulin Delivered (U)",
     "Initial Delivery (U)", "Extended Delivery (U)", "Serial number"
   )
 
+  # Decide if a bolus is normal / dual wave / square wave
   data <- data %>%
-    rename(timestamp = .data$Timestamp) %>%
     mutate(
-      sub_type = case_when(
-        is.na(.data$`Initial Delivery (U)`) & is.na(.data$`Extended Delivery (U)`) ~ "standard",
+      type = case_when(
+        # normal if initial and extended delivery are both NA
+        is.na(.data$`Initial Delivery (U)`) & is.na(.data$`Extended Delivery (U)`) ~ "normal",
+        # dual if initial and extended delivery are both > 0
         .data$`Initial Delivery (U)` > 0 & .data$`Extended Delivery (U)` > 0 ~ "dual_wave",
+        # square if initial delivery is 0 and extended delivery is > 0
         .data$`Initial Delivery (U)` == 0 & .data$`Extended Delivery (U)` > 0 ~ "square_wave",
+        # default: normal
         TRUE ~ "normal"
-      ),
-      duration = NA,
-      extended = ifelse(.data$sub_type != "standard",
-        .data$`Extended Delivery (U)`,
-        NA
+      )
+    )
+  
+  # Add units of total bolus, as well as units of normal and extended bolus
+  data <- data |> 
+    mutate(
+      extended = ifelse(.data$type != "normal",
+                        .data$`Extended Delivery (U)`,
+                        NA
       ),
       normal = case_when(
-        sub_type == "standard" ~ .data$`Insulin Delivered (U)`,
-        sub_type == "dual_wave" ~ .data$`Initial Delivery (U)`,
-        sub_type == "square_wave" ~ 0
+        type == "normal" ~ .data$`Insulin Delivered (U)`,
+        type == "dual_wave" ~ .data$`Initial Delivery (U)`,
+        type == "square_wave" ~ 0
       ),
-      type = NA,
-      timezone_offset = NA
+      total = coalesce(.data$extended, 0) + coalesce(.data$normal, 0),
+    )
+  
+  # Select relevant columns
+  data <- data |> 
+    mutate(
+      duration_extended = NA, # not given (also not for extended bolus)
+      timezone_offset = NA, # not given
+      pump_name = NA, # not given
+      unit = "U"
     ) %>%
-    select("timestamp", "timezone_offset", "type", "sub_type", "duration", "extended", "normal")
+    select("timestamp", "timezone_offset", "type", "total", "normal", 
+           "extended", "unit", "duration_extended", "pump_name")
+  
+  return(data)
+}
 
-  # Add sensor name: not known for Glooko (!= Serial number)
-  data$sensor_name <- NA
+#------------------------------
+# Functions for carbs
+#------------------------------
+
+#' Format and clean carbohydrate data from Glooko.
+#'
+#' @param data A data frame containing the carbohydrate data from a Glooko file.
+#'
+#' @return A data frame containing the formatted and cleaned carbohydrate data.
+#' @keywords internal
+.format_carbs_glooko.aidR <- function(data) {
+  data <- data.frame(unclass(data))
+  
+  # 4th column in entered carbs. Filter on non-zero carbs
+  data <- data.frame(timestamp = data[, 1],
+                     timezone_offset = NA,
+                     carbs = data[, 4])
+  
+  data <- data %>%
+    filter(.data$carbs > 0) %>%
+    mutate(
+      unit = "g",
+      label = NA,
+      estimated_absorption_duration = NA,
+      is_hypo_treatment = NA
+    )
   
   return(data)
 }
@@ -459,34 +498,6 @@ clean.glooko <- function(data, ...) {
 }
 
 #------------------------------
-# Functions for carbs
-#------------------------------
-
-#' Format and clean carbohydrate data from Glooko.
-#'
-#' @param data A data frame containing the carbohydrate data from a Glooko file.
-#'
-#' @return A data frame containing the formatted and cleaned carbohydrate data.
-#' @keywords internal
-.format_carbs_glooko.aidR <- function(data) {
-  data <- data.frame(unclass(data))
-
-  # 4th column in entered carbs. Filter on non-zero carbs
-  data <- data.frame(timestamp = data[, 1],
-                     timezone_offset = NA,
-                     carbs = data[, 4])
-
-  data <- data %>%
-    filter(.data$carbs > 0) %>%
-    mutate(
-      label = NA,
-      estimated_absorption_duration = NA
-    )
-
-  return(data)
-}
-
-#------------------------------
 # Functions for SMBG (BG)
 #------------------------------
 
@@ -512,9 +523,10 @@ clean.glooko <- function(data, ...) {
     timestamp = data[, 1],
     timezone_offset = NA,
     value = data[, 2],
-    manual_reading = data[, 3]
+    unit = "mg/dL",
+    sensor_name = NA # never given in Glooko file
   )
-
+  
   return(data)
 }
 
@@ -604,21 +616,20 @@ clean.glooko <- function(data, ...) {
 .format_food_glooko.aidR <- function(data) {
   data <- data.frame(unclass(data))
 
-  # Note: ignoring fat, proteins, calories and portions for now
-  # consider adding them
-
-  # 3th column is carbs
   data <- data.frame(
     timestamp = data[, 1],
-    timezone_offset = NA,
     label = data[, 2],
-    carbs = data[, 3]
+    carbs = data[, 3],
+    fat = data[, 4],
+    protein = data[, 5],
+    calories = data[, 6],
+    portions = data[, 7],
+    num_portions = data[,8]
   )
 
   # Filter on non-zero carbs
   data <- data %>%
-    filter(.data$carbs > 0) %>%
-    mutate(estimated_absorption_duration = NA)
+    filter(.data$carbs > 0)
 
   return(data)
 }

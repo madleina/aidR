@@ -118,16 +118,17 @@ clean.mylife <- function(data, ...){
 .clean_mylife_bolus.aidR <- function(bolus){
   bolus <- bolus %>% 
     mutate(timestamp = as_datetime(.data$timestamp),
-           amount = as.numeric(gsub(pattern = ",", replacement = ".", .data$amount)),
-           duration = NA,
-           extended = NA,
+           timezone_offset = NA,
            type = "normal",
-           subtype = "standard") %>% 
-    rename(normal = "amount") %>% 
-    select("timestamp", "type", "subtype", "duration", "extended", "normal")
-    
-  # Add sensor name: not known for mylife
-  bolus$sensor_name <- NA
+           total = as.numeric(gsub(pattern = ",", replacement = ".", .data$amount)),
+           normal = .data$total,
+           extended = NA,
+           unit = "U",
+           duration_extended = NA,
+           pump_name = NA,
+           ) %>% 
+  select("timestamp", "timezone_offset", "type", "total", "normal", 
+         "extended", "unit", "duration_extended", "pump_name")
     
   return(bolus)
 }
@@ -143,12 +144,13 @@ clean.mylife <- function(data, ...){
   carbs <- carbs %>% 
     mutate(timestamp = as_datetime(.data$timestamp),
            timezone_offset = NA,
-           amount = as.numeric(gsub(pattern = ",", replacement = ".", .data$amount)),
-           estimated_absorption_duration = 60 * 
-             as.numeric(str_extract(.data$information, "(?<=\\s)[\\d.]+(?=h)"))) %>% 
-    rename(carbs_grams = "amount",
-           label = "type") %>% 
-    select("timestamp", "timezone_offset", "carbs_grams", "label", "estimated_absorption_duration")
+           carbs = as.numeric(gsub(pattern = ",", replacement = ".", .data$amount)),
+           estimated_absorption_duration = as.numeric(str_extract(.data$information, "(?<=\\s)[\\d.]+(?=h)")),
+           is_hypo_treatment = grepl("HypoTreatment", .data$information),
+           unit = "g"
+           ) %>% 
+    rename(label = "type") %>% 
+    select("timestamp", "timezone_offset", "carbs", "unit", "label", "estimated_absorption_duration", "is_hypo_treatment")
   
   return(carbs)
 }

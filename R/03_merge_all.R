@@ -11,14 +11,15 @@
 #' Merge data available for all individuals, separately per data type.
 #'
 #' @param data A list with data found for all individual.
+#' @param types A vector with data type names to be merged.
 #'
 #' @return A list with data found for all individual, merged for each data type.
 #' @export
-merge_all <- function(data){
-  # Merge: CGM, basal, bolus and carbs (standardized formats)
+merge_all <- function(data, types = c("cgm", "basal", "bolus", "carbs", "SMBG")){
+  # Merge: CGM, basal, bolus, carbs and SMBG (standardized formats)
   
   result <- list()
-  for (type in c("cgm", "basal", "bolus", "carbs")){
+  for (type in types){
     type_list <- list()
     
     for (id in names(data)){
