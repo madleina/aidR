@@ -1,16 +1,16 @@
-"Tag;""Datum"";""Uhrzeit"";""Ereignis"";""Wert"";""Einheit"";""Information"";""Notiz""",
-"Fr.;""16.01.26"";""09:05"";""Kohlenhydrate"";""42"";""g KH"";;",
-"Fr.;""16.01.26"";""09:04"";""Bolus"";""4","40"";""U"";""Bolusvorschlag: 4.40 U"";"
-"Fr.;""16.01.26"";""09:22"";""Bolus"";""4","40"";""U"";""Bolusvorschlag: 4.40 U"";"
-"Fr.;""16.01.26"";""09:22"";""Kohlenhydrate"";""42"";""g KH"";;",
-"Fr.;""16.01.26"";""12:17"";""Bolus"";""6","60"";""U"";""Bolusvorschlag: 5.60 U"";"
-"Fr.;""16.01.26"";""12:17"";""Kohlenhydrate"";""60"";""g KH"";;",
-"Fr.;""16.01.26"";""15:43"";""Bolus"";""3","55"";""U"";""Bolusvorschlag: 3.90 U"";"
-"Fr.;""16.01.26"";""15:43"";""Kohlenhydrate"";""45"";""g KH"";;",
-"Fr.;""16.01.26"";""15:48"";""Bolus"";""3","55"";""U"";""Bolusvorschlag: 3.90 U"";"
-"Fr.;""16.01.26"";""16:02"";""Kohlenhydrate"";""15"";""g KH"";;",
-"Fr.;""16.01.26"";""16:02"";""Bolus"";""1","70"";""U"";""Bolusvorschlag: 1.70 U"";"
-"Fr.;""16.01.26"";""18:01"";""Bolus"";""3","30"";""U"";""Bolusvorschlag: 3.30 U"";"
-"Fr.;""16.01.26"";""18:01"";""Kohlenhydrate"";""30"";""g KH"";;",
-"Fr.;""16.01.26"";""18:25"";""Kohlenhydrate"";""26"";""g KH"";;",
-"Fr.;""16.01.26"";""18:25"";""Bolus"";""3","90"";""U"";""Bolusvorschlag: 2.90 U"";"
+"Tag";"Datum";"Uhrzeit";"Ereignis";"Wert";"Einheit";"Information";"Notiz"
+"Fr.";"16.01.26";"09:05";"Kohlenhydrate";"42";"g KH";;
+"Fr.";"16.01.26";"09:04";"Bolus";"4,40";"U";"Bolusvorschlag: 4.40 U";
+"Fr.";"16.01.26";"09:22";"Bolus";"4,40";"U";"Bolusvorschlag: 4.40 U";
+"Fr.";"16.01.26";"09:22";"Kohlenhydrate";"42";"g KH";;
+"Fr.";"16.01.26";"12:17";"Bolus";"6,60";"U";"Bolusvorschlag: 5.60 U";
+"Fr.";"16.01.26";"12:17";"Kohlenhydrate";"60";"g KH";;
+"Fr.";"16.01.26";"15:43";"Bolus";"3,55";"U";"Bolusvorschlag: 3.90 U";
+"Fr.";"16.01.26";"15:43";"Kohlenhydrate";"45";"g KH";;
+"Fr.";"16.01.26";"15:48";"Bolus";"3,55";"U";"Bolusvorschlag: 3.90 U";
+"Fr.";"16.01.26";"16:02";"Kohlenhydrate";"15";"g KH";;
+"Fr.";"16.01.26";"16:02";"Bolus";"1,70";"U";"Bolusvorschlag: 1.70 U";
+"Fr.";"16.01.26";"18:01";"Bolus";"3,30";"U";"Bolusvorschlag: 3.30 U";
+"Fr.";"16.01.26";"18:01";"Kohlenhydrate";"30";"g KH";;
+"Fr.";"16.01.26";"18:25";"Kohlenhydrate";"26";"g KH";;
+"Fr.";"16.01.26";"18:25";"Bolus";"3,90";"U";"Bolusvorschlag: 2.90 U";

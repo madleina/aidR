@@ -58,11 +58,12 @@ read_mylife <- function(id, filename){
 #' Format and clean the Mylife data to keep relevant columns only.
 #'
 #' @param data An instance of class \code{mylife}, wrapping a named list with data of different types.
+#' @param id Character or numeric participant identifier.
 #' @param ... Additional arguments passed to methods.
 #'
 #' @return A named list with names \code{bolus} and \code{carbs}, and other names for data of other types.
 #' @export
-clean.mylife <- function(data, ...){
+clean.mylife <- function(data, id, ...){
   if (is.null(data)){ return(NULL) }
   if (!("mylife" %in% class(data))){ stop("Expected Mylife format.") }
   
@@ -74,8 +75,8 @@ clean.mylife <- function(data, ...){
   bolus_in_list <- sapply(data, function(x) return(all(grepl("^U", x$units))))
   carbs_in_list <- sapply(data, function(x) return(all(grepl("^g ", x$units))))
   
-  data$bolus <- .clean_mylife_bolus.aidR(bind_rows(data[bolus_in_list]))
-  data$carbs <- .clean_mylife_carbs.aidR(bind_rows(data[carbs_in_list]))
+  data$bolus <- .clean_mylife_bolus.aidR(id, bind_rows(data[bolus_in_list]))
+  data$carbs <- .clean_mylife_carbs.aidR(id, bind_rows(data[carbs_in_list]))
 
   return(data)
 }
@@ -109,15 +110,18 @@ clean.mylife <- function(data, ...){
 #------------------------
 
 #' Format and clean bolus entries of a Mylife export.
-#'
+#' 
+#' @param id Character or numeric participant identifier.
 #' @param bolus A data frame containing the bolus data from a Mylife file.
 #'
 #' @return A data frame containing the formatted and cleaned bolus data.
 #'
 #' @keywords internal
-.clean_mylife_bolus.aidR <- function(bolus){
+.clean_mylife_bolus.aidR <- function(id, bolus){
   bolus <- bolus %>% 
-    mutate(timestamp = as_datetime(.data$timestamp),
+    mutate(id = id,
+           format = "mylife",
+           timestamp = as_datetime(.data$timestamp),
            timezone_offset = NA,
            type = "normal",
            total = as.numeric(gsub(pattern = ",", replacement = ".", .data$amount)),
@@ -127,7 +131,7 @@ clean.mylife <- function(data, ...){
            duration_extended = NA,
            pump_name = NA,
            ) %>% 
-  select("timestamp", "timezone_offset", "type", "total", "normal", 
+  select("id", "format", "timestamp", "timezone_offset", "type", "total", "normal", 
          "extended", "unit", "duration_extended", "pump_name")
     
   return(bolus)
@@ -135,14 +139,17 @@ clean.mylife <- function(data, ...){
 
 #' Format and clean carbohydrate entries of a Mylife export.
 #'
+#' @param id Character or numeric participant identifier.
 #' @param carbs A data frame containing the carbohydrate data from a Mylife file.
 #'
 #' @return A data frame containing the formatted and cleaned carbohydrate data.
 #'
 #' @keywords internal
-.clean_mylife_carbs.aidR <- function(carbs){
+.clean_mylife_carbs.aidR <- function(id, carbs){
   carbs <- carbs %>% 
-    mutate(timestamp = as_datetime(.data$timestamp),
+    mutate(id = id,
+           format = "mylife",
+           timestamp = as_datetime(.data$timestamp),
            timezone_offset = NA,
            carbs = as.numeric(gsub(pattern = ",", replacement = ".", .data$amount)),
            estimated_absorption_duration = as.numeric(str_extract(.data$information, "(?<=\\s)[\\d.]+(?=h)")),
@@ -150,7 +157,8 @@ clean.mylife <- function(data, ...){
            unit = "g"
            ) %>% 
     rename(label = "type") %>% 
-    select("timestamp", "timezone_offset", "carbs", "unit", "label", "estimated_absorption_duration", "is_hypo_treatment")
+    select("id", "format", "timestamp", "timezone_offset", "carbs", "unit", 
+           "label", "estimated_absorption_duration", "is_hypo_treatment")
   
   return(carbs)
 }

@@ -27,13 +27,14 @@ read_glooko <- function(id, filename) {
 }
 
 #' Format and clean the Glooko data to keep relevant columns only.
-#'
+#' 
 #' @param data An instance of class \code{glooko}, wrapping a named list with data of a particular data type.
+#' @param id Character or numeric participant identifier.
 #' @param ... Additional arguments passed to methods.
 #'
 #' @return A named list with names \code{cgm}, \code{basal}, \code{bolus}, or \code{carbs}, or other names if data is of another type.
 #' @export
-clean.glooko <- function(data, ...) {
+clean.glooko <- function(data, id, ...) {
   if (is.null(data)) {
     return(NULL)
   }
@@ -43,31 +44,31 @@ clean.glooko <- function(data, ...) {
 
   # Format, if necessary
   if (names(data) == "cgm") {
-    return(list(cgm = .format_cgm_glooko.aidR(data)))
+    return(list(cgm = .format_cgm_glooko.aidR(id, data)))
   } else if (names(data) == "basal") {
-    return(list(basal = .format_basal_glooko.aidR(data)))
+    return(list(basal = .format_basal_glooko.aidR(id, data)))
     return(data)
   } else if (names(data) == "bolus") {
     return(list(
-      bolus = .format_bolus_glooko.aidR(data),
-      carbs = .format_carbs_glooko.aidR(data)
+      bolus = .format_bolus_glooko.aidR(id, data),
+      carbs = .format_carbs_glooko.aidR(id, data)
     ))
   } else if (names(data) == "total_insulin") {
-    return(list(total_insulin = .format_total_insulin_glooko.aidR(data)))
+    return(list(total_insulin = .format_total_insulin_glooko.aidR(id, data)))
   } else if (names(data) == "SMBG") {
-    return(list(SMBG = .format_SMBG_glooko.aidR(data)))
+    return(list(SMBG = .format_SMBG_glooko.aidR(id, data)))
   } else if (names(data) == "alarm") {
-    return(list(alarm = .format_alarms_glooko.aidR(data)))
+    return(list(alarm = .format_alarms_glooko.aidR(id, data)))
   } else if (names(data) == "manual_insulin") {
-    return(list(manual_insulin = .format_manual_insulin_glooko.aidR(data)))
+    return(list(manual_insulin = .format_manual_insulin_glooko.aidR(id, data)))
   } else if (names(data) == "medication") {
-    return(list(medication = .format_medication_glooko.aidR(data)))
+    return(list(medication = .format_medication_glooko.aidR(id, data)))
   } else if (names(data) == "food") {
-    return(list(food = .format_food_glooko.aidR(data)))
+    return(list(food = .format_food_glooko.aidR(id, data)))
   } else if (names(data) == "notes") {
-    return(list(notes = .format_notes_glooko.aidR(data)))
+    return(list(notes = .format_notes_glooko.aidR(id, data)))
   } else if (names(data) == "exercise") {
-    return(list(exercise = .format_exercise_glooko.aidR(data)))
+    return(list(exercise = .format_exercise_glooko.aidR(id, data)))
   }
 
   # Note: there are more data types but they have always been empty so far
@@ -309,11 +310,12 @@ clean.glooko <- function(data, ...) {
 
 #' Format and clean CGM data from Glooko.
 #'
+#' @param id Character or numeric participant identifier.
 #' @param data A data frame containing the CGM data from a Glooko file.
 #'
 #' @return A data frame containing the formatted and cleaned CGM data.
 #' @keywords internal
-.format_cgm_glooko.aidR <- function(data) {
+.format_cgm_glooko.aidR <- function(id, data) {
   data <- data.frame(unclass(data))
 
   # CGM values are always given in second column (column name may vary with language)
@@ -327,6 +329,8 @@ clean.glooko <- function(data, ...) {
   }
 
   data <- data.frame(
+    id = id,
+    format = "glooko",
     timestamp = data[, 1],
     timezone_offset = NA,
     value = data[, 2],
@@ -343,11 +347,12 @@ clean.glooko <- function(data, ...) {
 
 #' Format and clean basal data from Glooko.
 #'
+#' @param id Character or numeric participant identifier.
 #' @param data A data frame containing the basal data from a Glooko file.
 #'
 #' @return A data frame containing the formatted and cleaned basal data.
 #' @keywords internal
-.format_basal_glooko.aidR <- function(data) {
+.format_basal_glooko.aidR <- function(id, data) {
   data <- data.frame(unclass(data))
 
   # Rename columns (for different languages)
@@ -358,7 +363,9 @@ clean.glooko <- function(data, ...) {
 
   # Select relevant columns, rename
   data <- data %>%
-    mutate(timezone_offset = NA,
+    mutate(id = id,
+           format = "glooko",
+           timezone_offset = NA,
            duration = .data$`Duration (minutes)` / 60, # in hours
            unit = "U/h", # rate
            pump_name = NA # pump name: not known (!= Serial number)
@@ -367,7 +374,8 @@ clean.glooko <- function(data, ...) {
       timestamp = .data$Timestamp,
       rate = .data$Rate
     ) %>%
-    select("timestamp", "timezone_offset", "duration", "rate", "unit", "pump_name")
+    select("id", "format", "timestamp", "timezone_offset", "duration", "rate",
+           "unit", "pump_name")
   
   return(data)
 }
@@ -378,11 +386,12 @@ clean.glooko <- function(data, ...) {
 
 #' Format and clean bolus data from Glooko.
 #'
+#' @param id Character or numeric participant identifier.
 #' @param data A data frame containing the bolus data from a Glooko file.
 #'
 #' @return A data frame containing the formatted and cleaned bolus data.
 #' @keywords internal
-.format_bolus_glooko.aidR <- function(data) {
+.format_bolus_glooko.aidR <- function(id, data) {
   data <- data.frame(unclass(data))
 
   # Rename columns (for different languages)
@@ -425,13 +434,15 @@ clean.glooko <- function(data, ...) {
   # Select relevant columns
   data <- data |> 
     mutate(
+      id = id,
+      format = "glooko",
       duration_extended = NA, # not given (also not for extended bolus)
       timezone_offset = NA, # not given
       pump_name = NA, # not given
       unit = "U"
     ) %>%
-    select("timestamp", "timezone_offset", "type", "total", "normal", 
-           "extended", "unit", "duration_extended", "pump_name")
+    select("id", "format", "timestamp", "timezone_offset", "type", "total", 
+           "normal", "extended", "unit", "duration_extended", "pump_name")
   
   return(data)
 }
@@ -442,15 +453,18 @@ clean.glooko <- function(data, ...) {
 
 #' Format and clean carbohydrate data from Glooko.
 #'
+#' @param id Character or numeric participant identifier.
 #' @param data A data frame containing the carbohydrate data from a Glooko file.
 #'
 #' @return A data frame containing the formatted and cleaned carbohydrate data.
 #' @keywords internal
-.format_carbs_glooko.aidR <- function(data) {
+.format_carbs_glooko.aidR <- function(id, data) {
   data <- data.frame(unclass(data))
   
   # 4th column in entered carbs. Filter on non-zero carbs
-  data <- data.frame(timestamp = data[, 1],
+  data <- data.frame(id = id,
+                     format = "glooko",
+                     timestamp = data[, 1],
                      timezone_offset = NA,
                      carbs = data[, 4])
   
@@ -472,11 +486,12 @@ clean.glooko <- function(data, ...) {
 
 #' Format and clean total insulin data from Glooko.
 #'
+#' @param id Character or numeric participant identifier.
 #' @param data A data frame containing the total insulin data from a Glooko file.
 #'
 #' @return A data frame containing the formatted and cleaned total insulin data.
 #' @keywords internal
-.format_total_insulin_glooko.aidR <- function(data) {
+.format_total_insulin_glooko.aidR <- function(id, data) {
   data <- data.frame(unclass(data))
 
   names(data) <- c(
@@ -486,13 +501,16 @@ clean.glooko <- function(data, ...) {
 
   data <- data %>%
     mutate(
+      id = id,
+      format = "glooko",
       total_bolus = .data$`Total Bolus (U)`,
       total_insulin = .data$`Total Insulin (U)`,
       total_basal = .data$`Total Basal (U)`,
       timezone_offset = NA
     ) %>%
     rename(timestamp = .data$Timestamp) %>%
-    select("timestamp", "timezone_offset", "total_bolus", "total_insulin", "total_basal")
+    select("id", "format", "timestamp", "timezone_offset", "total_bolus", 
+           "total_insulin", "total_basal")
 
   return(data)
 }
@@ -503,11 +521,12 @@ clean.glooko <- function(data, ...) {
 
 #' Format and clean SMBG (bg sheet) data from Glooko.
 #'
+#' @param id Character or numeric participant identifier.
 #' @param data A data frame containing the SMBG data from a Glooko file.
 #'
 #' @return A data frame containing the formatted and cleaned SMBG data.
 #' @keywords internal
-.format_SMBG_glooko.aidR <- function(data) {
+.format_SMBG_glooko.aidR <- function(id, data) {
   data <- data.frame(unclass(data))
 
   # BG values are always given in second column (column name may vary with language)
@@ -520,6 +539,8 @@ clean.glooko <- function(data, ...) {
   }
 
   data <- data.frame(
+    id = id,
+    format = "glooko",
     timestamp = data[, 1],
     timezone_offset = NA,
     value = data[, 2],
@@ -536,15 +557,18 @@ clean.glooko <- function(data, ...) {
 
 #' Format and clean alarm data from Glooko.
 #'
+#' @param id Character or numeric participant identifier.
 #' @param data A data frame containing the alarm data from a Glooko file.
 #'
 #' @return A data frame containing the formatted and cleaned alarm data.
 #' @keywords internal
-.format_alarms_glooko.aidR <- function(data) {
+.format_alarms_glooko.aidR <- function(id, data) {
   data <- data.frame(unclass(data))
 
   # drop serial number
   data <- data.frame(
+    id = id,
+    format = "glooko",
     timestamp = data[, 1],
     timezone_offset = NA,
     name = data[, 2]
@@ -559,15 +583,18 @@ clean.glooko <- function(data, ...) {
 
 #' Format and clean manual insulin data from Glooko.
 #'
+#' @param id Character or numeric participant identifier.
 #' @param data A data frame containing the manual insulin data from a Glooko file.
 #'
 #' @return A data frame containing the formatted and cleaned manual insulin data.
 #' @keywords internal
-.format_manual_insulin_glooko.aidR <- function(data) {
+.format_manual_insulin_glooko.aidR <- function(id, data) {
   data <- data.frame(unclass(data))
 
   # drop serial number
   data <- data.frame(
+    id = id,
+    format = "glooko",
     timestamp = data[, 1],
     timezone_offset = NA,
     name = data[, 2],
@@ -584,15 +611,18 @@ clean.glooko <- function(data, ...) {
 
 #' Format and clean medication data from Glooko.
 #'
+#' @param id Character or numeric participant identifier.
 #' @param data A data frame containing the medication data from a Glooko file.
 #'
 #' @return A data frame containing the formatted and cleaned medication data.
 #' @keywords internal
-.format_medication_glooko.aidR <- function(data) {
+.format_medication_glooko.aidR <- function(id, data) {
   data <- data.frame(unclass(data))
 
   # drop serial number
   data <- data.frame(
+    id = id,
+    format = "glooko",
     timestamp = data[, 1],
     timezone_offset = NA,
     name = data[, 2],
@@ -609,14 +639,17 @@ clean.glooko <- function(data, ...) {
 
 #' Format and clean food data from Glooko.
 #'
+#' @param id Character or numeric participant identifier.
 #' @param data A data frame containing the food data from a Glooko file.
 #'
 #' @return A data frame containing the formatted and cleaned food data.
 #' @keywords internal
-.format_food_glooko.aidR <- function(data) {
+.format_food_glooko.aidR <- function(id, data) {
   data <- data.frame(unclass(data))
 
   data <- data.frame(
+    id = id,
+    format = "glooko",
     timestamp = data[, 1],
     label = data[, 2],
     carbs = data[, 3],
@@ -640,14 +673,17 @@ clean.glooko <- function(data, ...) {
 
 #' Format and clean notes data from Glooko.
 #'
+#' @param id Character or numeric participant identifier.
 #' @param data A data frame containing the notes data from a Glooko file.
 #'
 #' @return A data frame containing the formatted and cleaned notes data.
 #' @keywords internal
-.format_notes_glooko.aidR <- function(data) {
+.format_notes_glooko.aidR <- function(id, data) {
   data <- data.frame(unclass(data))
 
   data <- data.frame(
+    id = id,
+    format = "glooko",
     timestamp = data[, 1],
     timezone_offset = NA,
     note = data[, 2]
@@ -662,14 +698,17 @@ clean.glooko <- function(data, ...) {
 
 #' Format and clean exercise data from Glooko.
 #'
+#' @param id Character or numeric participant identifier.
 #' @param data A data frame containing the exercise data from a Glooko file.
 #'
 #' @return A data frame containing the formatted and cleaned exercise data.
 #' @keywords internal
-.format_exercise_glooko.aidR <- function(data) {
+.format_exercise_glooko.aidR <- function(id, data) {
   data <- data.frame(unclass(data))
 
   data <- data.frame(
+    id = id,
+    format = "glooko",
     timestamp = data[, 1],
     timezone_offset = NA,
     name = data[, 2],

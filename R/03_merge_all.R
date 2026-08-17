@@ -26,8 +26,6 @@ merge_all <- function(data, types = c("cgm", "basal", "bolus", "carbs", "SMBG"))
       df <- data[[id]][[type]]
       if (is.null(df)) next  # type doesn't exist for this id
       type_list[[id]] <- df %>% 
-        mutate(id = id) %>% 
-        relocate(id) %>% # move id to front
         mutate(across(where(is.character), \(x) type.convert(x, as.is = TRUE))) # to avoid type-mismatches
     }
     

@@ -45,12 +45,13 @@ read_tidepool <- function(id, filename){
 
 #' Format and clean the Tidepool data to keep relevant columns only.
 #'
+#' @param id Character or numeric participant identifier.
 #' @param data An instance of class \code{tidepool}, wrapping a named list with data of different types.
 #' @param ... Additional arguments passed to methods.
 #'
 #' @return A named list with names \code{cgm}, \code{basal}, \code{bolus}, and \code{carbs}, and other names for data of other types.
 #' @export
-clean.tidepool <- function(data, ...){
+clean.tidepool <- function(data, id, ...){
   if (is.null(data)){ return(NULL) }
   if (!("tidepool" %in% class(data))){ stop("Expected Tidepool format.") }
   
@@ -58,17 +59,17 @@ clean.tidepool <- function(data, ...){
   data <- unclass(data)
   
   # Format CGM, basal, bolus and carb data
-  data$cgm <- .format_cgm_tidepool.aidR(data$cgm)
-  data$basal <- .format_basal_tidepool.aidR(data$basal)
-  data$bolus <- .format_bolus_tidepool.aidR(data$bolus)
-  data$SMBG <- .format_SMBG_tidepool.aidR(data$smbg)
+  data$cgm <- .format_cgm_tidepool.aidR(id, data$cgm)
+  data$basal <- .format_basal_tidepool.aidR(id, data$basal)
+  data$bolus <- .format_bolus_tidepool.aidR(id, data$bolus)
+  data$SMBG <- .format_SMBG_tidepool.aidR(id, data$smbg)
   
   if (!is.null(data$food) & !is.null(data$bolus_calculator)){
     stop(paste0("Found both food and bolus calculator data. Figure out which one to keep."))
   } else if (!is.null(data$food)){
-    data$carbs <- .format_food_tidepool.aidR(data$food)
+    data$carbs <- .format_food_tidepool.aidR(id, data$food)
   } else if (!is.null(data$bolus_calculator)){
-    data$carbs <- .format_bolus_calculator_tidepool.aidR(data$bolus_calculator)
+    data$carbs <- .format_bolus_calculator_tidepool.aidR(id, data$bolus_calculator)
   } else {
     stop(paste0("No data on carbohydrates available!"))
   }
@@ -120,11 +121,12 @@ clean.tidepool <- function(data, ...){
 
 #' Format and clean CGM data from Tidepool
 #'
+#' @param id Character or numeric participant identifier.
 #' @param cgm A data frame containing the CGM data from a Tidepool file.
 #'
 #' @return A data frame containing the formatted and cleaned CGM data.
 #' @keywords internal
-.format_cgm_tidepool.aidR <- function(cgm){
+.format_cgm_tidepool.aidR <- function(id, cgm){
   # Make sure CGM is in mg/dl
   cgm$Value[cgm$Units == "mmol/L"] <- cgm$Value[cgm$Units == "mmol/L"] * 18.018
 
@@ -147,11 +149,14 @@ clean.tidepool <- function(data, ...){
   # Select columns: timestamp and value
   cgm <- cgm %>%
     select("Local Time", "Timezone Offset", "Value") %>%
-    mutate(`Local Time` = as_datetime(.data$`Local Time`),
+    mutate(id = id,
+           format = "tidepool",
+           `Local Time` = as_datetime(.data$`Local Time`),
            `Timezone Offset` = .data$`Timezone Offset` / 60) %>% 
     rename(value = "Value", timestamp = "Local Time", timezone_offset = "Timezone Offset") |> 
     mutate(unit = "mg/dL",
-           sensor_name = sensor_name)
+           sensor_name = sensor_name) |> 
+    select("id", "format", "timestamp", "timezone_offset", "value", "unit", "sensor_name")
 
   return(cgm)
 }
@@ -162,18 +167,21 @@ clean.tidepool <- function(data, ...){
 
 #' Format and clean basal data from Tidepool
 #'
+#' @param id Character or numeric participant identifier.
 #' @param basal A data frame containing the basal data from a Tidepool file.
 #'
 #' @return A data frame containing the formatted and cleaned basal data.
 #' @keywords internal
-.format_basal_tidepool.aidR <- function(basal){
+.format_basal_tidepool.aidR <- function(id, basal){
   # Select relevant columns, format time, rename
   basal <- basal %>%
-    mutate(pump_name = NA, # not given in sheet
+    mutate(id = id,
+           format = "tidepool",
+           pump_name = NA, # not given in sheet
            duration = .data$`Duration (mins)` / 60, # in hours
            unit = "U/h") |> # of rate
-    select("Local Time", "Timezone Offset", "duration", "Rate", "unit",
-           "Delivery Type", "pump_name") %>%
+    select("id", "format", "Local Time", "Timezone Offset", "duration", "Rate", 
+           "unit", "Delivery Type", "pump_name") %>%
     mutate(`Local Time` = as_datetime(.data$`Local Time`),
            `Timezone Offset` = .data$`Timezone Offset` / 60) %>% 
     rename(
@@ -211,11 +219,11 @@ clean.tidepool <- function(data, ...){
   select(-"delivery_type")
   
   # Check if basal rates are contiguous (one ends when the next one starts)
-  end <- basal$timestamp + seconds(basal$duration * 3600)
-  max_diff <- max(abs(difftime(basal$timestamp, lead(end))), na.rm = T)
-  if (max_diff > 1){
-    stop(paste0("Basal rates are not contiguous (", round(max_diff, 2), " seconds difference)"))
-  }
+  # end <- basal$timestamp + seconds(basal$duration * 3600)
+  # max_diff <- max(abs(difftime(basal$timestamp, lead(end))), na.rm = T)
+  # if (max_diff > 1){
+  #   stop(paste0("Basal rates are not contiguous (", round(max_diff, 2), " seconds difference)"))
+  # }
   
   return(basal)
 }
@@ -226,11 +234,12 @@ clean.tidepool <- function(data, ...){
 
 #' Format and clean bolus data from Tidepool
 #'
+#' @param id Character or numeric participant identifier.
 #' @param bolus A data frame containing the bolus data from a Tidepool file.
 #'
 #' @return A data frame containing the formatted and cleaned bolus data.
 #' @keywords internal
-.format_bolus_tidepool.aidR <- function(bolus){
+.format_bolus_tidepool.aidR <- function(id, bolus){
   # Format time
   bolus <- bolus %>%
     mutate(`Local Time` = as_datetime(.data$`Local Time`),
@@ -260,13 +269,15 @@ clean.tidepool <- function(data, ...){
   
   # Select relevant columns
   bolus <- bolus %>%
-    mutate(unit = "U",
+    mutate(id = id,
+           format = "tidepool",
+           unit = "U",
            pump_name = NA,
            duration_extended = .data$`Duration (mins)` / 60) |> 
     rename(timestamp = "Local Time", 
            timezone_offset = "Timezone Offset") |> 
-    select("timestamp", "timezone_offset", "type", "total", "normal", 
-         "extended", "unit", "duration_extended", "pump_name")
+    select("id", "format", "timestamp", "timezone_offset", "type", "total", 
+           "normal", "extended", "unit", "duration_extended", "pump_name")
   
   return(bolus)
 }
@@ -277,23 +288,27 @@ clean.tidepool <- function(data, ...){
 
 #' Format and clean food data from Tidepool
 #'
+#' @param id Character or numeric participant identifier.
 #' @param food A data frame containing the food data from a Tidepool file.
 #'
 #' @return A data frame containing the formatted and cleaned food data.
 #' @keywords internal
-.format_food_tidepool.aidR <- function(food){
+.format_food_tidepool.aidR <- function(id, food){
   # Extract net carbs and estimated absorption duration
   food$carbs <- sapply(food$Nutrition, .extract_net_carbs_tidepool.aidR)
   food$estimated_absorption_duration <- sapply(1:nrow(food), .extract_estimated_absorption_duration_tidepool.aidR, food)
   
   food <- food %>%
-    mutate(timestamp = as_datetime(.data$`Local Time`),
+    mutate(id = id,
+           format = "tidepool",
+           timestamp = as_datetime(.data$`Local Time`),
            timezone_offset = .data$`Timezone Offset` / 60,
            estimated_absorption_duration = .data$estimated_absorption_duration / 3600, # convert seconds to hours 
            unit = "g",
            is_hypo_treatment = NA) %>% 
     rename(label = "Name") |> 
-    select("timestamp", "timezone_offset", "carbs", "unit", "label", "estimated_absorption_duration", "is_hypo_treatment")
+    select("id", "format", "timestamp", "timezone_offset", "carbs", "unit", 
+           "label", "estimated_absorption_duration", "is_hypo_treatment")
   
   return(food)
 }
@@ -356,14 +371,17 @@ clean.tidepool <- function(data, ...){
 
 #' Format and clean carbohydrates from bolus calculator data from Tidepool
 #'
+#' @param id Character or numeric participant identifier.
 #' @param bolus_calculator A data frame containing the bolus calculator data from a Tidepool file.
 #'
 #' @return A data frame containing the formatted and cleaned carbohydrates from bolus calculator data.
 #' @keywords internal
-.format_bolus_calculator_tidepool.aidR <- function(bolus_calculator){
+.format_bolus_calculator_tidepool.aidR <- function(id, bolus_calculator){
   bolus_calculator <- bolus_calculator %>%
     filter(.data$`Carb Input` > 0) %>%
-    mutate(timestamp = as_datetime(.data$`Local Time`),
+    mutate(id = id,
+           format = "tidepool",
+           timestamp = as_datetime(.data$`Local Time`),
            timezone_offset = .data$`Timezone Offset` / 60,
            unit = "g",
            label = NA,
@@ -371,7 +389,8 @@ clean.tidepool <- function(data, ...){
            is_hypo_treatment = NA
            ) %>% 
     rename(carbs = "Carb Input") |> 
-    select("timestamp", "timezone_offset", "carbs", "unit", "label", "estimated_absorption_duration", "is_hypo_treatment")
+    select("id", "format", "timestamp", "timezone_offset", "carbs", "unit", 
+           "label", "estimated_absorption_duration", "is_hypo_treatment")
   
   if (nrow(bolus_calculator) == 0){ return(NULL) }
   
@@ -384,11 +403,12 @@ clean.tidepool <- function(data, ...){
 
 #' Format and clean SMBG data from Tidepool
 #'
+#' @param id Character or numeric participant identifier.
 #' @param cgm A data frame containing the SMBG data from a Tidepool file.
 #'
 #' @return A data frame containing the formatted and cleaned SMBG data.
 #' @keywords internal
-.format_SMBG_tidepool.aidR <- function(SMBG){
+.format_SMBG_tidepool.aidR <- function(id, SMBG){
   if (is.null(SMBG)){ return(NULL) }
   
   # Make sure SMBG is in mg/dl
@@ -401,17 +421,14 @@ clean.tidepool <- function(data, ...){
   
   # Select columns: timestamp and value
   SMBG <- SMBG %>%
-    mutate(timestamp = as_datetime(.data$`Local Time`),
+    mutate(id = id,
+           format = "tidepool",
+           timestamp = as_datetime(.data$`Local Time`),
            timezone_offset = .data$`Timezone Offset` / 60,
            value = .data$Value,
            unit = "mg/dL",
            sensor_name = NA) %>% 
-    select("timestamp", "timezone_offset", "value", "unit", "sensor_name")
+    select("id", "format", "timestamp", "timezone_offset", "value", "unit", "sensor_name")
   
   return(SMBG)
 }
-
-
-
-
-

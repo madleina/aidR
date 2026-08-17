@@ -30,11 +30,12 @@ read_tandem_source <- function(id, filename) {
 #' Format and clean the Tandem Source data to keep relevant columns only.
 #'
 #' @param data An instance of class \code{tandem_source}, wrapping a named list with data of a particular data type.
+#' @param id Character or numeric participant identifier.
 #' @param ... Additional arguments passed to methods.
 #'
 #' @return A named list with names \code{cgm}, \code{basal}, \code{bolus}, or \code{carbs}, or other names if data is of another type.
 #' @export
-clean.tandem_source <- function(data, ...) {
+clean.tandem_source <- function(data, id, ...) {
   if (is.null(data)) {
     return(NULL)
   }
@@ -44,14 +45,14 @@ clean.tandem_source <- function(data, ...) {
 
   # Format if CGM, basal, bolus and carb data
   if (names(data) == "cgm") {
-    return(list(cgm = .format_cgm_tandem_source.aidR(data$cgm)))
+    return(list(cgm = .format_cgm_tandem_source.aidR(id, data$cgm)))
   } else if (names(data) == "basal") {
-    return(list(basal = .format_basal_tandem_source.aidR(data$basal)))
+    return(list(basal = .format_basal_tandem_source.aidR(id, data$basal)))
   } else if (names(data) == "bolus") {
-    return(list(bolus = .format_bolus_tandem_source.aidR(data$bolus),
-                carbs = .format_carbs_tandem_source.aidR(data$bolus)))
+    return(list(bolus = .format_bolus_tandem_source.aidR(id, data$bolus),
+                carbs = .format_carbs_tandem_source.aidR(id, data$bolus)))
   } else if (names(data) == "bg") {
-    return(list(SMBG = .format_bg_tandem_source.aidR(data$bg)))
+    return(list(SMBG = .format_bg_tandem_source.aidR(id, data$bg)))
   }
 
   # All other formats: just return the way they are
@@ -150,11 +151,12 @@ clean.tandem_source <- function(data, ...) {
 
 #' Format and clean CGM data from Tandem Source
 #'
+#' @param id Character or numeric participant identifier.
 #' @param cgm A data frame containing the CGM data from a Tandem Source file.
 #'
 #' @return A data frame containing the formatted and cleaned CGM data.
 #' @keywords internal
-.format_cgm_tandem_source.aidR <- function(cgm) {
+.format_cgm_tandem_source.aidR <- function(id, cgm) {
 
   # 5th column contains CGM readings
   # Convert units, if necessary
@@ -167,6 +169,8 @@ clean.tandem_source <- function(data, ...) {
   }
   
   cgm <- data.frame(
+    id = id, 
+    format = "tandem_source",
     timestamp = as_datetime(cgm$`Event Date Time`),
     timezone_offset = NA,
     value = cgm$value,
@@ -183,21 +187,24 @@ clean.tandem_source <- function(data, ...) {
 
 #' Format and clean basal data from Tandem Source
 #'
+#' @param id Character or numeric participant identifier.
 #' @param basal A data frame containing the basal data from a Tandem Source file.
 #'
 #' @return A data frame containing the formatted and cleaned basal data.
 #' @keywords internal
-.format_basal_tandem_source.aidR <- function(basal) {
+.format_basal_tandem_source.aidR <- function(id, basal) {
   
   basal <- basal |> 
     mutate(timestamp = as_datetime(.data$`Event Date Time`)) |> 
     arrange(timestamp) |> 
-    mutate(timezone_offset = NA,
+    mutate(id = id, 
+           format = "tandem_source",
+           timezone_offset = NA,
            duration = as.numeric(difftime(lead(timestamp), timestamp, units = "hours")),
            rate = .data$`Commanded Basal Dose (units of insulin)` / duration,
            unit = "U/h") |> 
     rename(pump_name = "Device Type") |> 
-    select("timestamp", "timezone_offset", "duration", "rate", "unit", "pump_name")
+    select("id", "format", "timestamp", "timezone_offset", "duration", "rate", "unit", "pump_name")
   
   return(basal)
 }
@@ -208,11 +215,12 @@ clean.tandem_source <- function(data, ...) {
 
 #' Format and clean bolus data from Tandem Source
 #'
+#' @param id Character or numeric participant identifier.
 #' @param bolus A data frame containing the bolus data from a Tandem Source file.
 #'
 #' @return A data frame containing the formatted and cleaned bolus data.
 #' @keywords internal
-.format_bolus_tandem_source.aidR <- function(bolus) {
+.format_bolus_tandem_source.aidR <- function(id, bolus) {
   
   # Decide if a bolus is normal / dual wave / square wave
   bolus <- bolus |> 
@@ -237,13 +245,15 @@ clean.tandem_source <- function(data, ...) {
   
   # Select relevant columns
   bolus <- bolus |> 
-    mutate(timestamp = as_datetime(.data$`Completion Date Time`),
+    mutate(id = id, 
+           format = "tandem_source",
+           timestamp = as_datetime(.data$`Completion Date Time`),
            timezone_offset = NA,
            duration_extended = .data$`Duration (mins)` / 60,
            unit = "U",
            pump_name = NA
            ) |> 
-    select("timestamp", "timezone_offset", "type", "total", "normal", 
+    select("id", "format", "timestamp", "timezone_offset", "type", "total", "normal", 
            "extended", "unit", "duration_extended", "pump_name")
   
   return(bolus)
@@ -255,21 +265,25 @@ clean.tandem_source <- function(data, ...) {
 
 #' Format and clean carbs data from Tandem Source
 #'
+#' @param id Character or numeric participant identifier.
 #' @param carbs A data frame containing the carbs data from a Tandem Source file.
 #'
 #' @return A data frame containing the formatted and cleaned carbs data.
 #' @keywords internal
-.format_carbs_tandem_source.aidR <- function(carbs) {
+.format_carbs_tandem_source.aidR <- function(id, carbs) {
   carbs <- carbs |> 
     filter(.data$`Carb Size` > 0) |> 
-    mutate(timestamp = as_datetime(.data$`Completion Date Time`),
+    mutate(id = id, 
+           format = "tandem_source",
+           timestamp = as_datetime(.data$`Completion Date Time`),
            timezone_offset = NA,
            carbs = .data$`Carb Size`,
            unit = "g",
            label = NA,
            estimated_absorption_duration = NA,
            is_hypo_treatment = NA) |> 
-    select("timestamp", "timezone_offset", "carbs", "unit", "label", "estimated_absorption_duration", "is_hypo_treatment")
+    select("id", "format", "timestamp", "timezone_offset", "carbs", "unit", 
+           "label", "estimated_absorption_duration", "is_hypo_treatment")
   
   return(carbs)
 }
@@ -280,11 +294,12 @@ clean.tandem_source <- function(data, ...) {
 
 #' Format and clean SMBG data from Tandem Source
 #'
-#' @param cgm A data frame containing the SMBG data from a Tandem Source file.
+#' @param id Character or numeric participant identifier.
+#' @param bg A data frame containing the SMBG data from a Tandem Source file.
 #'
 #' @return A data frame containing the formatted and cleaned SMBG data.
 #' @keywords internal
-.format_bg_tandem_source.aidR <- function(bg) {
+.format_bg_tandem_source.aidR <- function(id, bg) {
   
   # 5th column contains BG readings
   # Convert units, if necessary
@@ -297,6 +312,8 @@ clean.tandem_source <- function(data, ...) {
   }
   
   bg <- data.frame(
+    id = id, 
+    format = "tandem_source",
     timestamp = as_datetime(bg$`Event Date Time`),
     timezone_offset = NA,
     value = bg$value,

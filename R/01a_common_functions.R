@@ -50,10 +50,11 @@ parse_data <- function(id, paths, clean_files = TRUE) {
 #' Generic function for cleaning data
 #'
 #' @param data The data to clean.
+#' @param id Character or numeric participant identifier.
 #' @param ... Additional arguments passed to methods.
 #'
 #' @export
-clean <- function(data, ...) UseMethod("clean")
+clean <- function(data, id, ...) UseMethod("clean")
 
 #-------------------------------
 # General helper functions
@@ -94,7 +95,7 @@ clean <- function(data, ...) UseMethod("clean")
     data <- NULL
   }
   if (clean_files && !is.null(data)) {
-    data <- clean(data)
+    data <- clean(data, id)
   }
   return(data)
 }

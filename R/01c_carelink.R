@@ -60,11 +60,12 @@ read_carelink <- function(id, filename){
 #' Format and clean the Carelink data to keep relevant columns only.
 #'
 #' @param data An instance of class \code{carelink}, wrapping a named list with data of different types.
+#' @param id Character or numeric participant identifier.
 #' @param ... Additional arguments passed to methods.
 #'
 #' @return A named list with names \code{cgm}, \code{basal}, \code{bolus}, and \code{carbs}, and other names for data of other types.
 #' @export
-clean.carelink <- function(data, ...){
+clean.carelink <- function(data, id, ...){
   if (is.null(data)){ return(NULL) }
   if (!("carelink" %in% class(data))){ stop("Expected Carelink format.") }
   
@@ -72,11 +73,11 @@ clean.carelink <- function(data, ...){
   data <- unclass(data)
   
   # Format cgm, basal, bolus and carbs to unit format
-  data$cgm <- .clean_carelink_CGM.aidR(data$cgm)
-  data$basal <- .clean_carelink_basal.aidR(data$basal_rates)
-  data$bolus <- .clean_carelink_bolus.aidR(data$bolus)
-  data$carbs <- .clean_carelink_carbs.aidR(data$bwz)
-  data$SMBG <- .clean_carelink_SMBG.aidR(data$SMBG)
+  data$cgm <- .clean_carelink_CGM.aidR(id, data$cgm)
+  data$basal <- .clean_carelink_basal.aidR(id, data$basal_rates)
+  data$bolus <- .clean_carelink_bolus.aidR(id, data$bolus)
+  data$carbs <- .clean_carelink_carbs.aidR(id, data$bwz)
+  data$SMBG <- .clean_carelink_SMBG.aidR(id, data$SMBG)
   
   return(data)
 }
@@ -435,7 +436,7 @@ clean.carelink <- function(data, ...){
   .check_if_missing_columns_with_data.aidR(df, temp_basal)
   
   # Add pump name column
-  basal_rates$pump_name <- pump_name
+  temp_basal$pump_name <- pump_name
   
   return(temp_basal)
 }
@@ -457,7 +458,7 @@ clean.carelink <- function(data, ...){
   # Remove duplicate rows (all entries are present 2x, once with delivered and once without delivered)
   bolus <- bolus %>%
     arrange(.data$timestamp) %>%
-    group_by(across(-c(.data$`Bolus Volume Delivered (U)`, .data$timestamp, .data$Index))) %>%
+    group_by(across(-c("Bolus Volume Delivered (U)", "timestamp", "Index"))) %>%
     mutate(
       # Mark groups of timestamps within <1 min difference
       time_group = cumsum(c(TRUE, diff(.data$timestamp) >= dminutes(1)))
@@ -691,17 +692,21 @@ clean.carelink <- function(data, ...){
 
 #' Format and clean CGM entries of a Carelink export.
 #'
+#' @param id Character or numeric participant identifier.
 #' @param cgm A data frame containing the CGM data from a Carelink file.
 #'
 #' @return A data frame containing the formatted and cleaned CGM data.
 #'
 #' @keywords internal
-.clean_carelink_CGM.aidR <- function(cgm){
+.clean_carelink_CGM.aidR <- function(id, cgm){
   # only keep timestamp and value
   
   cgm <- cgm %>% 
     select("timestamp", "Sensor Glucose (mg/dL)", "sensor_name") %>% 
     rename(value = "Sensor Glucose (mg/dL)") |> 
+    mutate(id = id,
+           format = "carelink",
+           .before = "timestamp") |> 
     mutate(timezone_offset = NA, .after = "timestamp") |> 
     mutate(unit = "mg/dL", .before = "sensor_name")
   
@@ -710,17 +715,20 @@ clean.carelink <- function(data, ...){
 
 #' Format and clean basal entries of a Carelink export.
 #'
+#' @param id Character or numeric participant identifier.
 #' @param basal A data frame containing the basal data from a Carelink file.
 #'
 #' @return A data frame containing the formatted and cleaned basal data.
 #'
 #' @keywords internal
-.clean_carelink_basal.aidR <- function(basal){
+.clean_carelink_basal.aidR <- function(id, basal){
   basal <- basal %>% 
-    mutate(timezone_offset = NA,
+    mutate(id = id, 
+           format = "carelink",
+           timezone_offset = NA,
            unit = "U/h") %>%
-    select("timestamp", "timezone_offset", "duration_h", "Basal Rate (U/h)", 
-           "unit", "pump_name") %>%
+    select("id", "format", "timestamp", "timezone_offset", "duration_h", 
+           "Basal Rate (U/h)", "unit", "pump_name") %>%
     rename(duration = "duration_h",
            rate = "Basal Rate (U/h)") %>% 
     filter(.data$duration > 0)
@@ -730,12 +738,13 @@ clean.carelink <- function(data, ...){
 
 #' Format and clean bolus entries of a Carelink export.
 #'
+#' @param id Character or numeric participant identifier.
 #' @param bolus A data frame containing the bolus data from a Carelink file.
 #'
 #' @return A data frame containing the formatted and cleaned bolus data.
 #'
 #' @keywords internal
-.clean_carelink_bolus.aidR <- function(bolus){
+.clean_carelink_bolus.aidR <- function(id, bolus){
   
   # Decide if a bolus is normal / square wave (dual wave does not exist in Minimed)
   bolus <- bolus %>% 
@@ -753,6 +762,8 @@ clean.carelink <- function(data, ...){
   # Add units of total bolus, as well as units of normal and extended bolus
   bolus <- bolus %>% 
     mutate(
+      id = id, 
+      format = "carelink",
       total    = as.numeric(.data$`Bolus Volume Delivered (U)`),
       extended = if_else(.data$type == "normal", NA, .data$total),
       normal   = if_else(.data$type == "normal", .data$total, NA),
@@ -761,7 +772,7 @@ clean.carelink <- function(data, ...){
       timezone_offset = NA,
       pump_name = NA
     ) %>% 
-    select("timestamp", "timezone_offset", "type", "total", "normal", 
+    select("id", "format", "timestamp", "timezone_offset", "type", "total", "normal", 
            "extended", "unit", "duration_extended", "pump_name")
   
   # Remove all boluses where nothing was delivered
@@ -774,42 +785,50 @@ clean.carelink <- function(data, ...){
 
 #' Format and clean carbohydrate entries of a Carelink export.
 #'
+#' @param id Character or numeric participant identifier.
 #' @param bwz A data frame containing the carbohydrate data from a Carelink file.
 #'
 #' @return A data frame containing the formatted and cleaned carbohydrate data.
 #'
 #' @keywords internal
-.clean_carelink_carbs.aidR <- function(bwz){
+.clean_carelink_carbs.aidR <- function(id, bwz){
   
   # Extract carb info from bolus wizard
   carbs <- bwz %>% 
-    mutate(timezone_offset = NA,
+    mutate(id = id,
+           format = "carelink", 
+           timezone_offset = NA,
            carbs = as.numeric(.data$`BWZ Carb Input (grams)`),
            unit = "g",
            label = NA, 
            estimated_absorption_duration = NA,
            is_hypo_treatment = NA
     ) %>% 
-    select("timestamp", "timezone_offset", "carbs", "unit", "label", "estimated_absorption_duration", "is_hypo_treatment")
+    select("id", "format", "timestamp", "timezone_offset", "carbs", "unit",
+           "label", "estimated_absorption_duration", "is_hypo_treatment")
   
   return(carbs)
 }
 
 #' Format and clean SMBG entries of a Carelink export.
-#'
+#' 
+#' @param id Character or numeric participant identifier.
 #' @param bwz A data frame containing the SMBG data from a Carelink file.
 #'
 #' @return A data frame containing the formatted and cleaned SMBG data.
 #'
 #' @keywords internal
-.clean_carelink_SMBG.aidR <- function(SMBG){
+.clean_carelink_SMBG.aidR <- function(id, SMBG){
   SMBG <- SMBG %>% 
-    mutate(timezone_offset = NA,
+    mutate(id = id,
+           format = "carelink",
+           timezone_offset = NA,
            value = as.numeric(.data$`BG Reading (mg/dL)`),
            unit = "mg/dL",
            sensor_name = NA
     ) %>% 
-    select("timestamp", "timezone_offset", "value", "unit", "sensor_name")
+    select("id", "format", "timestamp", "timezone_offset", "value", 
+           "unit", "sensor_name")
   
   return(SMBG)
 }
