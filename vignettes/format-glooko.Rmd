@@ -65,11 +65,12 @@ head(data$alarm)
 head(data$SMBG)
 ```
 
-- **`carbs_data_*.csv`** / **`cgm_carbs_data_*.csv`**: carbohydrate intake. These
-  do **not** correspond to the carbohydrate intake communicated to the bolus
-  calculator, and are almost always missing entirely. They are therefore
-  ignored when building the clean `carbs` output, which instead comes from the
-  bolus files (see below).
+- **`carbs_data_*.csv`** / **`cgm_carbs_data_*.csv`**: carbohydrate/meal events 
+recorded by or imported from a CGM system. 
+These are different from carbohydrate amounts entered into a pump's bolus calculator. 
+In practice, these files are almost always empty in exports of AID users. 
+They are therefore ignored when building the clean `carbs` output, 
+which instead uses carbohydrate amounts recorded in the bolus files (see below).
 - **`cgm_data_*.csv`**: CGM data. *Compiled into `cgm`.*
 ```{r}
 head(data$cgm)
@@ -103,6 +104,8 @@ head(data$total_insulin)
 
 - CGM and SMBG values are reported in mg/dL or mmol/L depending on account
   settings; `aidR` converts to mg/dL automatically.
+- `timezone_offset` is always `NA`, since Glooko exports report only local
+  (wall-clock) time.
 - Serial numbers are reported for some data types (e.g. basal, bolus) but are
   not mapped to a device/pump name.
 - `sensor_name` for CGM is always `NA`, since Glooko exports do not report it.

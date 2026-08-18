@@ -1,3 +1,0 @@
-timestamp,timezoneOffSet,duration.value,duration.unit,reportedIntensity,inputTimestamp
-2025-07-06T18:00:00Z,120,0,seconds,medium,2025-07-06T18:53:18.014Z
-2025-07-06T18:15:00Z,120,3600,seconds,medium,2025-07-06T19:21:25.282Z

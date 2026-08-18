@@ -402,13 +402,12 @@ clean.carelink <- function(data, id, ...){
     select("Index", "timestamp", "Basal Rate (U/h)", "Suspend", "Rewind") %>% 
     filter(if_any(-c(1:2), ~ !is.na(.) & . != ""))
   
-  # Calculate delivered basal based on Rate and duration to next entry
+  # Calculate duration to next entry
   basal_rates <- basal_rates %>%
     arrange(desc(.data$timestamp)) %>%            
     mutate(
       next_time = lag(.data$timestamp),
-      duration_h = as.numeric(difftime(.data$next_time, .data$timestamp, units = "hours")),
-      delivered_U = as.numeric(.data$`Basal Rate (U/h)`) * .data$duration_h   # U/h × hours = units delivered
+      duration_h = as.numeric(difftime(.data$next_time, .data$timestamp, units = "hours"))
     ) %>% 
     select(-"next_time")
   
