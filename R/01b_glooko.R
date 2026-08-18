@@ -57,24 +57,10 @@ clean.glooko <- function(data, id, ...) {
     return(list(total_insulin = .format_total_insulin_glooko.aidR(id, data)))
   } else if (names(data) == "SMBG") {
     return(list(SMBG = .format_SMBG_glooko.aidR(id, data)))
-  } else if (names(data) == "alarm") {
-    return(list(alarm = .format_alarms_glooko.aidR(id, data)))
-  } else if (names(data) == "manual_insulin") {
-    return(list(manual_insulin = .format_manual_insulin_glooko.aidR(id, data)))
-  } else if (names(data) == "medication") {
-    return(list(medication = .format_medication_glooko.aidR(id, data)))
-  } else if (names(data) == "food") {
-    return(list(food = .format_food_glooko.aidR(id, data)))
-  } else if (names(data) == "notes") {
-    return(list(notes = .format_notes_glooko.aidR(id, data)))
-  } else if (names(data) == "exercise") {
-    return(list(exercise = .format_exercise_glooko.aidR(id, data)))
-  }
-
-  # Note: there are more data types but they have always been empty so far
-  # -> throw if a non-empty one occurs, so we can check how to format it
-
-  stop("Not implemented: ", names(data))
+  } 
+  
+  # All other formats: just return the way they are
+  return(data)
 }
 
 #------------------------
@@ -248,7 +234,7 @@ clean.glooko <- function(data, id, ...) {
   glooko_files <- list()
 
   # 2 columns
-  glooko_files$carbs <- list(expected_num_cols = 2, time_cols = 1, numeric_cols = 2, expected_keyword = list(name = "(g)", col_ix = 2), non_numeric_cols = c())
+  glooko_files$carbs_manual <- list(expected_num_cols = 2, time_cols = 1, numeric_cols = 2, expected_keyword = list(name = "(g)", col_ix = 2), non_numeric_cols = c())
   glooko_files$notes <- list(expected_num_cols = 2, time_cols = 1, numeric_cols = c(), non_numeric_cols = c())
 
   # 3 columns
@@ -551,171 +537,3 @@ clean.glooko <- function(data, id, ...) {
   return(data)
 }
 
-#------------------------------
-# Functions for alarms
-#------------------------------
-
-#' Format and clean alarm data from Glooko.
-#'
-#' @param id Character or numeric participant identifier.
-#' @param data A data frame containing the alarm data from a Glooko file.
-#'
-#' @return A data frame containing the formatted and cleaned alarm data.
-#' @keywords internal
-.format_alarms_glooko.aidR <- function(id, data) {
-  data <- data.frame(unclass(data))
-
-  # drop serial number
-  data <- data.frame(
-    id = id,
-    format = "glooko",
-    timestamp = data[, 1],
-    timezone_offset = NA,
-    name = data[, 2]
-  )
-
-  return(data)
-}
-
-#------------------------------
-# Functions for manual insulin
-#------------------------------
-
-#' Format and clean manual insulin data from Glooko.
-#'
-#' @param id Character or numeric participant identifier.
-#' @param data A data frame containing the manual insulin data from a Glooko file.
-#'
-#' @return A data frame containing the formatted and cleaned manual insulin data.
-#' @keywords internal
-.format_manual_insulin_glooko.aidR <- function(id, data) {
-  data <- data.frame(unclass(data))
-
-  # drop serial number
-  data <- data.frame(
-    id = id,
-    format = "glooko",
-    timestamp = data[, 1],
-    timezone_offset = NA,
-    name = data[, 2],
-    value = data[, 3],
-    insulin_type = data[, 4]
-  )
-
-  return(data)
-}
-
-#------------------------------
-# Functions for medication
-#------------------------------
-
-#' Format and clean medication data from Glooko.
-#'
-#' @param id Character or numeric participant identifier.
-#' @param data A data frame containing the medication data from a Glooko file.
-#'
-#' @return A data frame containing the formatted and cleaned medication data.
-#' @keywords internal
-.format_medication_glooko.aidR <- function(id, data) {
-  data <- data.frame(unclass(data))
-
-  # drop serial number
-  data <- data.frame(
-    id = id,
-    format = "glooko",
-    timestamp = data[, 1],
-    timezone_offset = NA,
-    name = data[, 2],
-    value = data[, 3],
-    medication_type = data[, 4]
-  )
-
-  return(data)
-}
-
-#------------------------------
-# Functions for food
-#------------------------------
-
-#' Format and clean food data from Glooko.
-#'
-#' @param id Character or numeric participant identifier.
-#' @param data A data frame containing the food data from a Glooko file.
-#'
-#' @return A data frame containing the formatted and cleaned food data.
-#' @keywords internal
-.format_food_glooko.aidR <- function(id, data) {
-  data <- data.frame(unclass(data))
-
-  data <- data.frame(
-    id = id,
-    format = "glooko",
-    timestamp = data[, 1],
-    label = data[, 2],
-    carbs = data[, 3],
-    fat = data[, 4],
-    protein = data[, 5],
-    calories = data[, 6],
-    portions = data[, 7],
-    num_portions = data[,8]
-  )
-
-  # Filter on non-zero carbs
-  data <- data %>%
-    filter(.data$carbs > 0)
-
-  return(data)
-}
-
-#------------------------------
-# Functions for notes
-#------------------------------
-
-#' Format and clean notes data from Glooko.
-#'
-#' @param id Character or numeric participant identifier.
-#' @param data A data frame containing the notes data from a Glooko file.
-#'
-#' @return A data frame containing the formatted and cleaned notes data.
-#' @keywords internal
-.format_notes_glooko.aidR <- function(id, data) {
-  data <- data.frame(unclass(data))
-
-  data <- data.frame(
-    id = id,
-    format = "glooko",
-    timestamp = data[, 1],
-    timezone_offset = NA,
-    note = data[, 2]
-  )
-
-  return(data)
-}
-
-#------------------------------
-# Functions for exercise
-#------------------------------
-
-#' Format and clean exercise data from Glooko.
-#'
-#' @param id Character or numeric participant identifier.
-#' @param data A data frame containing the exercise data from a Glooko file.
-#'
-#' @return A data frame containing the formatted and cleaned exercise data.
-#' @keywords internal
-.format_exercise_glooko.aidR <- function(id, data) {
-  data <- data.frame(unclass(data))
-
-  data <- data.frame(
-    id = id,
-    format = "glooko",
-    timestamp = data[, 1],
-    timezone_offset = NA,
-    name = data[, 2],
-    intensity = data[, 3],
-    duration_minutes = data[, 4],
-    burned_calories = data[, 5]
-  )
-
-  return(data)
-}

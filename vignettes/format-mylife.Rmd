@@ -1,0 +1,93 @@
+---
+title: "aidR: mylife export format"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{aidR: mylife export format}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup, message = FALSE}
+library(aidR)
+```
+
+## Overview
+
+A mylife (Ypsomed) export is a *single* semicolon-delimited `.csv` file with
+eight columns, holding one row per logged event. Unlike the platforms that ship
+one file per data type, all event types are interleaved in the same file and are
+distinguished only by the value of the event column, e.g.
+
+```
+"Tag";"Datum";"Uhrzeit";"Ereignis";"Wert";"Einheit";"Information";"Notiz"
+"Fr.";"16.01.26";"09:05";"Kohlenhydrate";"42";"g KH";;
+"Fr.";"16.01.26";"09:04";"Bolus";"4,40";"U";"Bolusvorschlag: 4.40 U";
+```
+
+Both the column headers and the event labels are language-specific and differ
+with the user's account language (the example above is German). Numeric values
+use a comma as the decimal separator (`4,40` = 4.40), the date and time are held
+in separate columns, and additional context is only available as free text in
+the information column.
+
+```{r}
+path <- system.file("extdata", "mylife_example.csv", package = "aidR")
+```
+
+## How aidR detects this format
+
+Because both headers and event labels are language-specific, `aidR` cannot rely
+on their text to identify a mylife file. Instead it checks the *structure* of
+the header row, namely that it splits into exactly eight fields. For the same
+reason, event types are not matched by label either: bolus rows are recognized
+by their unit starting with `U`, and carbohydrate rows by their unit starting
+with `g`, both of which are stable across languages.
+
+## Entries and the data types they produce
+
+```{r}
+data <- parse_data(id = "1", paths = path)
+```
+
+`aidR` compiles the raw mylife entries into a smaller set of data types. The
+list below describes each entry type, shows an example and, in italics, notes
+which clean data type(s) it is compiled into.
+
+- **Bolus entries** (unit `U`; labelled e.g. `Bolus`): insulin boluses.
+  *Compiled into `bolus`.*
+```{r}
+head(data$bolus)
+```
+- **Carbohydrate entries** (unit `g`; labelled e.g. `Kohlenhydrate`):
+  carbohydrate intake communicated to the pump. *Compiled into `carbs`.*
+```{r}
+head(data$carbs)
+```
+- **All other entry types**: preserved as-is under their original,
+  language-specific label, so nothing in the export is lost even though it is
+  not standardized. In the bundled German example these are the raw `Bolus` and
+  `Kohlenhydrate` groups the two clean types above were built from:
+```{r}
+setdiff(names(data), c("bolus", "carbs"))
+```
+
+Note that a mylife export contains **no CGM, basal, or SMBG data** - `bolus` and
+`carbs` are the only core data types available from this platform.
+
+## Notes
+
+- `estimated_absorption_duration` is parsed out of the free-text information
+  column (e.g. `"... 2h ..."`) and is `NA` when not stated.
+- `is_hypo_treatment` is likewise derived from the information column, by
+  looking for the marker `HypoTreatment`.
+- `label` retains the original, language-specific event label, so the source of
+  each carbohydrate entry stays traceable after merging across platforms.
+- `timezone_offset` is always `NA`, since mylife exports report only local
+  (wall-clock) time.

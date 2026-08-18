@@ -4,9 +4,11 @@
 \alias{.format_carbs_yourloops.aidR}
 \title{Format and clean carbs data from Yourloops}
 \usage{
-.format_carbs_yourloops.aidR(carbs)
+.format_carbs_yourloops.aidR(id, carbs)
 }
 \arguments{
+\item{id}{Character or numeric participant identifier.}
+
 \item{carbs}{A data frame containing the carbs data from a Yourloops file.}
 }
 \value{

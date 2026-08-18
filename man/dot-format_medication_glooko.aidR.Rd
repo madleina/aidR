@@ -4,9 +4,11 @@
 \alias{.format_medication_glooko.aidR}
 \title{Format and clean medication data from Glooko.}
 \usage{
-.format_medication_glooko.aidR(data)
+.format_medication_glooko.aidR(id, data)
 }
 \arguments{
+\item{id}{Character or numeric participant identifier.}
+
 \item{data}{A data frame containing the medication data from a Glooko file.}
 }
 \value{

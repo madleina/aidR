@@ -4,9 +4,11 @@
 \alias{.format_manual_insulin_glooko.aidR}
 \title{Format and clean manual insulin data from Glooko.}
 \usage{
-.format_manual_insulin_glooko.aidR(data)
+.format_manual_insulin_glooko.aidR(id, data)
 }
 \arguments{
+\item{id}{Character or numeric participant identifier.}
+
 \item{data}{A data frame containing the manual insulin data from a Glooko file.}
 }
 \value{

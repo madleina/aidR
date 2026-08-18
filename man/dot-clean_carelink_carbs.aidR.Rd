@@ -4,9 +4,11 @@
 \alias{.clean_carelink_carbs.aidR}
 \title{Format and clean carbohydrate entries of a Carelink export.}
 \usage{
-.clean_carelink_carbs.aidR(bwz)
+.clean_carelink_carbs.aidR(id, bwz)
 }
 \arguments{
+\item{id}{Character or numeric participant identifier.}
+
 \item{bwz}{A data frame containing the carbohydrate data from a Carelink file.}
 }
 \value{

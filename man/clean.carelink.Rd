@@ -4,10 +4,12 @@
 \alias{clean.carelink}
 \title{Format and clean the Carelink data to keep relevant columns only.}
 \usage{
-\method{clean}{carelink}(data, ...)
+\method{clean}{carelink}(data, id, ...)
 }
 \arguments{
 \item{data}{An instance of class \code{carelink}, wrapping a named list with data of different types.}
+
+\item{id}{Character or numeric participant identifier.}
 
 \item{...}{Additional arguments passed to methods.}
 }

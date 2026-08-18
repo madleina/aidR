@@ -4,10 +4,12 @@
 \alias{.get_carelink_basal_rates.aidR}
 \title{Parse all entries corresponding to basal rates in a Carelink export.}
 \usage{
-.get_carelink_basal_rates.aidR(df)
+.get_carelink_basal_rates.aidR(df, pump_name)
 }
 \arguments{
 \item{df}{A data frame obtained from reading a Carelink file.}
+
+\item{pump_name}{A string denoting the name of the pump, NA if unknown.}
 }
 \value{
 A data frame containing the target entries

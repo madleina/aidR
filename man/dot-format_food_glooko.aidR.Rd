@@ -4,9 +4,11 @@
 \alias{.format_food_glooko.aidR}
 \title{Format and clean food data from Glooko.}
 \usage{
-.format_food_glooko.aidR(data)
+.format_food_glooko.aidR(id, data)
 }
 \arguments{
+\item{id}{Character or numeric participant identifier.}
+
 \item{data}{A data frame containing the food data from a Glooko file.}
 }
 \value{

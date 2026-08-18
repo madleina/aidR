@@ -4,9 +4,11 @@
 \alias{.format_basal_tidepool.aidR}
 \title{Format and clean basal data from Tidepool}
 \usage{
-.format_basal_tidepool.aidR(basal)
+.format_basal_tidepool.aidR(id, basal)
 }
 \arguments{
+\item{id}{Character or numeric participant identifier.}
+
 \item{basal}{A data frame containing the basal data from a Tidepool file.}
 }
 \value{

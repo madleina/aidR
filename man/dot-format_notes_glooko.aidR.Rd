@@ -4,9 +4,11 @@
 \alias{.format_notes_glooko.aidR}
 \title{Format and clean notes data from Glooko.}
 \usage{
-.format_notes_glooko.aidR(data)
+.format_notes_glooko.aidR(id, data)
 }
 \arguments{
+\item{id}{Character or numeric participant identifier.}
+
 \item{data}{A data frame containing the notes data from a Glooko file.}
 }
 \value{

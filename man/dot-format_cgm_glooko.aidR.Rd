@@ -4,9 +4,11 @@
 \alias{.format_cgm_glooko.aidR}
 \title{Format and clean CGM data from Glooko.}
 \usage{
-.format_cgm_glooko.aidR(data)
+.format_cgm_glooko.aidR(id, data)
 }
 \arguments{
+\item{id}{Character or numeric participant identifier.}
+
 \item{data}{A data frame containing the CGM data from a Glooko file.}
 }
 \value{

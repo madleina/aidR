@@ -4,14 +4,12 @@
 \alias{.diax_series.aidR}
 \title{Build one DIAX time/value series from a standardized aidR data frame.}
 \usage{
-.diax_series.aidR(type, df, tz_offset)
+.diax_series.aidR(type, df)
 }
 \arguments{
-\item{type}{One of \code{"cgm"}, \code{"basal"}, \code{"bolus"} or \code{"carbs"}.}
+\item{type}{One of \code{"cgm"}, \code{"bolus"}, \code{"basal"}, \code{"carbs"} or \code{"SMBG"}.}
 
 \item{df}{The corresponding standardized aidR data frame.}
-
-\item{tz_offset}{Character string with the UTC offset of the timestamps.}
 }
 \value{
 A list with entries \code{time} and \code{value}.

@@ -4,9 +4,11 @@
 \alias{.clean_carelink_CGM.aidR}
 \title{Format and clean CGM entries of a Carelink export.}
 \usage{
-.clean_carelink_CGM.aidR(cgm)
+.clean_carelink_CGM.aidR(id, cgm)
 }
 \arguments{
+\item{id}{Character or numeric participant identifier.}
+
 \item{cgm}{A data frame containing the CGM data from a Carelink file.}
 }
 \value{

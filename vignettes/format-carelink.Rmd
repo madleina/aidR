@@ -1,0 +1,118 @@
+---
+title: "aidR: CareLink export format"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{aidR: CareLink export format}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup, message = FALSE}
+library(aidR)
+```
+
+## Overview
+
+A CareLink (Medtronic) export is a *single* semicolon-delimited `.csv` (or
+`.xlsx`) file that bundles everything into one sheet. Rather than one file per
+data type, the file is divided into **sections** separated by marker rows of the
+form `-------;MiniMed 780G MMT-1111;Pump;XXXXXXXXXX;-------`. Each section has
+its own header row and its own set of columns, and within a section each row
+holds only the few columns relevant to its event type - so a single section
+mixes boluses, basal rates, alerts, and more, with most columns empty on any
+given row.
+
+Numeric values use a comma as the decimal separator (`1,9` = 1.9), and
+timestamps are split across separate `Date` and `Time` columns.
+
+```{r}
+path <- system.file("extdata", "carelink_example.csv", package = "aidR")
+```
+
+## How aidR detects this format
+
+`aidR` looks for the characteristic multi-section layout, i.e. the presence of
+`-------` marker rows. Because everything arrives in one file, most of the
+parsing work happens up front: the file is split into sections, and the large
+"Pump" section is then split further into individual event types based on which
+columns are populated on each row. As a safety net, `aidR` checks that no
+column containing data was missed while splitting, so a change in Medtronic's
+export layout surfaces as an error rather than silently dropped data.
+
+## Sections and the data types they produce
+
+```{r}
+data <- parse_data(id = "1", paths = path)
+```
+
+`aidR` compiles the raw CareLink sections into a smaller set of data types. The
+list below describes each section, shows an example and, in italics, notes
+which clean data type(s) it is compiled into.
+
+- **Header block** (first rows, before the first `-------`): patient, pump, and
+  sensor information. Not a data type of its own; `aidR` reads the pump name
+  (e.g. `MiniMed 780G MMT-1111`) and sensor name (e.g. `Guardian™ 4 Sensor`)
+  from here and attaches them to the relevant rows as `pump_name` and
+  `sensor_name`.
+- **Pump section**: the bulk of the export. Split by event type into:
+  - basal rates. *Compiled into `basal`.*
+```{r}
+head(data$basal)
+```
+  - boluses. *Compiled into `bolus`.* Records whether a bolus was normal,
+    square-wave, or dual-wave, along with the delivered volume and, for extended
+    boluses, the duration.
+```{r}
+head(data$bolus)
+```
+  - bolus wizard (BWZ) entries, i.e. the carbohydrates communicated to the bolus
+    calculator together with the resulting recommendation. *Compiled into
+    `carbs`.* `aidR` matches these against the bolus events so that a
+    carbohydrate entry can be linked to the bolus it triggered.
+```{r}
+head(data$carbs)
+```
+  - alerts and alarms raised by the pump.
+```{r}
+head(data$alerts)
+```
+  - prime events (tubing/cannula fills).
+```{r}
+head(data$prime)
+```
+  - additionally, where present: temp basal events, correction-bolus
+    information, sensor calibrations, insulin action curve changes, and device
+    change events. These are preserved under their own names but are absent from
+    the bundled example, since the sections are empty for this participant.
+- **Aggregated Auto Insulin Data section**: daily aggregated insulin delivered
+  in automated mode.
+```{r}
+head(data$aggr_daily_insulin)
+```
+- **Sensor section**: CGM data. *Compiled into `cgm`.* Sensor exceptions
+  (e.g. calibration required, sensor warm-up) are extracted separately into
+  `sensor_exceptions` where present.
+```{r}
+head(data$cgm)
+```
+
+Self-measured blood glucose (SMBG) is also read from the pump section and
+compiled into `SMBG` when the export contains meter readings; the bundled
+example has none, so that entry is absent here.
+
+## Notes
+
+- CGM and SMBG values are reported in mg/dL or mmol/L depending on account
+  settings; `aidR` converts to mg/dL automatically.
+- `timezone_offset` is always `NA`, since CareLink exports report only local
+  (wall-clock) time.
+- Which sections are present depends on the pump/CGM combination and on what the
+  participant actually used; empty sections are dropped rather than returned as
+  empty data frames.

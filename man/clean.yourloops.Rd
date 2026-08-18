@@ -4,10 +4,12 @@
 \alias{clean.yourloops}
 \title{Format and clean the Yourloops data to keep relevant columns only.}
 \usage{
-\method{clean}{yourloops}(data, ...)
+\method{clean}{yourloops}(data, id, ...)
 }
 \arguments{
 \item{data}{An instance of class \code{yourloops}, wrapping a named list with data of a particular data type.}
+
+\item{id}{Character or numeric participant identifier.}
 
 \item{...}{Additional arguments passed to methods.}
 }

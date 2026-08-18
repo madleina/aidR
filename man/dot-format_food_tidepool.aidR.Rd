@@ -4,9 +4,11 @@
 \alias{.format_food_tidepool.aidR}
 \title{Format and clean food data from Tidepool}
 \usage{
-.format_food_tidepool.aidR(food)
+.format_food_tidepool.aidR(id, food)
 }
 \arguments{
+\item{id}{Character or numeric participant identifier.}
+
 \item{food}{A data frame containing the food data from a Tidepool file.}
 }
 \value{

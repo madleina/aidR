@@ -1,0 +1,109 @@
+---
+title: "aidR: Tidepool export format"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{aidR: Tidepool export format}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup, message = FALSE}
+library(aidR)
+```
+
+## Overview
+
+A Tidepool export is a *single* multi-sheet `.xlsx` workbook with one sheet per
+data type. The sheets `CGM`, `Basal`, and `Bolus` are always expected to be
+present; the remaining sheets (`Device Event`, `Food`, `Bolus Calculator`,
+`Basal Schedules`, `BG Targets`, `Carb Ratios`, `Insulin Sensitivities`, `SMBG`,
+`Upload`) are optional and are read only if the workbook contains them.
+
+Because Tidepool aggregates data uploaded from many different pumps, meters, and
+CGM devices, the exact set of sheets and the columns within them vary between
+exports. Unlike Glooko or mylife, sheet names and headers are always in English.
+
+```{r}
+path <- system.file("extdata", "tidepool_example.xlsx", package = "aidR")
+```
+
+## How aidR detects this format
+
+`aidR` checks that the file is a readable Excel workbook containing a sheet
+named `CGM`. Since Tidepool's sheet names are stable and language-independent,
+no content-based heuristics are needed - each sheet is looked up by name, and
+missing optional sheets simply yield no data rather than an error.
+
+## Sheets and the data types they produce
+
+```{r}
+data <- parse_data(id = "1", paths = path)
+```
+
+`aidR` compiles the raw Tidepool sheets into a smaller set of data types. The
+list below describes each sheet, shows an example and, in italics, notes which
+clean data type(s) it is compiled into.
+
+- **`CGM`**: CGM data. *Compiled into `cgm`.*
+```{r}
+head(data$cgm)
+```
+- **`Basal`**: basal rates, including the delivery type (e.g. scheduled versus
+  temporary). *Compiled into `basal`.*
+```{r}
+head(data$basal)
+```
+- **`Bolus`**: insulin boluses. *Compiled into `bolus`.*
+```{r}
+head(data$bolus)
+```
+- **`SMBG`**: self-measured blood glucose. *Compiled into `SMBG`.* The raw sheet
+  is additionally preserved as `smbg`.
+```{r}
+head(data$SMBG)
+```
+- **`Bolus Calculator`** or **`Food`**: carbohydrate intake. *Compiled into
+  `carbs`.* Tidepool exports carry one or the other depending on the uploading
+  device, never both, and `aidR` uses whichever is present. If both or neither
+  appear, `aidR` raises an error rather than guessing - so a change in
+  Tidepool's export format is caught immediately. The bundled example contains a
+  `Bolus Calculator` sheet, which is also preserved raw as `bolus_calculator`.
+```{r}
+head(data$carbs)
+```
+- **`Device Event`**: device-level events such as alarms, suspends, resumes, and
+  cannula/reservoir changes.
+```{r}
+head(data$device_event)
+```
+- **`Basal Schedules`**, **`BG Targets`**, **`Carb Ratios`**,
+  **`Insulin Sensitivities`**: pump therapy settings as they changed over time.
+  These are preserved under their own names, since their structure is
+  pump-specific and has no equivalent on other platforms.
+```{r}
+head(data$basal_schedules)
+```
+- **`Upload`**: metadata about each upload to Tidepool (device, time, software
+  version), useful for tracing which device a given stretch of data came from.
+```{r}
+head(data$upload)
+```
+
+## Notes
+
+- The `CGM` sheet is read with a generous `guess_max`, because columns that are
+  sparse early in a large sheet would otherwise be assigned the wrong type.
+- Timestamps carry a per-row UTC offset, so unlike most other platforms
+  `timezone_offset` is populated rather than `NA`.
+- CGM and SMBG values are converted to mg/dL automatically where reported in
+  mmol/L.
+- Some workbooks contain an `EXPORT ERROR` sheet listing records Tidepool could
+  not export; `aidR` does not read it, so consult it directly if data appear to
+  be missing.

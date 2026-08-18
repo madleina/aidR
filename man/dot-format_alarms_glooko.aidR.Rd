@@ -4,9 +4,11 @@
 \alias{.format_alarms_glooko.aidR}
 \title{Format and clean alarm data from Glooko.}
 \usage{
-.format_alarms_glooko.aidR(data)
+.format_alarms_glooko.aidR(id, data)
 }
 \arguments{
+\item{id}{Character or numeric participant identifier.}
+
 \item{data}{A data frame containing the alarm data from a Glooko file.}
 }
 \value{

@@ -4,9 +4,11 @@
 \alias{.format_exercise_glooko.aidR}
 \title{Format and clean exercise data from Glooko.}
 \usage{
-.format_exercise_glooko.aidR(data)
+.format_exercise_glooko.aidR(id, data)
 }
 \arguments{
+\item{id}{Character or numeric participant identifier.}
+
 \item{data}{A data frame containing the exercise data from a Glooko file.}
 }
 \value{

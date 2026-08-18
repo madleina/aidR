@@ -4,9 +4,11 @@
 \alias{.format_bolus_glooko.aidR}
 \title{Format and clean bolus data from Glooko.}
 \usage{
-.format_bolus_glooko.aidR(data)
+.format_bolus_glooko.aidR(id, data)
 }
 \arguments{
+\item{id}{Character or numeric participant identifier.}
+
 \item{data}{A data frame containing the bolus data from a Glooko file.}
 }
 \value{

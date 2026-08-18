@@ -4,10 +4,12 @@
 \alias{clean}
 \title{Generic function for cleaning data}
 \usage{
-clean(data, ...)
+clean(data, id, ...)
 }
 \arguments{
 \item{data}{The data to clean.}
+
+\item{id}{Character or numeric participant identifier.}
 
 \item{...}{Additional arguments passed to methods.}
 }

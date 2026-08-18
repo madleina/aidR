@@ -25,58 +25,58 @@ Data exported from automated insulin delivery (AID) systems are highly heterogen
 The **aidR** package standardizes these exports into a small set of tidy data frames for continuous glucose monitoring (CGM), basal insulin, bolus insulin, carbohydrate data, and potentially other data types. 
 As a result, downstream analyses can be implemented once and applied consistently across data from different AID systems.
 
-The typical workflow has four steps:
+The following steps are supported by the package:
 
 1. **Read and clean** every export file belonging to one participant
    (`parse_data()`).
+2. **Filter** the merged data, e.g. to clean up implausible or duplicated CGM readings (`filter_CGM()`).
 3. **Check completeness** of the merged data, e.g. to flag missing data types or missing days (`check_completeness()`, `check_completeness_range()`).
 4. **Merge across participants** into one long-format data set for the whole study population (`merge_all()`).
 
-The rest of this vignette walks through each step, describes the supported export formats, and shows how to filter the resulting data.
+The rest of this vignette walks through each step, describes the supported export formats, and shows how to filter, check and convert the resulting data.
 
 ## Supported export formats
 
-`parse_data()` figures out, from the *content* of each file, which platform it came from. Importantly, it does not use the file name. 
+`parse_data()` figures out, from the *content* of each file, which platform it came from. Importantly, it does not use the file name.
 This means you can drop files from several participants and several platforms into one folder (or a `.zip` archive, including nested zips) and `parse_data()` will dispatch every file to the right reader automatically. Files with irrelevant extensions (e.g. `.png`, `.pdf`, `.jpg`, `.jpeg`, `.txt`, `.json`) are silently ignored, as are macOS metadata files.
 
-aidR currently supports five export formats:
+aidR currently supports six export formats:
 
-| Platform | Typical file type | Detected by |
-|---|---|---|---|
-| [Glooko] | one CSV per data type |
-| CareLink (Medtronic) | single `.xlsx`/`.csv` export | 
-| mylife (Ypsomed) | single semicolon-delimited CSV | 
-| Tidepool | single multi-sheet `.xlsx` | 
+| Platform | Typical file type |
+|---|---|
+| Glooko | one CSV per data type |
+| CareLink (Medtronic) | single `.xlsx`/`.csv` export |
+| mylife (Ypsomed) | single semicolon-delimited CSV |
+| Tidepool | single multi-sheet `.xlsx` |
 | YourLoops (Diabeloop) | one CSV per data type |
+| Tandem Source | one CSV per data type |
 
-
-`parse_data()` takes an argument `clean_files`. If this is set to `TRUE`, the major data types (CGM, basal, bolus and carbohydrates) are standardized to a common column layout:
+`parse_data()` takes an argument `clean_files`. If this is set to `TRUE`, the major data types (CGM, basal, bolus, carbohydrates and SMBG) are standardized to a common column layout:
 
 - **`cgm`**: `timestamp`, `value` (mg/dL)
 - **`basal`**: `timestamp`, `duration`, `amount`, `rate`
 - **`bolus`**: `timestamp`, `type`, `sub_type`, `duration`, `extended`, `normal`
 - **`carbs`**: `timestamp`, `carbs_grams`, `label`, `estimated_absorption_duration`
+- **`SMBG`**: `timestamp`, `value` (mg/dL)
 
-Platforms often report additional data beyond these four core types (e.g. CareLink also exposes sensor calibrations, alerts, temp basal and device change events; Tidepool exposes pump settings sheets; Glooko exposes total daily insulin, SMBG and alarms). These extra types are preserved in the output under their own name, just not standardized across platforms, since their availability and structure vary by platform.
+Platforms often report additional data beyond these four core types (e.g. CareLink also exposes sensor calibrations, alerts, temp basal and device change events; Tidepool exposes pump settings sheets; Glooko exposes total daily insulin and alarms). These extra types are preserved in the output under their own name, just not standardized across all platforms, since their availability and structure vary by platform.
 
 Not every platform reports every core type: for example, mylife exports only contain `bolus` and `carbs` entries.
 
 ## Reading and cleaning data for one participant
 
-`parse_data()` takes a participant ID and one or more paths (files, folders, or zip archives) and returns a named list, one entry per file found, with the cleaned data for that file:
+`parse_data()` takes a participant ID and one or more paths (files, folders, or zip archives), reads every file it finds, and merges them into a single named list for that participant, one entry per data type:
 
 ```{r}
-path <- system.file("extdata", "1_cycle_1_arm_1_ms_aid_data_1.xlsx", package = "aidR")
+path <- system.file("extdata", "tidepool_example.xlsx", package = "aidR")
 
 data_101 <- parse_data(id = "101", paths = path)
 str(data_101, max.level = 1)
-str(data_101[[1]], max.level = 1)
 ```
 
-Here, `path` happens to be a single Tidepool export, so `data_101` has one entry, containing the standardized `cgm`, `basal`, `bolus` and `carbs` data frames alongside Tidepool-specific extras (`device_event`, `food`, `basal_schedules`, ...).
+Here, `path` happens to be a single Tidepool export, so `data_101` contains the standardized `cgm`, `basal`, `bolus`, `carbs` and `SMBG` data frames alongside Tidepool-specific extras (`device_event`, `bolus_calculator`, `basal_schedules`, ...).
 
-Note that if a participant's data spans several files (e.g. repeated exports over time, or exports from more than one platform), all files belonging to one participant together, by data type, and sorts each resulting data frame by `timestamp`:
-In addition, exact duplicate rows from every data type are removed.
+If a participant's data spans several files or platforms (e.g. repeated exports over time, or exports from more than one platform), `parse_data()` merges all of them together, by data type, and sorts each resulting data frame by `timestamp`. Exact duplicate rows within a data type are removed.
 
 Passing `clean_files = FALSE` returns the raw, unstandardized data as read from the file, tagged with its platform class -- useful for debugging a parser or inspecting a platform's raw layout.
 
@@ -131,7 +131,28 @@ str(combined, max.level = 1)
 head(combined$cgm)
 ```
 
-`merge_all()` always returns the four core types (`cgm`, `basal`, `bolus`, `carbs`); a participant missing one of them simply contributes no rows to that type.
+By default, `merge_all()` returns the four core types plus `SMBG` (`cgm`, `basal`, `bolus`, `carbs`, `SMBG`); a participant missing one of them simply contributes no rows to that type. The `types` argument restricts (or extends) which data types are merged.
+
+## Converting to other formats
+
+Two helper functions convert the standardized data into formats expected by other tools.
+
+`get_iglu_format()` reshapes the `cgm` data frame into the `id`/`time`/`gl` layout expected by the [iglu](https://irinagain.github.io/iglu/) package, so that CGM metrics and visualizations from iglu can be used directly:
+
+```{r}
+iglu_101 <- get_iglu_format(clean_101)
+head(iglu_101)
+```
+
+`write_DIAX_format()` writes CGM, basal, bolus, carbs and SMBG data to one JSON file per participant, following the [DIAX](https://github.com/Center-for-Diabetes-Technology/DIAX) specification. It accepts either the output of `parse_data()` for a single participant or the output of `merge_all()` for several, and writes one file per id to `paste0(prefix, id, ".json")`:
+
+```{r}
+diax_dir <- tempfile()
+dir.create(diax_dir)
+
+write_DIAX_format(combined, prefix = file.path(diax_dir, "id_"))
+list.files(diax_dir)
+```
 
 ## Putting it all together
 

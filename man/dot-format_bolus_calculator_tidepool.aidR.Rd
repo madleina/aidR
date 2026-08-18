@@ -4,9 +4,11 @@
 \alias{.format_bolus_calculator_tidepool.aidR}
 \title{Format and clean carbohydrates from bolus calculator data from Tidepool}
 \usage{
-.format_bolus_calculator_tidepool.aidR(bolus_calculator)
+.format_bolus_calculator_tidepool.aidR(id, bolus_calculator)
 }
 \arguments{
+\item{id}{Character or numeric participant identifier.}
+
 \item{bolus_calculator}{A data frame containing the bolus calculator data from a Tidepool file.}
 }
 \value{

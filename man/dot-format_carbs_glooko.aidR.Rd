@@ -4,9 +4,11 @@
 \alias{.format_carbs_glooko.aidR}
 \title{Format and clean carbohydrate data from Glooko.}
 \usage{
-.format_carbs_glooko.aidR(data)
+.format_carbs_glooko.aidR(id, data)
 }
 \arguments{
+\item{id}{Character or numeric participant identifier.}
+
 \item{data}{A data frame containing the carbohydrate data from a Glooko file.}
 }
 \value{

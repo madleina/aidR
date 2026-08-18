@@ -4,9 +4,11 @@
 \alias{.clean_mylife_carbs.aidR}
 \title{Format and clean carbohydrate entries of a Mylife export.}
 \usage{
-.clean_mylife_carbs.aidR(carbs)
+.clean_mylife_carbs.aidR(id, carbs)
 }
 \arguments{
+\item{id}{Character or numeric participant identifier.}
+
 \item{carbs}{A data frame containing the carbohydrate data from a Mylife file.}
 }
 \value{

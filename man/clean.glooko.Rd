@@ -4,10 +4,12 @@
 \alias{clean.glooko}
 \title{Format and clean the Glooko data to keep relevant columns only.}
 \usage{
-\method{clean}{glooko}(data, ...)
+\method{clean}{glooko}(data, id, ...)
 }
 \arguments{
 \item{data}{An instance of class \code{glooko}, wrapping a named list with data of a particular data type.}
+
+\item{id}{Character or numeric participant identifier.}
 
 \item{...}{Additional arguments passed to methods.}
 }

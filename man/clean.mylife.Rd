@@ -4,10 +4,12 @@
 \alias{clean.mylife}
 \title{Format and clean the Mylife data to keep relevant columns only.}
 \usage{
-\method{clean}{mylife}(data, ...)
+\method{clean}{mylife}(data, id, ...)
 }
 \arguments{
 \item{data}{An instance of class \code{mylife}, wrapping a named list with data of different types.}
+
+\item{id}{Character or numeric participant identifier.}
 
 \item{...}{Additional arguments passed to methods.}
 }

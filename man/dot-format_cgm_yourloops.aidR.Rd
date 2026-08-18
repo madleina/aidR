@@ -4,9 +4,11 @@
 \alias{.format_cgm_yourloops.aidR}
 \title{Format and clean CGM data from Yourloops}
 \usage{
-.format_cgm_yourloops.aidR(cgm)
+.format_cgm_yourloops.aidR(id, cgm)
 }
 \arguments{
+\item{id}{Character or numeric participant identifier.}
+
 \item{cgm}{A data frame containing the CGM data from a Yourloops file.}
 }
 \value{

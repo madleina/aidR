@@ -9,7 +9,7 @@
 \arguments{
 \item{id}{Character or numeric participant identifier.}
 
-\item{filename}{Character string corresponding to the filename of the Glooko export.}
+\item{filename}{Character string corresponding to the filename of the Carelink export.}
 }
 \value{
 A list of three data frames containing (1) many different information, (2) daily aggregated insulin and (3) CGM measurement data.

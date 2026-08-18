@@ -4,9 +4,11 @@
 \alias{.format_cgm_tidepool.aidR}
 \title{Format and clean CGM data from Tidepool}
 \usage{
-.format_cgm_tidepool.aidR(cgm)
+.format_cgm_tidepool.aidR(id, cgm)
 }
 \arguments{
+\item{id}{Character or numeric participant identifier.}
+
 \item{cgm}{A data frame containing the CGM data from a Tidepool file.}
 }
 \value{

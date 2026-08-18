@@ -4,9 +4,11 @@
 \alias{.format_SMBG_glooko.aidR}
 \title{Format and clean SMBG (bg sheet) data from Glooko.}
 \usage{
-.format_SMBG_glooko.aidR(data)
+.format_SMBG_glooko.aidR(id, data)
 }
 \arguments{
+\item{id}{Character or numeric participant identifier.}
+
 \item{data}{A data frame containing the SMBG data from a Glooko file.}
 }
 \value{

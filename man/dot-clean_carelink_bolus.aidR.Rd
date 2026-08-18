@@ -4,9 +4,11 @@
 \alias{.clean_carelink_bolus.aidR}
 \title{Format and clean bolus entries of a Carelink export.}
 \usage{
-.clean_carelink_bolus.aidR(bolus)
+.clean_carelink_bolus.aidR(id, bolus)
 }
 \arguments{
+\item{id}{Character or numeric participant identifier.}
+
 \item{bolus}{A data frame containing the bolus data from a Carelink file.}
 }
 \value{

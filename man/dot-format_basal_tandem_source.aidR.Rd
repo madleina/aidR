@@ -4,9 +4,11 @@
 \alias{.format_basal_tandem_source.aidR}
 \title{Format and clean basal data from Tandem Source}
 \usage{
-.format_basal_tandem_source.aidR(basal)
+.format_basal_tandem_source.aidR(id, basal)
 }
 \arguments{
+\item{id}{Character or numeric participant identifier.}
+
 \item{basal}{A data frame containing the basal data from a Tandem Source file.}
 }
 \value{

@@ -4,9 +4,11 @@
 \alias{.format_cgm_tandem_source.aidR}
 \title{Format and clean CGM data from Tandem Source}
 \usage{
-.format_cgm_tandem_source.aidR(cgm)
+.format_cgm_tandem_source.aidR(id, cgm)
 }
 \arguments{
+\item{id}{Character or numeric participant identifier.}
+
 \item{cgm}{A data frame containing the CGM data from a Tandem Source file.}
 }
 \value{

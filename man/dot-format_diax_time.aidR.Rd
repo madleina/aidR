@@ -2,20 +2,24 @@
 % Please edit documentation in R/06_conversions.R
 \name{.format_diax_time.aidR}
 \alias{.format_diax_time.aidR}
-\title{Format timestamps according to the DIAX \code{"Y-m-d H:M:S Z"} convention.}
+\title{Format timestamps according to the DIAX ISO 8601 convention.}
 \usage{
-.format_diax_time.aidR(timestamp, tz_offset)
+.format_diax_time.aidR(timestamp, timezone_offset)
 }
 \arguments{
-\item{timestamp}{A vector of timestamps.}
+\item{timestamp}{A vector of timestamps, in local time.}
 
-\item{tz_offset}{Character string with the UTC offset of the timestamps, in the
-form \code{"+HH:MM"} or \code{"-HH:MM"}.}
+\item{timezone_offset}{A numeric vector (same length as \code{timestamp})
+with the UTC offset in hours, or \code{NA} where the offset is unknown.}
 }
 \value{
-A character vector of formatted timestamps.
+A character vector of formatted timestamps, e.g.
+\code{"2025-09-27 14:02:20 -0400"} when the offset is known, or
+\code{"2025-09-27 14:02:20"} when it is not.
 }
 \description{
-Format timestamps according to the DIAX \code{"Y-m-d H:M:S Z"} convention.
+Per the DIAX specification, timestamps are \code{"Y-m-d H:M:S"} when the
+timezone is unknown, or \code{"Y-m-d H:M:S Z"} (offset appended, no colon)
+when it is known.
 }
 \keyword{internal}

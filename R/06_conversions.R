@@ -22,7 +22,8 @@ get_iglu_format <- function(data){
          Please make sure parse_data() was run with clean = TRUE.")
   }
   
-  iglu_df <- iglu::process_data(data$cgm, id = "id", timestamp = "timestamp", glu = "value")
+  cgm <- data$cgm[, c("id", "timestamp", "value")]
+  iglu_df <- iglu::process_data(cgm, id = "id", timestamp = "timestamp", glu = "value")
   return(iglu_df)
 }
 
@@ -185,7 +186,6 @@ write_DIAX_format <- function(data, prefix, ids = NULL){
 
   paste(sort(devices), collapse = ", ")
 }
-
 
 #' Get metadata explanation for timestamps (depending on local time, with or without timestamp)
 #'

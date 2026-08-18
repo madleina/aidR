@@ -4,9 +4,11 @@
 \alias{.format_bolus_tandem_source.aidR}
 \title{Format and clean bolus data from Tandem Source}
 \usage{
-.format_bolus_tandem_source.aidR(bolus)
+.format_bolus_tandem_source.aidR(id, bolus)
 }
 \arguments{
+\item{id}{Character or numeric participant identifier.}
+
 \item{bolus}{A data frame containing the bolus data from a Tandem Source file.}
 }
 \value{

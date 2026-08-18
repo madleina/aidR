@@ -4,9 +4,11 @@
 \alias{.format_basal_yourloops.aidR}
 \title{Format and clean basal data from Yourloops}
 \usage{
-.format_basal_yourloops.aidR(basal)
+.format_basal_yourloops.aidR(id, basal)
 }
 \arguments{
+\item{id}{Character or numeric participant identifier.}
+
 \item{basal}{A data frame containing the basal data from a Yourloops file.}
 }
 \value{

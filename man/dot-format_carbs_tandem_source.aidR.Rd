@@ -4,9 +4,11 @@
 \alias{.format_carbs_tandem_source.aidR}
 \title{Format and clean carbs data from Tandem Source}
 \usage{
-.format_carbs_tandem_source.aidR(carbs)
+.format_carbs_tandem_source.aidR(id, carbs)
 }
 \arguments{
+\item{id}{Character or numeric participant identifier.}
+
 \item{carbs}{A data frame containing the carbs data from a Tandem Source file.}
 }
 \value{

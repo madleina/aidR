@@ -4,9 +4,11 @@
 \alias{.clean_mylife_bolus.aidR}
 \title{Format and clean bolus entries of a Mylife export.}
 \usage{
-.clean_mylife_bolus.aidR(bolus)
+.clean_mylife_bolus.aidR(id, bolus)
 }
 \arguments{
+\item{id}{Character or numeric participant identifier.}
+
 \item{bolus}{A data frame containing the bolus data from a Mylife file.}
 }
 \value{

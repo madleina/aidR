@@ -4,9 +4,11 @@
 \alias{.clean_carelink_basal.aidR}
 \title{Format and clean basal entries of a Carelink export.}
 \usage{
-.clean_carelink_basal.aidR(basal)
+.clean_carelink_basal.aidR(id, basal)
 }
 \arguments{
+\item{id}{Character or numeric participant identifier.}
+
 \item{basal}{A data frame containing the basal data from a Carelink file.}
 }
 \value{

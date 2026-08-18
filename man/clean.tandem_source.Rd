@@ -4,10 +4,12 @@
 \alias{clean.tandem_source}
 \title{Format and clean the Tandem Source data to keep relevant columns only.}
 \usage{
-\method{clean}{tandem_source}(data, ...)
+\method{clean}{tandem_source}(data, id, ...)
 }
 \arguments{
 \item{data}{An instance of class \code{tandem_source}, wrapping a named list with data of a particular data type.}
+
+\item{id}{Character or numeric participant identifier.}
 
 \item{...}{Additional arguments passed to methods.}
 }

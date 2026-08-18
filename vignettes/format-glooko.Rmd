@@ -1,0 +1,108 @@
+---
+title: "aidR: Glooko export format"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{aidR: Glooko export format}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup, message = FALSE}
+library(aidR)
+```
+
+## Overview
+
+A Glooko export is a folder (possibly zipped) containing CSV files for various data types. 
+A single data type may be split across two or
+more files, which are then numbered `cgm_data_1.csv`, `cgm_data_2.csv`, and so
+on; `aidR` reads and concatenates all matching files. Every file starts with a
+one-line header such as `Name:First Last,Date Range:2024-01-01 - 2024-03-01`
+before the actual column headers. Both the one-line header and the column
+headers are language-specific and may differ depending on the user's account
+language.
+
+```{r}
+path <- system.file("extdata", "glooko_example.zip", package = "aidR")
+```
+
+## How aidR detects this format
+
+Because headers in Glooko exports are language-specific,
+`aidR` cannot rely on header names to identify a file.
+Instead, it checks the *structure* of the first line
+(`something:something,something:date - date`) and distinguishes between data
+types by matching the expected number of columns, which columns are numeric,
+and (where available) a language-independent keyword such as `"(g)"` for carbs
+or `"Insulin"` for bolus/basal/total-insulin files.
+
+## Files and the data types they produce
+
+```{r}
+data <- parse_data(id = "1", paths = path)
+```
+
+`aidR` compiles the raw Glooko CSVs into a smaller set of data types. The
+list below describes each raw file, shows an example and, in italics, notes which clean data
+type(s) it is compiled into.
+
+- **`alarms_data_*.csv`**: pump alarms.
+
+```{r}
+head(data$alarm)
+```
+
+- **`bg_data_*.csv`**: self-measured blood glucose (SMBG). *Compiled into `SMBG`.*
+
+```{r}
+head(data$SMBG)
+```
+
+- **`carbs_data_*.csv`** / **`cgm_carbs_data_*.csv`**: carbohydrate intake. These
+  do **not** correspond to the carbohydrate intake communicated to the bolus
+  calculator, and are almost always missing entirely. They are therefore
+  ignored when building the clean `carbs` output, which instead comes from the
+  bolus files (see below).
+- **`cgm_data_*.csv`**: CGM data. *Compiled into `cgm`.*
+```{r}
+head(data$cgm)
+```
+- **`Insulin data/basal_data_*.csv`**: basal rates. *Compiled into `basal`.* For
+  Omnipod users these are often very sparse or missing.
+  For these users, the few entries that do appear correspond to basal rates delivered while in 
+  manual mode; basal delivered in automated mode is unknown and can only be 
+  roughly approximated from the daily aggregated insulin.
+```{r}
+head(data$basal)
+```
+- **`Insulin data/bolus_data_*.csv`**: boluses. *Compiled into `bolus`, and also
+  into `carbs`* (bolus calculator). Also records whether
+  a bolus was normal, square-wave, or dual-wave (although the duration for the latter two are unknown).
+```{r}
+head(data$bolus)
+```
+- **`Insulin data/insulin_data_1.csv`**: daily aggregated bolus, basal, and total
+  insulin.
+```{r}
+head(data$total_insulin)
+```
+- **`Manual data/` files** (`exercise_data_*`, `food_data_*`,
+  `manual_insulin_data_*`, `medication_data_*`, `notes_data_*`): self-reported
+  entries made by the user in the Glooko app - exercise, food intake, manual
+  insulin deliveries, medication, and free-text notes, respectively. These are
+  often very sparse or missing entirely.
+
+## Notes
+
+- CGM and SMBG values are reported in mg/dL or mmol/L depending on account
+  settings; `aidR` converts to mg/dL automatically.
+- Serial numbers are reported for some data types (e.g. basal, bolus) but are
+  not mapped to a device/pump name.
+- `sensor_name` for CGM is always `NA`, since Glooko exports do not report it.

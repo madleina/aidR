@@ -1,0 +1,103 @@
+---
+title: "aidR: Tandem Source export format"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{aidR: Tandem Source export format}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup, message = FALSE}
+library(aidR)
+```
+
+## Overview
+
+A Tandem Source export is a folder (possibly zipped) containing one CSV per data
+type. Filenames combine the participant, serial number, and export date with a
+data-type suffix, e.g.
+
+```
+XXX_1111111_10Mar2026_1111-CGM.csv
+XXX_1111111_10Mar2026_1111-Basal-doses.csv
+XXX_1111111_10Mar2026_1111-Bolus.csv
+XXX_1111111_10Mar2026_1111-BG.csv
+XXX_1111111_10Mar2026_1111-Hourly-basal-delivery.csv
+```
+
+Column headers are always in English regardless of account language. Each file
+records the device type (e.g. `Tandem Mobi™ System`) and serial number per row,
+so the pump and sensor can be identified directly from the data.
+
+```{r}
+path <- system.file("extdata", "tandem_source_example.zip", package = "aidR")
+```
+
+## How aidR detects this format
+
+Because the headers are stable and language-independent, `aidR` identifies each
+file by matching its column names against a lookup of the expected headers per
+data type. Note that the filename suffix is *not* used for this: a file is
+recognized purely from its header row, so renamed or re-exported files are still
+dispatched correctly.
+
+## Files and the data types they produce
+
+```{r}
+data <- parse_data(id = "1", paths = path)
+```
+
+`aidR` compiles the raw Tandem Source CSVs into a smaller set of data types. The
+list below describes each raw file, shows an example and, in italics, notes
+which clean data type(s) it is compiled into.
+
+- **`*-CGM.csv`**: CGM data. *Compiled into `cgm`.*
+```{r}
+head(data$cgm)
+```
+- **`*-Basal-doses.csv`**: the basal insulin dose commanded at each event.
+  *Compiled into `basal`.* Tandem reports doses rather than rates and gives no
+  explicit duration, so `aidR` derives the duration of each entry from the gap to
+  the following one and converts the dose into a rate in U/h.
+```{r}
+head(data$basal)
+```
+- **`*-Bolus.csv`**: insulin boluses, including the bolus type and delivery
+  method, the food and correction components, and the completion status.
+  *Compiled into `bolus`, and also into `carbs`*, since the carbohydrates
+  communicated to the bolus calculator are recorded on the same rows.
+```{r}
+head(data$bolus)
+```
+```{r}
+head(data$carbs)
+```
+- **`*-BG.csv`**: self-measured blood glucose. *Compiled into `SMBG`.*
+```{r}
+head(data$SMBG)
+```
+- **`*-Hourly-basal-delivery.csv`**: basal insulin aggregated per hour, with one
+  column per hour of the day. This is preserved as `hourly_basal` rather than
+  merged into `basal`, since its wide, aggregated layout does not fit the
+  per-event schema used across platforms.
+```{r}
+head(data$hourly_basal)
+```
+
+## Notes
+
+- `timezone_offset` is always `NA`, since Tandem Source exports report only local
+  (wall-clock) time.
+- The device type is carried through as `pump_name` for insulin data and
+  `sensor_name` for glucose data. Note that these strings may contain invisible
+  Unicode direction marks around the device name, as they appear in the export.
+- Because basal durations are inferred from consecutive timestamps, the final
+  basal entry of an export has no successor and its duration is therefore
+  unknown.

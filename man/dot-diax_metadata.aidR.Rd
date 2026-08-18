@@ -4,14 +4,11 @@
 \alias{.diax_metadata.aidR}
 \title{Build the \code{metadata} section of a DIAX list.}
 \usage{
-.diax_metadata.aidR(diax, tz_offset, metadata)
+.diax_metadata.aidR(data_id)
 }
 \arguments{
-\item{diax}{The DIAX list built so far (used to know which series are present).}
-
-\item{tz_offset}{Character string with the UTC offset of the timestamps.}
-
-\item{metadata}{A named list of user-supplied overrides.}
+\item{data_id}{A list with the standardized aidR data frames present for
+one individual, named by aidR type (\code{cgm}, \code{bolus}, ...).}
 }
 \value{
 A named list to be used as the \code{metadata} entry of the DIAX list.

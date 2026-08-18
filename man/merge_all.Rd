@@ -4,10 +4,12 @@
 \alias{merge_all}
 \title{Merge data available for all individuals, separately per data type.}
 \usage{
-merge_all(data)
+merge_all(data, types = c("cgm", "basal", "bolus", "carbs", "SMBG"))
 }
 \arguments{
 \item{data}{A list with data found for all individual.}
+
+\item{types}{A vector with data type names to be merged.}
 }
 \value{
 A list with data found for all individual, merged for each data type.

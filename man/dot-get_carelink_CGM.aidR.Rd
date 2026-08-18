@@ -4,7 +4,7 @@
 \alias{.get_carelink_CGM.aidR}
 \title{Parse all entries corresponding to CGM data in a Carelink export.}
 \usage{
-.get_carelink_CGM.aidR(df)
+.get_carelink_CGM.aidR(df, sensor_name)
 }
 \arguments{
 \item{df}{A data frame obtained from reading a Carelink file.}
