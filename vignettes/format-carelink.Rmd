@@ -23,10 +23,14 @@ library(aidR)
 A CareLink (Medtronic) export is a *single* semicolon-delimited `.csv` (or
 `.xlsx`) file. The file is divided into **sections** separated by marker rows of
 the form `-------;MiniMed 780G MMT-1886;Pump;XXXXXXXXXX;-------`. Each section
-has its own header row and its own set of columns.
+has its own header row and its own set of columns:
 
-```{r}
+```{r, include=FALSE}
 path <- system.file("extdata", "carelink_example.csv", package = "aidR")
+```
+
+```{r, comment = ""}
+writeLines(readLines(path, n = 10))
 ```
 
 ## How aidR detects this format
@@ -41,7 +45,7 @@ to CareLink, so the presence of `MiniMed` uniquely marks the format.
 data <- parse_data(id = "1", paths = path, clean_files = FALSE)
 ```
 
-Because everything arrives in one file, most of the parsing work happens up
+Because all information is present in one file, most of the parsing work happens up
 front: the file is split into sections, and the large "Pump" section is then
 split further into individual event types based on which columns are populated
 on each row. (Here `clean_files = FALSE` returns these intermediate sections so
