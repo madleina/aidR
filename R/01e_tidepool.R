@@ -59,23 +59,24 @@ clean.tidepool <- function(data, id, ...){
   data <- unclass(data)
   
   # Format CGM, basal, bolus and carb data
-  data$cgm <- .format_cgm_tidepool.aidR(id, data$cgm)
-  data$basal <- .format_basal_tidepool.aidR(id, data$basal)
-  data$bolus <- .format_bolus_tidepool.aidR(id, data$bolus)
-  data$SMBG <- .format_SMBG_tidepool.aidR(id, data$smbg)
+  data_new <- list()
+  data_new$cgm <- .format_cgm_tidepool.aidR(id, data$cgm)
+  data_new$basal <- .format_basal_tidepool.aidR(id, data$basal)
+  data_new$bolus <- .format_bolus_tidepool.aidR(id, data$bolus)
+  data_new$SMBG <- .format_SMBG_tidepool.aidR(id, data$smbg)
   
   if (!is.null(data$food) & !is.null(data$bolus_calculator)){
     stop(paste0("Found both food and bolus calculator data. Figure out which one to keep."))
   } else if (!is.null(data$food)){
-    data$carbs <- .format_food_tidepool.aidR(id, data$food)
+    data_new$carbs <- .format_food_tidepool.aidR(id, data$food)
   } else if (!is.null(data$bolus_calculator)){
-    data$carbs <- .format_bolus_calculator_tidepool.aidR(id, data$bolus_calculator)
+    data_new$carbs <- .format_bolus_calculator_tidepool.aidR(id, data$bolus_calculator)
   } else {
     stop(paste0("No data on carbohydrates available!"))
   }
 
   # Found everything
-  return(data)
+  return(data_new)
 }
 
 #------------------------

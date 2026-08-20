@@ -55,8 +55,8 @@ clean.tandem_source <- function(data, id, ...) {
     return(list(SMBG = .format_bg_tandem_source.aidR(id, data$bg)))
   }
 
-  # All other formats: just return the way they are
-  return(data)
+  # All other formats: don't clean, return NULL
+  return(NULL)
 }
 
 #------------------------

@@ -56,8 +56,8 @@ clean.yourloops <- function(data, id, ...) {
     return(list(carbs = .format_rescuecarbs_yourloops.aidR(id, data$rescuecarbs)))
   }
 
-  # All other formats: just return the way they are
-  return(data)
+  # All other formats: don't clean, return NULL
+  return(NULL)
 }
 
 #------------------------
@@ -195,7 +195,7 @@ clean.yourloops <- function(data, id, ...) {
     timezone_offset = -cgm$timezoneOffSet / 60, # take -offset as we've added it to timestamp before
     value = cgm$value,
     unit = "mg/dL",
-    pump_name = cgm$cgmModel
+    sensor_name = cgm$cgmModel
   )
 
   return(cgm)

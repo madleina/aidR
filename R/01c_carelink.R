@@ -73,13 +73,14 @@ clean.carelink <- function(data, id, ...){
   data <- unclass(data)
   
   # Format cgm, basal, bolus and carbs to unit format
-  data$cgm <- .clean_carelink_CGM.aidR(id, data$cgm)
-  data$basal <- .clean_carelink_basal.aidR(id, data$basal_rates)
-  data$bolus <- .clean_carelink_bolus.aidR(id, data$bolus)
-  data$carbs <- .clean_carelink_carbs.aidR(id, data$bwz)
-  data$SMBG <- .clean_carelink_SMBG.aidR(id, data$SMBG)
+  data_new <- list()
+  data_new$cgm <- .clean_carelink_CGM.aidR(id, data$cgm)
+  data_new$basal <- .clean_carelink_basal.aidR(id, data$basal_rates)
+  data_new$bolus <- .clean_carelink_bolus.aidR(id, data$bolus)
+  data_new$carbs <- .clean_carelink_carbs.aidR(id, data$bwz)
+  data_new$SMBG <- .clean_carelink_SMBG.aidR(id, data$SMBG)
   
-  return(data)
+  return(data_new)
 }
 
 #------------------------

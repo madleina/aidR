@@ -20,79 +20,60 @@ library(aidR)
 
 ## Overview
 
-A CareLink (Medtronic) export is a *single* semicolon-delimited `.csv` (or
-`.xlsx`) file. The file is divided into **sections** separated by marker rows of
-the form `-------;MiniMed 780G MMT-1886;Pump;XXXXXXXXXX;-------`. Each section
-has its own header row and its own set of columns:
-
 ```{r, include=FALSE}
 path <- system.file("extdata", "carelink_example.csv", package = "aidR")
 ```
 
-```{r, comment = ""}
+A CareLink (Medtronic) export is a *single* semicolon-delimited `.csv` (or `.xlsx`) file. The file is divided into *sections* separated by marker rows of the form `-------;MiniMed 780G MMT-1886;Pump;XXXXXXXXXX;-------`. Each section has its own header row and its own set of columns:
+
+```{r, comment = "", echo = FALSE}
 writeLines(readLines(path, n = 10))
 ```
 
 ## How aidR detects this format
 
-`aidR` identifies a CareLink export by the keyword `MiniMed`: CareLink only
-accepts uploads from Medtronic MiniMed pumps, and MiniMed pumps can only upload
-to CareLink, so the presence of `MiniMed` uniquely marks the format.
+`aidR` identifies a CareLink export by the keyword `MiniMed`: CareLink only accepts uploads from Medtronic MiniMed pumps, and MiniMed pumps can only upload to CareLink, so the presence of `MiniMed` uniquely marks the format.
 
 ## Sections and the data types they produce
+
+To inspect the files, we parse the export with `clean_files = FALSE`, which returns the full information provided by CareLink:
 
 ```{r}
 data <- parse_data(id = "1", paths = path, clean_files = FALSE)
 ```
 
-Because all information is present in one file, most of the parsing work happens up
-front: the file is split into sections, and the large "Pump" section is then
-split further into individual event types based on which columns are populated
-on each row. (Here `clean_files = FALSE` returns these intermediate sections so
-they can be shown individually.)
+Because all information is present in one file, most of the parsing work happens up front: the file is split into sections, and the large "Pump" section is then split further into individual event types based on which columns are populated on each row. 
 
-The list below describes each section, shows an example and, in italics, notes
-which clean data type(s) it is compiled into. Sections and event types without
-such a note are parsed and returned, but are not standardized further.
+The list below describes the differnt sections and the information we can get from it.
 
-- **Header block** (first rows, before the first `-------`): patient, pump, and
-  sensor information. `aidR` reads the pump name (e.g. `MiniMed 780G MMT-1886`)
-  and sensor name (e.g. `Guardian™ 4 Sensor`) from here.
+- **Header block** (first rows, before the first `-------`): patient, pump, and sensor information. `aidR` reads the pump name (e.g. `MiniMed 780G MMT-1886`) and sensor name (e.g. `Guardian™ 4 Sensor`) from here.
 
-- **Pump section**: split by event type. The following are compiled into clean
-  data types:
+- **Pump section**: split by event type into
 
-  - basal rates. *Compiled into `basal`.*
+  - basal rates.
 
 ```{r}
 head(data$basal)
 ```
 
-  - boluses. *Compiled into `bolus`.* Records whether a bolus was normal,
-    square-wave, or dual-wave, along with the delivered volume and, for extended
-    boluses, the duration.
+  - boluses. Records whether a bolus was normal, square-wave, or dual-wave, along with the delivered volume and, for extended boluses, the duration.
 
 ```{r}
 head(data$bolus)
 ```
 
-  - bolus wizard (BWZ) entries, i.e. the carbohydrates communicated to the bolus
-    calculator together with the resulting recommendation. *Compiled into
-    `carbs`.* `aidR` matches these against the bolus events so that a
+  - bolus wizard (BWZ) entries, i.e. the carbohydrates communicated to the bolus calculator together with the resulting recommendation. `aidR` matches these against the bolus events so that a
     carbohydrate entry can be linked to the bolus it triggered.
 
 ```{r}
 head(data$bwz)
 ```
 
-  - self-measured blood glucose (SMBG) entries. *Compiled into `SMBG`.*
+  - self-measured blood glucose (SMBG) entries.
 
 ```{r}
 head(data$SMBG)
 ```
-
-  The remaining event types are extracted and returned, but are not compiled
-  into a clean data type:
 
   - alerts and alarms raised by the pump.
 
@@ -112,7 +93,7 @@ head(data$prime)
 head(data$temp_basal)
 ```
 
-  - correction-bolus information.
+  - correction-bolus information (not present in this example).
 
 ```{r}
 head(data$corr_bolus_info)
@@ -136,26 +117,32 @@ head(data$insulin_action_curve)
 head(data$device_changes)
 ```
 
-- **Aggregated Auto Insulin Data section**: daily aggregated insulin delivered
-  in automated mode.
+- **Aggregated Auto Insulin Data section**: daily aggregated insulin delivered in automated mode.
 
 ```{r}
 head(data$aggr_daily_insulin)
 ```
 
-- **Sensor section**: CGM data. *Compiled into `cgm`.*
+- **Sensor section**: CGM data.
 
 ```{r}
 head(data$cgm)
 ```
 
+## Cleaning files
+
+When `parse_data` is run with `clean_files = TRUE`, the cleaned data types are built from the following raw files and attributes:
+
+| Cleaned data type |  Used files            | Used attributes |
+|-------------------|------------------------|-----------------|
+| `cgm`             | `carelink_example.csv` | `data$cgm`      |
+| `basal`           | `carelink_example.csv` | `data$basal`    |
+| `bolus`           | `carelink_example.csv` | `data$bolus`    |
+| `carbs`           | `carelink_example.csv` | `data$bwz`      |
+| `SMBG`            | `carelink_example.csv` | `data$SMBG`     |
+
 ## Notes
 
-- CGM and SMBG values are reported in mg/dL or mmol/L depending on account
-  settings; `aidR` converts to mg/dL automatically.
-- `timezone_offset` is always `NA`, since CareLink exports report only local
-  (wall-clock) time.
-- Which sections are present depends on the pump/CGM combination and on what the
-  participant actually used; empty sections are dropped rather than returned as
-  empty data frames.
+- CGM and SMBG values are reported in mg/dL or mmol/L depending on account settings; `aidR` converts to mg/dL automatically.
+- `timezone_offset` is always `NA`, since CareLink exports report only local (wall-clock) time.
 

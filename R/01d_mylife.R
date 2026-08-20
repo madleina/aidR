@@ -70,15 +70,18 @@ clean.mylife <- function(data, id, ...){
   # Remove class attribute for ease
   data <- unclass(data)
   
-  # find all bolus- and carb-related entries
+  # find all bolus-, carb- and SMBG-related entries
   # Note: language-specific -> use unit (g) to identify them
   bolus_in_list <- sapply(data, function(x) return(all(grepl("^U", x$units))))
   carbs_in_list <- sapply(data, function(x) return(all(grepl("^g ", x$units))))
+  smbg_in_list <- sapply(data, function(x) return(all(grepl("^mg/dL", x$units) | grepl("^mmol/L", x$units))))
   
-  data$bolus <- .clean_mylife_bolus.aidR(id, bind_rows(data[bolus_in_list]))
-  data$carbs <- .clean_mylife_carbs.aidR(id, bind_rows(data[carbs_in_list]))
-
-  return(data)
+  data_new <- list()
+  data_new$bolus <- .clean_mylife_bolus.aidR(id, bind_rows(data[bolus_in_list]))
+  data_new$carbs <- .clean_mylife_carbs.aidR(id, bind_rows(data[carbs_in_list]))
+  data_new$SMBG <- .clean_mylife_SMBG.aidR(id, bind_rows(data[smbg_in_list]))
+  
+  return(data_new)
 }
 
 #------------------------
@@ -118,6 +121,8 @@ clean.mylife <- function(data, id, ...){
 #'
 #' @keywords internal
 .clean_mylife_bolus.aidR <- function(id, bolus){
+  if (is.null(bolus) | nrow(bolus) == 0){ return(NULL) }
+  
   bolus <- bolus %>% 
     mutate(id = id,
            format = "mylife",
@@ -146,6 +151,8 @@ clean.mylife <- function(data, id, ...){
 #'
 #' @keywords internal
 .clean_mylife_carbs.aidR <- function(id, carbs){
+  if (is.null(carbs) | nrow(carbs) == 0){ return(NULL) }
+  
   carbs <- carbs %>% 
     mutate(id = id,
            format = "mylife",
@@ -161,6 +168,34 @@ clean.mylife <- function(data, id, ...){
            "label", "estimated_absorption_duration", "is_hypo_treatment")
   
   return(carbs)
+}
+
+#' Format and clean SMBG entries of a Mylife export.
+#'
+#' @param id Character or numeric participant identifier.
+#' @param carbs A data frame containing the SMBG data from a Mylife file.
+#'
+#' @return A data frame containing the formatted and cleaned SMBG data.
+#'
+#' @keywords internal
+.clean_mylife_SMBG.aidR <- function(id, SMBG){
+  if (is.null(SMBG) | nrow(SMBG) == 0){ return(NULL) }
+  
+  # Make sure SMBG is in mg/dl
+  SMBG$amount[SMBG$units == "mmol/L"] <- as.numeric(SMBG$amount[SMBG$units == "mmol/L"]) * 18.018
+  
+  # Select columns: timestamp and value
+  SMBG <- SMBG %>%
+    mutate(id = id,
+           format = "mylife",
+           timestamp = as_datetime(.data$timestamp),
+           timezone_offset = NA,
+           value = as.numeric(gsub(pattern = ",", replacement = ".", .data$amount)),
+           unit = "mg/dL",
+           sensor_name = NA) %>% 
+  select("id", "format", "timestamp", "timezone_offset", "value", "unit", "sensor_name")
+  
+  return(SMBG)
 }
 
 

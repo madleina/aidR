@@ -18,7 +18,7 @@ This vignette explains *why* aidR is built the way it is. For a hands-on walkthr
 
 ## Goal: one interface, many platforms
 
-Every AID platform exports the same underlying concepts (CGM readings, basal delivery, boluses, carbohydrate intake) but encodes them completely differently: different file layouts, column names, units, languages, and levels of detail. aidR's central design goal is that downstream analysis code should not need to know which platform a participant's data came from. Everything upstream of `parse_data(clean_files = TRUE)` is platform-specific; everything downstream works on a small, fixed set of standardized data frames.
+Every AID platform exports the same underlying concepts (CGM readings, basal delivery, boluses, carbohydrate intake) but encodes them differently: different file layouts, column names, units, languages, and levels of detail. aidR's central design goal is that downstream analysis code should not need to know which platform a participant's data came from. Everything upstream of `parse_data(clean_files = TRUE)` is platform-specific; everything downstream works on a small, fixed set of standardized data frames.
 
 ## Detecting formats from content, not filenames
 
@@ -30,46 +30,15 @@ Every AID platform exports the same underlying concepts (CGM readings, basal del
 
 This is why users can drop a folder containing exports from several participants and several platforms (even nested inside `.zip` archives) into `parse_data()` and have every file routed to the right parser automatically -- see `vignette("aidR")` for an example.
 
-## A common S3 interface per platform
-
-Each platform implements the same two-function contract:
-
-- `read_<platform>(id, filename)` reads one file and returns an object of class `<platform>`, wrapping the raw, unstandardized content.
-- `clean.<platform>(data, id, ...)`, an S3 method for the generic `clean()`, turns that raw object into a named list of data frames.
-
-`.process_file.aidR()` is the only place that knows about all platforms: it tries each `.is_<platform>_format.aidR()` in turn, calls the matching `read_<platform>()`, and (if `clean_files = TRUE`) dispatches to `clean()`. Adding a new platform means adding a new `read_*`/`clean.*`/`.is_*_format.aidR()` triplet and one new branch in that dispatch function -- nothing else in the package needs to change.
 
 ## Standardizing the core types, preserving the rest
 
-Regardless of platform, `clean.<platform>()` always tries to produce some subset of five standardized data frames:
+Regardless of platform, when running `parse_data()` with `clean = TRUE`, a subset of five standardized data frames is produced:
 
-- **`cgm`**: `timestamp`, `value` (mg/dL)
-- **`basal`**: `timestamp`, `duration`, `rate`
-- **`bolus`**: `timestamp`, `type`, `total`, `normal`, `extended`
-- **`carbs`**: `timestamp`, `carbs`, `label`, `estimated_absorption_duration`
-- **`SMBG`**: `timestamp`, `value` (mg/dL)
+- **`cgm`**: `id`, `format`, `timestamp`, `timezone_offset`, `value`, `unit` and `sensor_name`
+- **`basal`**: `id`, `format`, `timestamp`, `timezone_offset`, `duration`, `rate`, `unit` and `pump_name`
+- **`bolus`**: `id`, `format`, `timestamp`, `timezone_offset`, `type`, `total`, `normal`, `extended`, `unit`, `duration_extended` and `pump_name`
+- **`carbs`**: `id`, `format`, `timestamp`, `timezone_offset`, `carbs`, `unit`, `label`, `estimated_absorption_duration`, and `is_hypo_treatment`
+- **`SMBG`**: `id`, `format`, `timestamp`, `timezone_offset`, `value`, `unit` and `sensor_name`
 
-Every standardized data frame also carries `id`, `format` (the source platform) and `timezone_offset` (in hours; `NA` where a platform only reports local time), so that data from different platforms can be safely combined -- see `vignette("aidR")`, "Merging data across participants".
-
-Not every platform reports every core type (mylife, for example, only ever reports `bolus` and `carbs`), and platforms routinely report additional information that has no equivalent elsewhere (CareLink's sensor calibrations and device-change events; Tidepool's pump-setting sheets; Glooko's exercise and medication logs). Rather than force-fitting these into the standardized schema or silently dropping them, `clean.<platform>()` preserves them under their own, platform-specific name. The five core types are the contract every platform is normalized to; everything else is kept, unopinionated, for platform-specific analyses.
-
-## Merging: per file, then per participant, then across participants
-
-Merging happens in three, increasingly coarse-grained stages:
-
-1. **Per file**: `read_<platform>()`/`clean.<platform>()` process one file at a time (a single CSV or `.xlsx`; for multi-sheet/multi-section platforms like Tidepool and CareLink, one call already produces several data types).
-2. **Per participant**: `.merge_per_id.aidR()` (called internally at the end of `parse_data()`) row-binds all files belonging to one participant, by data type -- regardless of how many files or platforms they came from -- sorts each resulting data frame by `timestamp`, harmonizes column types that disagree across files (e.g. one file reporting a column as logical because it happened to be all-`NA`, another as character), and drops exact duplicate rows.
-3. **Across participants**: `merge_all()` row-binds the per-participant lists into one long-format data frame per data type, adding the `id` column needed to tell participants apart.
-
-Keeping these stages separate means a single participant's data (`parse_data()`'s return value) is always a complete, directly usable object on its own -- useful for per-participant checks and plots -- while `merge_all()` remains a thin, purely mechanical last step for population-level analysis.
-
-## Cleaning, filtering and checking are separate steps
-
-`parse_data(clean_files = TRUE)` only standardizes column layout and units -- it does not remove implausible values or check for completeness. Those are deliberately separate, opt-in steps:
-
-- `filter_CGM()` truncates implausible CGM values and downsamples duplicate/overlapping readings to a regular time interval. It is applied *after* parsing, so `parse_data(clean_files = FALSE)` still gives access to completely raw values for debugging.
-- `check_completeness()`/`check_completeness_range()` only warn about missing data types or missing days; they never modify data. This keeps "is my data as expected" checks independent of any filtering decisions.
-
-## Conversion functions are one-way, best-effort exports
-
-`get_iglu_format()` and `write_DIAX_format()` (see `vignette("aidR")`, "Converting to other formats") both consume the *standardized* data frames, never platform-specific raw data. This means they work identically regardless of which platform a participant's data came from, at the cost of only being able to export what the standardized schema captures (e.g. `write_DIAX_format()` cannot include CareLink's sensor-calibration events, since DIAX has no field for them).
+Not every platform reports every core type (mylife, for example, only ever reports `bolus`, `carbs` and `SMBG`), and platforms routinely report additional information that has no equivalent elsewhere (CareLink's sensor calibrations and device-change events; Tidepool's pump-setting sheets; Glooko's exercise and medication logs). This information is still available when running `clean = FALSE` and can therefore be used for particular analyses requiring it.

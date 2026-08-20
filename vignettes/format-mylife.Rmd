@@ -6,88 +6,73 @@ vignette: >
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
-
 ```{r, include = FALSE}
 knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>"
 )
 ```
-
 ```{r setup, message = FALSE}
 library(aidR)
 ```
-
-## Overview
-
-A mylife (Ypsomed) export is a *single* semicolon-delimited `.csv` file with
-eight columns, holding one row per logged event. Unlike the platforms that ship
-one file per data type, all event types are interleaved in the same file and are
-distinguished only by the value of the event column, e.g.
-
-```
-"Tag";"Datum";"Uhrzeit";"Ereignis";"Wert";"Einheit";"Information";"Notiz"
-"Fr.";"16.01.26";"09:05";"Kohlenhydrate";"42";"g KH";;
-"Fr.";"16.01.26";"09:04";"Bolus";"4,40";"U";"Bolusvorschlag: 4.40 U";
-```
-
-Both the column headers and the event labels are language-specific and differ
-with the user's account language (the example above is German). Numeric values
-use a comma as the decimal separator (`4,40` = 4.40), the date and time are held
-in separate columns, and additional context is only available as free text in
-the information column.
-
-```{r}
+```{r, include=FALSE}
 path <- system.file("extdata", "mylife_example.csv", package = "aidR")
 ```
+## Overview
+
+A mylife export is a *single* semicolon-delimited `.csv` file with eight columns:
+```{r, comment = "", echo = FALSE}
+writeLines(readLines(path, n = 10))
+```
+Each event represents a single row. Both the column headers and the event labels are language-specific and vary with the language of the user's account (the example above is in German).
 
 ## How aidR detects this format
 
-Because both headers and event labels are language-specific, `aidR` cannot rely
-on their text to identify a mylife file. Instead it checks the *structure* of
-the header row, namely that it splits into exactly eight fields. For the same
-reason, event types are not matched by label either: bolus rows are recognized
-by their unit starting with `U`, and carbohydrate rows by their unit starting
-with `g`, both of which are stable across languages.
+Because the headers in a mylife export are language-specific, `aidR` cannot identify a file from its header names. It relies instead on the *structure* of the header row, which is delimited by semicolons `;` and must split into exactly eight columns. For the same reason, event types are not matched by their labels either: bolus rows are recognized by a unit starting with `U`, and carbohydrate rows by a unit starting with `g`.
 
 ## Entries and the data types they produce
 
+To inspect the raw entries, we parse the export with `clean_files = FALSE`, which returns the full information provided by mylife:
 ```{r}
-data <- parse_data(id = "1", paths = path)
+data <- parse_data(id = "1", paths = path, clean_files = FALSE)
 ```
+All entries are preserved as-is under their original, language-specific label, so nothing in the export is lost. Possible labels include:
 
-`aidR` compiles the raw mylife entries into a smaller set of data types. The
-list below describes each entry type, shows an example and, in italics, notes
-which clean data type(s) it is compiled into.
+- **Bolus entries**: insulin boluses. German label e.g. `Bolus`; unit `U`.
+```{r}
+head(data$Bolus)
+```
+- **Carbohydrate entries**: carbohydrate intake communicated to the pump. German label e.g. `Kohlenhydrate`; unit `g`.
+```{r}
+head(data$Kohlenhydrate)
+```
+- **Manual blood glucose entries**: self-monitored blood glucose (SMBG). German label e.g. `Blutzucker manuelle Eingabe`; unit `mg/dL` or `mmol/L`.
+```{r}
+head(data$`Blutzucker manuelle Eingabe`)
+```
+- **Ease-off** (`Ease-off`): start and duration of Ease-off mode.
+- **Boost** (`Boost`): start and duration of Boost mode.
+- **Hypo carbohydrate entries**: carbohydrates taken to treat hypoglycemia. German label e.g. `Hypo Kohlenhydrate`; unit `g`.
+- **Auto mode on**: start and duration of Auto mode. German label e.g. `Auto mode An`.
+- **Slowly resorbing**: carbohydrate intake recorded as slowly resorbing. German label e.g. `langsam resorbierbar`; unit `g`.
+- **Auto mode loading**: start and end of Auto mode loading, including the reason for any interruption. German label e.g. `Auto mode lädt`.
 
-- **Bolus entries** (unit `U`; labelled e.g. `Bolus`): insulin boluses.
-  *Compiled into `bolus`.*
-```{r}
-head(data$bolus)
-```
-- **Carbohydrate entries** (unit `g`; labelled e.g. `Kohlenhydrate`):
-  carbohydrate intake communicated to the pump. *Compiled into `carbs`.*
-```{r}
-head(data$carbs)
-```
-- **All other entry types**: preserved as-is under their original,
-  language-specific label, so nothing in the export is lost even though it is
-  not standardized. In the bundled German example these are the raw `Bolus` and
-  `Kohlenhydrate` groups the two clean types above were built from:
-```{r}
-setdiff(names(data), c("bolus", "carbs"))
-```
+Note that a mylife export contains **no CGM or basal data** - `bolus`, `carbs`, and `SMBG` are the only core data types available from this platform.
 
-Note that a mylife export contains **no CGM, basal, or SMBG data** - `bolus` and
-`carbs` are the only core data types available from this platform.
+## Cleaning files
+
+When `parse_data` is run with `clean_files = TRUE`, the cleaned data types are built from the following raw files and attributes:
+ 
+| Cleaned data type | Used files           | Used attributes                                                                                                                |
+|-------------------|----------------------|--------------------------------------------------------------------------------------------------------------------------------|
+| `bolus`           | `mylife_example.csv` | All entries whose unit is `U`, i.e. bolus entries.                                                                             |
+| `carbs`           | `mylife_example.csv` | All entries whose unit is `g`, including regular carbohydrates, slowly resorbing carbohydrates, and hypo carbohydrate entries. |
+| `SMBG`            | `mylife_example.csv` | All entries whose unit is `mg/dL` or `mmol/L`, i.e. manual blood glucose entries.                                              |
 
 ## Notes
 
-- `estimated_absorption_duration` is parsed out of the free-text information
-  column (e.g. `"... 2h ..."`) and is `NA` when not stated.
-- `is_hypo_treatment` is likewise derived from the information column, by
-  looking for the marker `HypoTreatment`.
-- `label` retains the original, language-specific event label, so the source of
-  each carbohydrate entry stays traceable after merging across platforms.
-- `timezone_offset` is always `NA`, since mylife exports report only local
-  (wall-clock) time.
+- SMBG values may be reported in mg/dL or mmol/L depending on the account settings; `aidR` converts them to mg/dL automatically.
+- `timezone_offset` is always `NA`, since mylife exports report only local (wall-clock) time.
+- `estimated_absorption_duration` is parsed out of the free-text information column for slowly resorbing carbs (e.g. `"... 2h ..."`) and is `NA` when not stated.
+- `is_hypo_treatment` is likewise derived from the information column, by looking for the marker `HypoTreatment`.
+- `label` retains the original, language-specific event label, so the source of each carbohydrate entry stays traceable after merging across platforms.

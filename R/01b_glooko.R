@@ -59,8 +59,8 @@ clean.glooko <- function(data, id, ...) {
     return(list(SMBG = .format_SMBG_glooko.aidR(id, data)))
   } 
   
-  # All other formats: just return the way they are
-  return(data)
+  # All other formats: don't clean, return NULL
+  return(NULL)
 }
 
 #------------------------
