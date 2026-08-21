@@ -2,18 +2,20 @@
 % Please edit documentation in R/01g_tandem_source.R
 \name{read_tandem_source}
 \alias{read_tandem_source}
-\title{Read file from a Tandem Source export}
+\title{Read a file from a Tandem Source export}
 \usage{
 read_tandem_source(id, filename)
 }
 \arguments{
 \item{id}{Character or numeric participant identifier.}
 
-\item{filename}{Character string corresponding to the filename of the Tandem Source export.}
+\item{filename}{Character string with the filename of the file to be read.}
 }
 \value{
-An instance of class \code{tandem_source}. NULL if the data was not parsed.
+An instance of class \code{tandem_source}, wrapping a named list with
+the data of one data type.
 }
 \description{
-Read file from a Tandem Source export
+Read a file from a Tandem Source export
 }
+\keyword{internal}

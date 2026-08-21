@@ -2,7 +2,7 @@
 % Please edit documentation in R/06_conversions.R
 \name{.diax_series_map.aidR}
 \alias{.diax_series_map.aidR}
-\title{Mapping from aidR data types to DIAX field names.}
+\title{Mapping from aidR data types to DIAX field names}
 \usage{
 .diax_series_map.aidR()
 }
@@ -10,6 +10,6 @@
 A named list, mapping aidR type names to DIAX field names.
 }
 \description{
-Mapping from aidR data types to DIAX field names.
+Mapping from aidR data types to DIAX field names
 }
 \keyword{internal}

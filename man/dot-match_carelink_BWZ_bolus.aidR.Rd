@@ -2,7 +2,7 @@
 % Please edit documentation in R/01c_carelink.R
 \name{.match_carelink_BWZ_bolus.aidR}
 \alias{.match_carelink_BWZ_bolus.aidR}
-\title{Match bolus wizard entries to bolus entries from a Carelink export}
+\title{Match bolus wizard entries to bolus entries from a CareLink export}
 \usage{
 .match_carelink_BWZ_bolus.aidR(bolus, bwz)
 }
@@ -15,6 +15,6 @@
 A data frame containing bolus entries, with an extra column indicating the index of a matching bolus wizard entry.
 }
 \description{
-Match bolus wizard entries to bolus entries from a Carelink export
+Match bolus wizard entries to bolus entries from a CareLink export
 }
 \keyword{internal}

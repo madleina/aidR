@@ -2,7 +2,7 @@
 % Please edit documentation in R/06_conversions.R
 \name{.diax_device_col.aidR}
 \alias{.diax_device_col.aidR}
-\title{Name of the column holding the device name, per aidR data type.}
+\title{Name of the column holding the device name, per aidR data type}
 \usage{
 .diax_device_col.aidR()
 }
@@ -11,6 +11,6 @@ A named list, mapping aidR type names to column names (\code{NA} if
 no device is recorded for that type).
 }
 \description{
-Name of the column holding the device name, per aidR data type.
+Name of the column holding the device name, per aidR data type
 }
 \keyword{internal}

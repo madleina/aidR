@@ -2,7 +2,7 @@
 % Please edit documentation in R/06_conversions.R
 \name{.diax_device.aidR}
 \alias{.diax_device.aidR}
-\title{Determine the device name(s) recorded for one data type.}
+\title{Determine the device name(s) recorded for one data type}
 \usage{
 .diax_device.aidR(type, df)
 }
@@ -16,6 +16,6 @@ A character string with the device name(s), comma-separated if more
 than one is present, or \code{NA} if no device is recorded.
 }
 \description{
-Determine the device name(s) recorded for one data type.
+Determine the device name(s) recorded for one data type
 }
 \keyword{internal}

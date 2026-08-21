@@ -2,19 +2,20 @@
 % Please edit documentation in R/01b_glooko.R
 \name{.format_carbs_glooko.aidR}
 \alias{.format_carbs_glooko.aidR}
-\title{Format and clean carbohydrate data from Glooko.}
+\title{Format and clean carbohydrate data from a Glooko export}
 \usage{
 .format_carbs_glooko.aidR(id, data)
 }
 \arguments{
 \item{id}{Character or numeric participant identifier.}
 
-\item{data}{A data frame containing the carbohydrate data from a Glooko file.}
+\item{data}{A data frame containing the bolus data from a Glooko file, which
+holds the carbohydrates entered into the bolus calculator.}
 }
 \value{
 A data frame containing the formatted and cleaned carbohydrate data.
 }
 \description{
-Format and clean carbohydrate data from Glooko.
+Format and clean carbohydrate data from a Glooko export
 }
 \keyword{internal}

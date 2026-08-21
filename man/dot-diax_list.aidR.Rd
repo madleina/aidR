@@ -2,7 +2,7 @@
 % Please edit documentation in R/06_conversions.R
 \name{.diax_list.aidR}
 \alias{.diax_list.aidR}
-\title{Build a full DIAX list for one individual.}
+\title{Build a full DIAX list for one individual}
 \usage{
 .diax_list.aidR(id, data_id)
 }
@@ -16,6 +16,6 @@ individual, named by aidR type (\code{cgm}, \code{bolus}, ...).}
 A list following the DIAX specification.
 }
 \description{
-Build a full DIAX list for one individual.
+Build a full DIAX list for one individual
 }
 \keyword{internal}

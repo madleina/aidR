@@ -2,19 +2,19 @@
 % Please edit documentation in R/01f_yourloops.R
 \name{.format_basal_yourloops.aidR}
 \alias{.format_basal_yourloops.aidR}
-\title{Format and clean basal data from Yourloops}
+\title{Format and clean basal data from a YourLoops export}
 \usage{
 .format_basal_yourloops.aidR(id, basal)
 }
 \arguments{
 \item{id}{Character or numeric participant identifier.}
 
-\item{basal}{A data frame containing the basal data from a Yourloops file.}
+\item{basal}{A data frame containing the basal data from a YourLoops file.}
 }
 \value{
 A data frame containing the formatted and cleaned basal data.
 }
 \description{
-Format and clean basal data from Yourloops
+Format and clean basal data from a YourLoops export
 }
 \keyword{internal}

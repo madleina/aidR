@@ -2,7 +2,7 @@
 % Please edit documentation in R/01c_carelink.R
 \name{.is_carelink_format.aidR}
 \alias{.is_carelink_format.aidR}
-\title{Check if a file corresponds to a file from a Carelink export.}
+\title{Check if a file comes from a CareLink export}
 \usage{
 .is_carelink_format.aidR(filename)
 }
@@ -10,9 +10,10 @@
 \item{filename}{Character string with the filename to be checked.}
 }
 \value{
-A logical value: \code{TRUE} if the file is a file from a Carelink export.
+A logical value: \code{TRUE} if the file comes from a CareLink export.
 }
 \description{
-Check if a file corresponds to a file from a Carelink export.
+CareLink is used for Medtronic MiniMed devices only, which is what the check
+looks for in the file header.
 }
 \keyword{internal}

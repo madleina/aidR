@@ -1,6 +1,6 @@
 ##################################
 #                                #
-#   Read Mylife data             #
+#   Read mylife data             #
 #                                #
 ##################################
 
@@ -8,12 +8,15 @@
 # Public functions
 #------------------------
 
-#' Read file from a Mylife export
+#' Read a file from a mylife export
 #'
 #' @param id Character or numeric participant identifier.
-#' @param filename Character string corresponding to the filename of the Mylife export.
+#' @param filename Character string with the filename of the file to be read.
 #'
-#' @return An instance of class \code{mylife}.
+#' @return An instance of class \code{mylife}, wrapping a named list with one
+#'   entry per entry type found in the file. \code{NULL} if the file is empty.
+#'
+#' @keywords internal
 read_mylife <- function(id, filename){
   # Read the file line by line
   lines <- read.csv(filename, encoding = "UTF-8")
@@ -55,17 +58,22 @@ read_mylife <- function(id, filename){
   return(data)
 }
 
-#' Format and clean the Mylife data to keep relevant columns only.
+#' Format and clean the mylife data to keep relevant columns only
+#'
+#' The entry types are identified by their unit, since their labels are
+#' language-specific. Note that a mylife export contains no CGM and no basal data.
 #'
 #' @param data An instance of class \code{mylife}, wrapping a named list with data of different types.
 #' @param id Character or numeric participant identifier.
 #' @param ... Additional arguments passed to methods.
 #'
-#' @return A named list with names \code{bolus} and \code{carbs}, and other names for data of other types.
+#' @return A named list with the cleaned data, with entries \code{bolus},
+#'   \code{carbs} and \code{SMBG}. Entries are \code{NULL} if the export holds
+#'   no data of that type.
 #' @export
 clean.mylife <- function(data, id, ...){
   if (is.null(data)){ return(NULL) }
-  if (!("mylife" %in% class(data))){ stop("Expected Mylife format.") }
+  if (!("mylife" %in% class(data))){ stop("Expected mylife format.") }
   
   # Remove class attribute for ease
   data <- unclass(data)
@@ -88,11 +96,11 @@ clean.mylife <- function(data, id, ...){
 # Helper functions
 #------------------------
 
-#' Check if a file corresponds to a file from a Mylife export.
+#' Check if a file comes from a mylife export
 #'
 #' @param filename Character string with the filename to be checked.
 #'
-#' @return A logical value: \code{TRUE} if the file is a file from a Mylife export.
+#' @return A logical value: \code{TRUE} if the file comes from a mylife export.
 #'
 #' @keywords internal
 .is_mylife_format.aidR <- function(filename){
@@ -112,12 +120,13 @@ clean.mylife <- function(data, id, ...){
 # Format bolus
 #------------------------
 
-#' Format and clean bolus entries of a Mylife export.
-#' 
+#' Format and clean bolus data from a mylife export
+#'
 #' @param id Character or numeric participant identifier.
-#' @param bolus A data frame containing the bolus data from a Mylife file.
+#' @param bolus A data frame containing the bolus data from a mylife file.
 #'
 #' @return A data frame containing the formatted and cleaned bolus data.
+#'   \code{NULL} if there is no bolus data.
 #'
 #' @keywords internal
 .clean_mylife_bolus.aidR <- function(id, bolus){
@@ -142,12 +151,13 @@ clean.mylife <- function(data, id, ...){
   return(bolus)
 }
 
-#' Format and clean carbohydrate entries of a Mylife export.
+#' Format and clean carbohydrate data from a mylife export
 #'
 #' @param id Character or numeric participant identifier.
-#' @param carbs A data frame containing the carbohydrate data from a Mylife file.
+#' @param carbs A data frame containing the carbohydrate data from a mylife file.
 #'
 #' @return A data frame containing the formatted and cleaned carbohydrate data.
+#'   \code{NULL} if there is no carbohydrate data.
 #'
 #' @keywords internal
 .clean_mylife_carbs.aidR <- function(id, carbs){
@@ -158,24 +168,25 @@ clean.mylife <- function(data, id, ...){
            format = "mylife",
            timestamp = as_datetime(.data$timestamp),
            timezone_offset = NA,
-           carbs = as.numeric(gsub(pattern = ",", replacement = ".", .data$amount)),
+           value = as.numeric(gsub(pattern = ",", replacement = ".", .data$amount)),
            estimated_absorption_duration = as.numeric(str_extract(.data$information, "(?<=\\s)[\\d.]+(?=h)")),
            is_hypo_treatment = grepl("HypoTreatment", .data$information),
            unit = "g"
            ) %>% 
     rename(label = "type") %>% 
-    select("id", "format", "timestamp", "timezone_offset", "carbs", "unit", 
+    select("id", "format", "timestamp", "timezone_offset", "value", "unit", 
            "label", "estimated_absorption_duration", "is_hypo_treatment")
   
   return(carbs)
 }
 
-#' Format and clean SMBG entries of a Mylife export.
+#' Format and clean SMBG data from a mylife export
 #'
 #' @param id Character or numeric participant identifier.
-#' @param carbs A data frame containing the SMBG data from a Mylife file.
+#' @param SMBG A data frame containing the SMBG data from a mylife file.
 #'
 #' @return A data frame containing the formatted and cleaned SMBG data.
+#'   \code{NULL} if there is no SMBG data.
 #'
 #' @keywords internal
 .clean_mylife_SMBG.aidR <- function(id, SMBG){

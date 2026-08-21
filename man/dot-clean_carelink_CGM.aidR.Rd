@@ -2,19 +2,19 @@
 % Please edit documentation in R/01c_carelink.R
 \name{.clean_carelink_CGM.aidR}
 \alias{.clean_carelink_CGM.aidR}
-\title{Format and clean CGM entries of a Carelink export.}
+\title{Format and clean CGM data from a CareLink export}
 \usage{
 .clean_carelink_CGM.aidR(id, cgm)
 }
 \arguments{
 \item{id}{Character or numeric participant identifier.}
 
-\item{cgm}{A data frame containing the CGM data from a Carelink file.}
+\item{cgm}{A data frame containing the CGM data from a CareLink file.}
 }
 \value{
 A data frame containing the formatted and cleaned CGM data.
 }
 \description{
-Format and clean CGM entries of a Carelink export.
+Format and clean CGM data from a CareLink export
 }
 \keyword{internal}

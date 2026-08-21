@@ -2,17 +2,17 @@
 % Please edit documentation in R/05_checks.R
 \name{.format_date_ranges.aidR}
 \alias{.format_date_ranges.aidR}
-\title{Formats date ranges.}
+\title{Format date ranges}
 \usage{
 .format_date_ranges.aidR(dates)
 }
 \arguments{
-\item{dates}{A vector with dates}
+\item{dates}{A vector with dates.}
 }
 \value{
-A string with all consecutive dates collapsed into ranges
+A string with all consecutive dates collapsed into ranges.
 }
 \description{
-Formats date ranges.
+Format date ranges
 }
 \keyword{internal}

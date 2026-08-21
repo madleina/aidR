@@ -2,19 +2,20 @@
 % Please edit documentation in R/01d_mylife.R
 \name{.clean_mylife_bolus.aidR}
 \alias{.clean_mylife_bolus.aidR}
-\title{Format and clean bolus entries of a Mylife export.}
+\title{Format and clean bolus data from a mylife export}
 \usage{
 .clean_mylife_bolus.aidR(id, bolus)
 }
 \arguments{
 \item{id}{Character or numeric participant identifier.}
 
-\item{bolus}{A data frame containing the bolus data from a Mylife file.}
+\item{bolus}{A data frame containing the bolus data from a mylife file.}
 }
 \value{
 A data frame containing the formatted and cleaned bolus data.
+\code{NULL} if there is no bolus data.
 }
 \description{
-Format and clean bolus entries of a Mylife export.
+Format and clean bolus data from a mylife export
 }
 \keyword{internal}

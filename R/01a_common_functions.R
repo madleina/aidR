@@ -9,20 +9,23 @@
 #'
 #' Iterates over one or more paths, discovers all contained files (including
 #' inside ZIP archives), and dispatches each file to the appropriate
-#' device-specific reader based on its format.
+#' format-specific reader. Supported formats are Glooko, CareLink, mylife,
+#' Tidepool, YourLoops and Tandem Source.
 #'
-#' @param id Character or numeric. Participant identifier used for logging and
-#'   passed through to the format-specific readers.
+#' @param id Character or numeric participant identifier. Used for logging and
+#'   stored in the \code{id} column of the cleaned data.
 #' @param paths Character vector. One or more file or directory paths to search
 #'   for data files. Directories are traversed recursively; ZIP archives are
 #'   extracted automatically.
-#' @param clean_files Logical, if \code{TRUE}, files will be cleaned and formatted.
+#' @param clean Logical, if \code{TRUE} (the default), the main data types (CGM,
+#'   basal, bolus, carbohydrates and SMBG) are cleaned and standardized. If
+#'   \code{FALSE}, all data is returned as found in the export.
 #'
-#' @return  A list with all data found for one individual, merged per data type. 
-#'   Returns \code{NULL} if no valid data files are found.
+#' @return A list with all data found for one individual, merged per data type.
+#'   \code{NULL} if no valid data files were found.
 #'
 #' @export
-parse_data <- function(id, paths, clean_files = TRUE) {
+parse_data <- function(id, paths, clean = TRUE) {
   cat(paste0("Parsing data for id ", id, "...\n"))
   data <- list()
   for (path in paths) {
@@ -30,7 +33,7 @@ parse_data <- function(id, paths, clean_files = TRUE) {
     # Note: this works recursively and deals with zipped files
     filenames <- .get_all_files_in_path.aidR(path)
     for (filename in filenames) {
-      data[[filename]] <- .process_file.aidR(filename, id, clean_files)
+      data[[filename]] <- .process_file.aidR(filename, id, clean)
     }
   }
   # No valid files
@@ -49,9 +52,14 @@ parse_data <- function(id, paths, clean_files = TRUE) {
 
 #' Generic function for cleaning data
 #'
-#' @param data The data to clean.
+#' @param data The data to clean, an instance of one of the format-specific
+#'   classes (\code{glooko}, \code{carelink}, \code{mylife}, \code{tidepool},
+#'   \code{yourloops} or \code{tandem_source}).
 #' @param id Character or numeric participant identifier.
 #' @param ... Additional arguments passed to methods.
+#'
+#' @return A named list with the cleaned data, see the format-specific methods
+#'   (e.g. \code{\link{clean.glooko}}).
 #'
 #' @export
 clean <- function(data, id, ...) UseMethod("clean")
@@ -60,19 +68,22 @@ clean <- function(data, id, ...) UseMethod("clean")
 # General helper functions
 #-------------------------------
 
-#' Check whether the file has a recognized extension, then determine its
-#' device format and call the corresponding \code{read_*_clean()} function.
+#' Read a single file and dispatch it to the matching format
+#'
+#' Checks whether the file has a recognized extension, then determines which
+#' format it comes from and calls the corresponding \code{read_*()} function.
 #' Files with non-data extensions (e.g. PNG, PDF, TXT) are silently ignored.
 #' Unrecognized data files produce a console message.
 #'
-#' @param filename Character string, with the filename to parse.
+#' @param filename Character string with the filename to parse.
 #' @param id Character or numeric participant identifier.
-#' @param clean_files Logical, if \code{TRUE}, files will be cleaned and formatted.
+#' @param clean Logical, if \code{TRUE}, the data will be cleaned and standardized.
 #'
-#' @return A list with the data found in the file.
+#' @return A list with the data found in the file. \code{NULL} if the file was
+#'   ignored or could not be parsed.
 #'
 #' @keywords internal
-.process_file.aidR <- function(filename, id, clean_files = TRUE) {
+.process_file.aidR <- function(filename, id, clean = TRUE) {
   # Silently ignore non-data files
   filename <- .filter_relevant_files.aidR(filename)
   if (length(filename) == 0) {
@@ -94,15 +105,16 @@ clean <- function(data, id, ...) UseMethod("clean")
     cat(paste0("Id ", id, ": Failed to parse file '", filename, "'.\n"))
     data <- NULL
   }
-  if (clean_files && !is.null(data)) {
+  if (clean && !is.null(data)) {
     data <- clean(data, id)
   }
   return(data)
 }
 
 #' Filter a character vector to retain only recognized data file extensions
+#'
 #' Removes file paths whose extensions match a list of known non-data formats
-#' (PNG, PDF, BIB, JPG, JPEG, TXT, JSON, etc). The check is case-insensitive.
+#' (PNG, PDF, BIB, JPG, JPEG, TXT, JSON). The check is case-insensitive.
 #'
 #' @param filenames Character vector. File paths to filter.
 #'
@@ -118,8 +130,9 @@ clean <- function(data, id, ...) UseMethod("clean")
   return(filenames[!exclude])
 }
 
-#' Recursively traverse a directory and return all contained files.
-#' Zip archives encountered at any level are automatically extracted to
+#' Recursively traverse a directory and return all contained files
+#'
+#' ZIP archives encountered at any level are automatically extracted to
 #' temporary directories and traversed recursively, including nested ZIP files.
 #'
 #' macOS metadata files and folders such as __MACOSX, .DS_Store,
@@ -132,7 +145,7 @@ clean <- function(data, id, ...) UseMethod("clean")
 #'
 #' @details
 #' ZIP archives are extracted into temporary directories created via
-#' [tempfile()]. Invalid or corrupted ZIP archives are skipped with a warning.
+#' \code{tempfile()}. Invalid or corrupted ZIP archives are skipped with a warning.
 #'
 #' @keywords internal
 .get_all_files_in_path.aidR <- function(path) {

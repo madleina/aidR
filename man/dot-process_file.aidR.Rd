@@ -2,26 +2,24 @@
 % Please edit documentation in R/01a_common_functions.R
 \name{.process_file.aidR}
 \alias{.process_file.aidR}
-\title{Check whether the file has a recognized extension, then determine its
-device format and call the corresponding \code{read_*_clean()} function.
-Files with non-data extensions (e.g. PNG, PDF, TXT) are silently ignored.
-Unrecognized data files produce a console message.}
+\title{Read a single file and dispatch it to the matching format}
 \usage{
-.process_file.aidR(filename, id, clean_files = TRUE)
+.process_file.aidR(filename, id, clean = TRUE)
 }
 \arguments{
-\item{filename}{Character string, with the filename to parse.}
+\item{filename}{Character string with the filename to parse.}
 
 \item{id}{Character or numeric participant identifier.}
 
-\item{clean_files}{Logical, if \code{TRUE}, files will be cleaned and formatted.}
+\item{clean}{Logical, if \code{TRUE}, the data will be cleaned and standardized.}
 }
 \value{
-A list with the data found in the file.
+A list with the data found in the file. \code{NULL} if the file was
+ignored or could not be parsed.
 }
 \description{
-Check whether the file has a recognized extension, then determine its
-device format and call the corresponding \code{read_*_clean()} function.
+Checks whether the file has a recognized extension, then determines which
+format it comes from and calls the corresponding \code{read_*()} function.
 Files with non-data extensions (e.g. PNG, PDF, TXT) are silently ignored.
 Unrecognized data files produce a console message.
 }

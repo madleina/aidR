@@ -2,9 +2,7 @@
 % Please edit documentation in R/01a_common_functions.R
 \name{.filter_relevant_files.aidR}
 \alias{.filter_relevant_files.aidR}
-\title{Filter a character vector to retain only recognized data file extensions
-Removes file paths whose extensions match a list of known non-data formats
-(PNG, PDF, BIB, JPG, JPEG, TXT, JSON, etc). The check is case-insensitive.}
+\title{Filter a character vector to retain only recognized data file extensions}
 \usage{
 .filter_relevant_files.aidR(filenames)
 }
@@ -17,8 +15,7 @@ A character vector containing only the paths whose extensions are
 filtered out.
 }
 \description{
-Filter a character vector to retain only recognized data file extensions
 Removes file paths whose extensions match a list of known non-data formats
-(PNG, PDF, BIB, JPG, JPEG, TXT, JSON, etc). The check is case-insensitive.
+(PNG, PDF, BIB, JPG, JPEG, TXT, JSON). The check is case-insensitive.
 }
 \keyword{internal}

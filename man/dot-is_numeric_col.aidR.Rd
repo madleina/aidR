@@ -7,10 +7,10 @@
 .is_numeric_col.aidR(vec)
 }
 \arguments{
-\item{vec}{Character vector to be checked}
+\item{vec}{Character vector to be checked.}
 }
 \value{
-A logical value: \code{TRUE} if the vector can be converted to numeric values
+A logical value: \code{TRUE} if the vector can be converted to numeric values.
 }
 \description{
 Check if a vector can be converted to numeric values

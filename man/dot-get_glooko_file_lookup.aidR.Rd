@@ -2,15 +2,16 @@
 % Please edit documentation in R/01b_glooko.R
 \name{.get_glooko_file_lookup.aidR}
 \alias{.get_glooko_file_lookup.aidR}
-\title{A lookup with Glooko file characteristics.}
+\title{A lookup with Glooko file characteristics}
 \usage{
 .get_glooko_file_lookup.aidR()
 }
 \value{
-A list with data types and their expected file formats, including the number of columns, the column indices of the time- and
-numeric columns and expected keywords in the header.
+A list with data types and their expected file formats, including the
+number of columns, the column indices of the time- and numeric columns and
+expected keywords in the header.
 }
 \description{
-A lookup with Glooko file characteristics.
+A lookup with Glooko file characteristics
 }
 \keyword{internal}

@@ -1,6 +1,6 @@
 ##################################
 #                                #
-#   Read tidepool data           #
+#   Read Tidepool data           #
 #                                #
 ##################################
 
@@ -8,12 +8,16 @@
 # Public functions
 #------------------------
 
-#' Read file from a Tidepool export
+#' Read a file from a Tidepool export
 #'
 #' @param id Character or numeric participant identifier.
-#' @param filename Character string corresponding to the filename of the Tidepool export.
+#' @param filename Character string with the filename of the file to be read.
 #'
-#' @return An instance of class \code{tidepool}.
+#' @return An instance of class \code{tidepool}, wrapping a named list with one
+#'   entry per sheet of the export. Entries of optional sheets that are absent
+#'   from the file are \code{NULL}.
+#'
+#' @keywords internal
 read_tidepool <- function(id, filename){
   # CGM, basal, and bolus should always exist
   # Note: guess_max is set to a higher value to ensure proper parsing of sparse columns
@@ -30,26 +34,29 @@ read_tidepool <- function(id, filename){
   bg_targets <- .read_tidepool_sheet.aidR(filename, sheet = "BG Targets")
   carb_ratios <- .read_tidepool_sheet.aidR(filename, sheet = "Carb Ratios")
   insulin_sensitivities <- .read_tidepool_sheet.aidR(filename, sheet = "Insulin Sensitivities")
-  smbg <- .read_tidepool_sheet.aidR(filename, sheet = "SMBG")
+  SMBG <- .read_tidepool_sheet.aidR(filename, sheet = "SMBG")
   upload <- .read_tidepool_sheet.aidR(filename, sheet = "Upload")
   
   data <- list(cgm = cgm, basal = basal, bolus = bolus, device_event = device_event, 
                food = food, bolus_calculator = bolus_calculator,
                basal_schedules = basal_schedules, bg_targets = bg_targets, 
                carb_ratios = carb_ratios, insulin_sensitivities = insulin_sensitivities,
-               smbg = smbg, upload = upload)
+               SMBG = SMBG, upload = upload)
   class(data) <- "tidepool"
 
   return(data)
 }
 
-#' Format and clean the Tidepool data to keep relevant columns only.
+#' Format and clean the Tidepool data to keep relevant columns only
 #'
-#' @param id Character or numeric participant identifier.
 #' @param data An instance of class \code{tidepool}, wrapping a named list with data of different types.
+#' @param id Character or numeric participant identifier.
 #' @param ... Additional arguments passed to methods.
 #'
-#' @return A named list with names \code{cgm}, \code{basal}, \code{bolus}, and \code{carbs}, and other names for data of other types.
+#' @return A named list with the cleaned data, with entries \code{cgm},
+#'   \code{basal}, \code{bolus}, \code{SMBG} and \code{carbs}. Carbohydrates are
+#'   taken from the Food sheet or, if that sheet is absent, from the Bolus
+#'   Calculator sheet.
 #' @export
 clean.tidepool <- function(data, id, ...){
   if (is.null(data)){ return(NULL) }
@@ -63,7 +70,7 @@ clean.tidepool <- function(data, id, ...){
   data_new$cgm <- .format_cgm_tidepool.aidR(id, data$cgm)
   data_new$basal <- .format_basal_tidepool.aidR(id, data$basal)
   data_new$bolus <- .format_bolus_tidepool.aidR(id, data$bolus)
-  data_new$SMBG <- .format_SMBG_tidepool.aidR(id, data$smbg)
+  data_new$SMBG <- .format_SMBG_tidepool.aidR(id, data$SMBG)
   
   if (!is.null(data$food) & !is.null(data$bolus_calculator)){
     stop(paste0("Found both food and bolus calculator data. Figure out which one to keep."))
@@ -83,11 +90,11 @@ clean.tidepool <- function(data, id, ...){
 # Helper functions
 #------------------------
 
-#' Check if a file corresponds to a file from a Tidepool export.
+#' Check if a file comes from a Tidepool export
 #'
 #' @param filename Character string with the filename to be checked.
 #'
-#' @return A logical value: \code{TRUE} if the file is a file from a Tidepool export.
+#' @return A logical value: \code{TRUE} if the file comes from a Tidepool export.
 #'
 #' @keywords internal
 .is_tidepool_format.aidR <- function(filename){
@@ -102,8 +109,8 @@ clean.tidepool <- function(data, id, ...){
 
 #' Read a sheet from a Tidepool Excel file
 #'
-#' @param filename A character string giving the path to the Excel file.
-#' @param sheet A character string giving the name of the sheet to read.
+#' @param filename Character string with the filename of the file to be read.
+#' @param sheet Character string with the name of the sheet to be read.
 #'
 #' @return A data frame containing the contents of the specified sheet, or
 #'   \code{NULL} if the sheet does not exist in the file.
@@ -120,7 +127,7 @@ clean.tidepool <- function(data, id, ...){
 # Format CGM
 #------------------------
 
-#' Format and clean CGM data from Tidepool
+#' Format and clean CGM data from a Tidepool export
 #'
 #' @param id Character or numeric participant identifier.
 #' @param cgm A data frame containing the CGM data from a Tidepool file.
@@ -166,7 +173,7 @@ clean.tidepool <- function(data, id, ...){
 # Format basal
 #------------------------
 
-#' Format and clean basal data from Tidepool
+#' Format and clean basal data from a Tidepool export
 #'
 #' @param id Character or numeric participant identifier.
 #' @param basal A data frame containing the basal data from a Tidepool file.
@@ -195,7 +202,7 @@ clean.tidepool <- function(data, id, ...){
   # Remove very short basal rates (artefacts from Loop)
   # filter out rates that last < 1s
   basal <- basal |> 
-    filter(duration >= 1/3600)
+    filter(.data$duration >= 1/3600)
   
   # Set rate for suspend to zero
   # Relevant for open-source AIDs (e.g. Loop), where this is NA
@@ -233,7 +240,7 @@ clean.tidepool <- function(data, id, ...){
 # Format bolus
 #------------------------
 
-#' Format and clean bolus data from Tidepool
+#' Format and clean bolus data from a Tidepool export
 #'
 #' @param id Character or numeric participant identifier.
 #' @param bolus A data frame containing the bolus data from a Tidepool file.
@@ -263,8 +270,8 @@ clean.tidepool <- function(data, id, ...){
   
   # Add units of total bolus, as well as units of normal and extended bolus
   bolus <- bolus %>%
-    mutate(normal = Normal,
-           extended = Extended,
+    mutate(normal = .data$Normal,
+           extended = .data$Extended,
            total = coalesce(.data$extended, 0) + coalesce(.data$normal, 0)
     )
   
@@ -287,16 +294,16 @@ clean.tidepool <- function(data, id, ...){
 # Format food
 #------------------------
 
-#' Format and clean food data from Tidepool
+#' Format and clean carbohydrate data from the Food sheet of a Tidepool export
 #'
 #' @param id Character or numeric participant identifier.
 #' @param food A data frame containing the food data from a Tidepool file.
 #'
-#' @return A data frame containing the formatted and cleaned food data.
+#' @return A data frame containing the formatted and cleaned carbohydrate data.
 #' @keywords internal
 .format_food_tidepool.aidR <- function(id, food){
   # Extract net carbs and estimated absorption duration
-  food$carbs <- sapply(food$Nutrition, .extract_net_carbs_tidepool.aidR)
+  food$value <- sapply(food$Nutrition, .extract_net_carbs_tidepool.aidR)
   food$estimated_absorption_duration <- sapply(1:nrow(food), .extract_estimated_absorption_duration_tidepool.aidR, food)
   
   food <- food %>%
@@ -308,18 +315,18 @@ clean.tidepool <- function(data, id, ...){
            unit = "g",
            is_hypo_treatment = NA) %>% 
     rename(label = "Name") |> 
-    select("id", "format", "timestamp", "timezone_offset", "carbs", "unit", 
+    select("id", "format", "timestamp", "timezone_offset", "value", "unit", 
            "label", "estimated_absorption_duration", "is_hypo_treatment")
   
   return(food)
 }
 
 
-#' Extract net carbohydrate amount from json string given in "Nutrition" column of Food sheet
+#' Extract the net carbohydrate amount from the \code{Nutrition} column of the Food sheet
 #'
-#' @param json_str A character string in json format, containing the net carbohydrate amount
+#' @param json_str A character string in JSON format, containing the net carbohydrate amount.
 #'
-#' @return A numeric value with the net carbohydrate amount
+#' @return A numeric value with the net carbohydrate amount.
 #' @keywords internal
 .extract_net_carbs_tidepool.aidR <- function(json_str) {
   parsed <- fromJSON(json_str)
@@ -339,12 +346,16 @@ clean.tidepool <- function(data, id, ...){
   return(parsed$net)
 }
 
-#' Extract estimated absorption duration from json string given in Bolus Calculator sheet
+#' Extract the estimated absorption duration from the Food sheet of a Tidepool export
 #'
-#' @param row The current row index to parse
-#' @param data The full data frame
+#' The duration is either part of the JSON string in the \code{Nutrition} column,
+#' or part of the JSON string in the \code{Payload} column.
 #'
-#' @return A numeric value with the estimated absorption duration, NA if not found.
+#' @param row The current row index to parse.
+#' @param data The full data frame with the food data from a Tidepool file.
+#'
+#' @return A numeric value with the estimated absorption duration in seconds,
+#'   \code{NA} if not found.
 #' @keywords internal
 .extract_estimated_absorption_duration_tidepool.aidR <- function(row, data){
   # Either given in "Nutrition" as part of json string
@@ -370,12 +381,13 @@ clean.tidepool <- function(data, id, ...){
 # Format bolus calculator
 #------------------------
 
-#' Format and clean carbohydrates from bolus calculator data from Tidepool
+#' Format and clean carbohydrate data from the Bolus Calculator sheet of a Tidepool export
 #'
 #' @param id Character or numeric participant identifier.
 #' @param bolus_calculator A data frame containing the bolus calculator data from a Tidepool file.
 #'
-#' @return A data frame containing the formatted and cleaned carbohydrates from bolus calculator data.
+#' @return A data frame containing the formatted and cleaned carbohydrate data.
+#'   \code{NULL} if no carbohydrates were entered.
 #' @keywords internal
 .format_bolus_calculator_tidepool.aidR <- function(id, bolus_calculator){
   bolus_calculator <- bolus_calculator %>%
@@ -389,8 +401,8 @@ clean.tidepool <- function(data, id, ...){
            estimated_absorption_duration = NA,
            is_hypo_treatment = NA
            ) %>% 
-    rename(carbs = "Carb Input") |> 
-    select("id", "format", "timestamp", "timezone_offset", "carbs", "unit", 
+    rename(value = "Carb Input") |> 
+    select("id", "format", "timestamp", "timezone_offset", "value", "unit", 
            "label", "estimated_absorption_duration", "is_hypo_treatment")
   
   if (nrow(bolus_calculator) == 0){ return(NULL) }
@@ -402,12 +414,13 @@ clean.tidepool <- function(data, id, ...){
 # Format SMBG
 #------------------------
 
-#' Format and clean SMBG data from Tidepool
+#' Format and clean SMBG data from a Tidepool export
 #'
 #' @param id Character or numeric participant identifier.
-#' @param cgm A data frame containing the SMBG data from a Tidepool file.
+#' @param SMBG A data frame containing the SMBG data from a Tidepool file.
 #'
 #' @return A data frame containing the formatted and cleaned SMBG data.
+#'   \code{NULL} if the export contains no SMBG sheet.
 #' @keywords internal
 .format_SMBG_tidepool.aidR <- function(id, SMBG){
   if (is.null(SMBG)){ return(NULL) }

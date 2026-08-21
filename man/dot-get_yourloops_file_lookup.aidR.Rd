@@ -2,7 +2,7 @@
 % Please edit documentation in R/01f_yourloops.R
 \name{.get_yourloops_file_lookup.aidR}
 \alias{.get_yourloops_file_lookup.aidR}
-\title{A lookup with Yourloop file characteristics.}
+\title{A lookup with YourLoops file characteristics}
 \usage{
 .get_yourloops_file_lookup.aidR()
 }
@@ -10,6 +10,6 @@
 A list with data types and their expected headers.
 }
 \description{
-A lookup with Yourloop file characteristics.
+A lookup with YourLoops file characteristics
 }
 \keyword{internal}

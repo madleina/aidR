@@ -8,12 +8,15 @@
 # Public functions
 #------------------------
 
-#' Read file from a Tandem Source export
+#' Read a file from a Tandem Source export
 #'
 #' @param id Character or numeric participant identifier.
-#' @param filename Character string corresponding to the filename of the Tandem Source export.
+#' @param filename Character string with the filename of the file to be read.
 #'
-#' @return An instance of class \code{tandem_source}. NULL if the data was not parsed.
+#' @return An instance of class \code{tandem_source}, wrapping a named list with
+#'   the data of one data type.
+#'
+#' @keywords internal
 read_tandem_source <- function(id, filename) {
   # Get file type
   file_type <- .get_tandem_source_file_type.aidR(filename)
@@ -27,13 +30,16 @@ read_tandem_source <- function(id, filename) {
   return(data)
 }
 
-#' Format and clean the Tandem Source data to keep relevant columns only.
+#' Format and clean the Tandem Source data to keep relevant columns only
 #'
 #' @param data An instance of class \code{tandem_source}, wrapping a named list with data of a particular data type.
 #' @param id Character or numeric participant identifier.
 #' @param ... Additional arguments passed to methods.
 #'
-#' @return A named list with names \code{cgm}, \code{basal}, \code{bolus}, or \code{carbs}, or other names if data is of another type.
+#' @return A named list with the cleaned data, named according to the data type
+#'   of \code{data}: \code{cgm}, \code{basal}, \code{bolus} and \code{carbs}
+#'   (both are extracted from the bolus file) or \code{SMBG}. \code{NULL} for all
+#'   other data types, which are not cleaned.
 #' @export
 clean.tandem_source <- function(data, id, ...) {
   if (is.null(data)) {
@@ -63,11 +69,11 @@ clean.tandem_source <- function(data, id, ...) {
 # Helper functions
 #------------------------
 
-#' Check if a file corresponds to a file from a Tandem Source export.
+#' Check if a file comes from a Tandem Source export
 #'
 #' @param filename Character string with the filename to be checked.
 #'
-#' @return A logical value: \code{TRUE} if the file is a file from a Tandem Source export.
+#' @return A logical value: \code{TRUE} if the file comes from a Tandem Source export.
 #'
 #' @keywords internal
 .is_tandem_source_format.aidR <- function(filename) {
@@ -75,7 +81,7 @@ clean.tandem_source <- function(data, id, ...) {
   return(!is.null(file_type))
 }
 
-#' A lookup with Tandem Source file characteristics.
+#' A lookup with Tandem Source file characteristics
 #'
 #' @return A list with data types and their expected headers.
 #'
@@ -92,11 +98,12 @@ clean.tandem_source <- function(data, id, ...) {
   return(tandem_source_files)
 }
 
-#' Get file type of a Tandem Source export.
+#' Get the data type of a file from a Tandem Source export
 #'
 #' @param filename Character string with the filename to be checked.
 #'
-#' @return A character string if file type could be determined, NULL there was no match. If multiple files types matched, an error is thrown.
+#' @return A character string with the data type, or \code{NULL} if there was no
+#'   match. Throws an error if multiple data types matched.
 #'
 #' @keywords internal
 .get_tandem_source_file_type.aidR <- function(filename) {
@@ -135,7 +142,7 @@ clean.tandem_source <- function(data, id, ...) {
 
 #' Read a file from a Tandem Source export
 #'
-#' @param filename A character string giving the path to the file.
+#' @param filename Character string with the filename of the file to be read.
 #'
 #' @return A data frame containing the contents of the specified file.
 #' @keywords internal
@@ -149,7 +156,7 @@ clean.tandem_source <- function(data, id, ...) {
 # Format CGM
 #------------------------
 
-#' Format and clean CGM data from Tandem Source
+#' Format and clean CGM data from a Tandem Source export
 #'
 #' @param id Character or numeric participant identifier.
 #' @param cgm A data frame containing the CGM data from a Tandem Source file.
@@ -185,7 +192,10 @@ clean.tandem_source <- function(data, id, ...) {
 # Functions for basal
 #------------------------------
 
-#' Format and clean basal data from Tandem Source
+#' Format and clean basal data from a Tandem Source export
+#'
+#' Tandem Source reports the insulin delivered since the previous entry; the rate
+#' is obtained by dividing it by the duration until the next entry.
 #'
 #' @param id Character or numeric participant identifier.
 #' @param basal A data frame containing the basal data from a Tandem Source file.
@@ -201,7 +211,7 @@ clean.tandem_source <- function(data, id, ...) {
            format = "tandem_source",
            timezone_offset = NA,
            duration = as.numeric(difftime(lead(timestamp), timestamp, units = "hours")),
-           rate = .data$`Commanded Basal Dose (units of insulin)` / duration,
+           rate = .data$`Commanded Basal Dose (units of insulin)` / .data$duration,
            unit = "U/h") |> 
     rename(pump_name = "Device Type") |> 
     select("id", "format", "timestamp", "timezone_offset", "duration", "rate", "unit", "pump_name")
@@ -213,7 +223,7 @@ clean.tandem_source <- function(data, id, ...) {
 # Functions for bolus
 #------------------------------
 
-#' Format and clean bolus data from Tandem Source
+#' Format and clean bolus data from a Tandem Source export
 #'
 #' @param id Character or numeric participant identifier.
 #' @param bolus A data frame containing the bolus data from a Tandem Source file.
@@ -263,12 +273,13 @@ clean.tandem_source <- function(data, id, ...) {
 # Functions for carbs
 #------------------------------
 
-#' Format and clean carbs data from Tandem Source
+#' Format and clean carbohydrate data from a Tandem Source export
 #'
 #' @param id Character or numeric participant identifier.
-#' @param carbs A data frame containing the carbs data from a Tandem Source file.
+#' @param carbs A data frame containing the bolus data from a Tandem Source file,
+#'   which holds the carbohydrates entered into the bolus calculator.
 #'
-#' @return A data frame containing the formatted and cleaned carbs data.
+#' @return A data frame containing the formatted and cleaned carbohydrate data.
 #' @keywords internal
 .format_carbs_tandem_source.aidR <- function(id, carbs) {
   carbs <- carbs |> 
@@ -277,12 +288,12 @@ clean.tandem_source <- function(data, id, ...) {
            format = "tandem_source",
            timestamp = as_datetime(.data$`Completion Date Time`),
            timezone_offset = NA,
-           carbs = .data$`Carb Size`,
+           value = .data$`Carb Size`,
            unit = "g",
            label = NA,
            estimated_absorption_duration = NA,
            is_hypo_treatment = NA) |> 
-    select("id", "format", "timestamp", "timezone_offset", "carbs", "unit", 
+    select("id", "format", "timestamp", "timezone_offset", "value", "unit", 
            "label", "estimated_absorption_duration", "is_hypo_treatment")
   
   return(carbs)
@@ -292,7 +303,7 @@ clean.tandem_source <- function(data, id, ...) {
 # Functions for SMBG
 #------------------------------
 
-#' Format and clean SMBG data from Tandem Source
+#' Format and clean SMBG data from a Tandem Source export
 #'
 #' @param id Character or numeric participant identifier.
 #' @param bg A data frame containing the SMBG data from a Tandem Source file.

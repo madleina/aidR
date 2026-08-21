@@ -2,17 +2,18 @@
 % Please edit documentation in R/01f_yourloops.R
 \name{.format_timestamp_yourloops.aidR}
 \alias{.format_timestamp_yourloops.aidR}
-\title{Format timestamp to get local (wall-clock) time of a Yourloops export}
+\title{Format timestamps to get local (wall-clock) time of a YourLoops export}
 \usage{
 .format_timestamp_yourloops.aidR(file)
 }
 \arguments{
-\item{file}{A data frame.}
+\item{file}{A data frame obtained from reading a YourLoops file.}
 }
 \value{
-A data frame where the timezone has been formatted to local time.
+A data frame where the timestamps have been converted to local time.
 }
 \description{
-Format timestamp to get local (wall-clock) time of a Yourloops export
+Timestamps are given in Zulu (UTC) time; the timezone offset is added to
+obtain local time. Data frames without these two columns are left unchanged.
 }
 \keyword{internal}

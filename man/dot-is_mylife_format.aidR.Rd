@@ -2,7 +2,7 @@
 % Please edit documentation in R/01d_mylife.R
 \name{.is_mylife_format.aidR}
 \alias{.is_mylife_format.aidR}
-\title{Check if a file corresponds to a file from a Mylife export.}
+\title{Check if a file comes from a mylife export}
 \usage{
 .is_mylife_format.aidR(filename)
 }
@@ -10,9 +10,9 @@
 \item{filename}{Character string with the filename to be checked.}
 }
 \value{
-A logical value: \code{TRUE} if the file is a file from a Mylife export.
+A logical value: \code{TRUE} if the file comes from a mylife export.
 }
 \description{
-Check if a file corresponds to a file from a Mylife export.
+Check if a file comes from a mylife export
 }
 \keyword{internal}

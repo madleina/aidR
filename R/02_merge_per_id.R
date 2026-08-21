@@ -39,7 +39,7 @@
 #' Coerce a vector to a target atomic type
 #'
 #' Wrapper around the \code{as.*} functions, dispatching on
-#' a target type name as returned by \code{\link{.most_general_class}}. An
+#' a target type name as returned by \code{\link{.most_general_class.aidR}}. An
 #' unrecognised target leaves the vector unchanged.
 #'
 #' @param x A vector to coerce.
@@ -70,7 +70,7 @@
 #'
 #' @param dfs A list of data frames.
 #'
-#' @return The input list with mismatched columns coerced to a common type
+#' @return The input list with mismatched columns coerced to a common type.
 #'
 #' @keywords internal
 .harmonise_column_types.aidR <- function(dfs) {
@@ -97,11 +97,13 @@
   dfs
 }
 
-#' Merge all data available for one individual, separately per data type.
+#' Merge all data available for one individual, separately per data type
 #'
-#' @param data_id A list with all data found for one individual.
+#' @param data_id A list with all data found for one individual, with one entry
+#'   per parsed file.
 #'
-#' @return A list with all data found for one individual, merged for each data type. Identical entries are removed.
+#' @return A list with all data found for one individual, merged for each data
+#'   type and sorted in time. Identical entries are removed.
 #' @keywords internal
 .merge_per_id.aidR <- function(data_id){
   if (is.null(data_id)){ return(data_id) }
@@ -120,19 +122,21 @@
   return(data_id)
 }
 
-#' Merge all data available for one individual and one data type.
+#' Merge all data available for one individual and one data type
 #'
-#' @param data_id A list with all data found for one individual.
+#' @param data_id A list with all data found for one individual, with one entry
+#'   per parsed file.
 #'
-#' @return A list with all data found for one individual, merged for each data type.
+#' @return A list with all data found for one individual, with one entry per data
+#'   type.
 #' 
 #' @keywords internal
 .merge_by_type.aidR <- function(data_id){
   # Merge by type
   # Note: data is a list() with one entry per filename
   # Each 'filename' can either be 
-  # - a list with individual data types (classes cgm, basal, bolus, ...), e.g. for Tidepool and Carelink
-  # - a list with a single entry only (class cgm / basal / bolus / ...), e.g. for Glooko and Yourloops
+  # - a list with individual data types (classes cgm, basal, bolus, ...), e.g. for Tidepool and CareLink
+  # - a list with a single entry only (class cgm / basal / bolus / ...), e.g. for Glooko and YourLoops
   
   filenames <- names(data_id)
   
@@ -163,11 +167,12 @@
   return(merged)
 }
 
-#' Sort data frames of all data types according to timestamps.
+#' Sort data frames of all data types according to timestamps
 #'
-#' @param data_id A list with all data found for one individual.
+#' @param data_id A list with all data found for one individual, with one entry
+#'   per data type.
 #'
-#' @return A list with all data found for one individual, sorted in time
+#' @return A list with all data found for one individual, sorted in time.
 #' 
 #' @keywords internal
 .sort_by_time.aidR <- function(data_id){

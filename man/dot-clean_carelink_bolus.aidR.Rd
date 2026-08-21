@@ -2,19 +2,19 @@
 % Please edit documentation in R/01c_carelink.R
 \name{.clean_carelink_bolus.aidR}
 \alias{.clean_carelink_bolus.aidR}
-\title{Format and clean bolus entries of a Carelink export.}
+\title{Format and clean bolus data from a CareLink export}
 \usage{
 .clean_carelink_bolus.aidR(id, bolus)
 }
 \arguments{
 \item{id}{Character or numeric participant identifier.}
 
-\item{bolus}{A data frame containing the bolus data from a Carelink file.}
+\item{bolus}{A data frame containing the bolus data from a CareLink file.}
 }
 \value{
 A data frame containing the formatted and cleaned bolus data.
 }
 \description{
-Format and clean bolus entries of a Carelink export.
+Format and clean bolus data from a CareLink export
 }
 \keyword{internal}

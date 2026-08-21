@@ -2,7 +2,7 @@
 % Please edit documentation in R/01g_tandem_source.R
 \name{.format_bg_tandem_source.aidR}
 \alias{.format_bg_tandem_source.aidR}
-\title{Format and clean SMBG data from Tandem Source}
+\title{Format and clean SMBG data from a Tandem Source export}
 \usage{
 .format_bg_tandem_source.aidR(id, bg)
 }
@@ -15,6 +15,6 @@
 A data frame containing the formatted and cleaned SMBG data.
 }
 \description{
-Format and clean SMBG data from Tandem Source
+Format and clean SMBG data from a Tandem Source export
 }
 \keyword{internal}

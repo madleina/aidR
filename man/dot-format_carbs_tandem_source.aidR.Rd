@@ -2,19 +2,20 @@
 % Please edit documentation in R/01g_tandem_source.R
 \name{.format_carbs_tandem_source.aidR}
 \alias{.format_carbs_tandem_source.aidR}
-\title{Format and clean carbs data from Tandem Source}
+\title{Format and clean carbohydrate data from a Tandem Source export}
 \usage{
 .format_carbs_tandem_source.aidR(id, carbs)
 }
 \arguments{
 \item{id}{Character or numeric participant identifier.}
 
-\item{carbs}{A data frame containing the carbs data from a Tandem Source file.}
+\item{carbs}{A data frame containing the bolus data from a Tandem Source file,
+which holds the carbohydrates entered into the bolus calculator.}
 }
 \value{
-A data frame containing the formatted and cleaned carbs data.
+A data frame containing the formatted and cleaned carbohydrate data.
 }
 \description{
-Format and clean carbs data from Tandem Source
+Format and clean carbohydrate data from a Tandem Source export
 }
 \keyword{internal}

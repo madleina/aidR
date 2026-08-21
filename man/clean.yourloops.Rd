@@ -2,7 +2,7 @@
 % Please edit documentation in R/01f_yourloops.R
 \name{clean.yourloops}
 \alias{clean.yourloops}
-\title{Format and clean the Yourloops data to keep relevant columns only.}
+\title{Format and clean the YourLoops data to keep relevant columns only}
 \usage{
 \method{clean}{yourloops}(data, id, ...)
 }
@@ -14,8 +14,11 @@
 \item{...}{Additional arguments passed to methods.}
 }
 \value{
-A named list with names \code{cgm}, \code{basal}, \code{bolus}, or \code{carbs}, or other names if data is of another type.
+A named list with the cleaned data, named according to the data type
+of \code{data}: \code{cgm}, \code{basal}, \code{bolus} or \code{carbs} (from
+meals or from rescue carbohydrates). \code{NULL} for all other data types,
+which are not cleaned. Note that a YourLoops export contains no SMBG data.
 }
 \description{
-Format and clean the Yourloops data to keep relevant columns only.
+Format and clean the YourLoops data to keep relevant columns only
 }

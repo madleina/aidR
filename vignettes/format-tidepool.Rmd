@@ -14,6 +14,7 @@ knitr::opts_chunk$set(
 ```
 ```{r setup, message = FALSE}
 library(aidR)
+library(readxl)
 ```
 ```{r, include=FALSE}
 path <- system.file("extdata", "tidepool_example.xlsx", package = "aidR")
@@ -35,48 +36,48 @@ print(file, n = 10)
 
 ## Sheets and the data types they produce
 
-To inspect the raw data, we parse the export with `clean_files = FALSE`, which returns the full information provided by Tidepool:
+To inspect the raw data, we parse the export with `clean = FALSE`, which returns the full information provided by Tidepool:
 ```{r}
-data <- parse_data(id = "1", paths = path, clean_files = FALSE)
+data <- parse_data(id = "1", paths = path, clean = FALSE)
 ```
 Each entry below describes one sheet and the information it provides.
 
 - **`CGM`**: CGM data.
-```{r}
+```{r, comment=""}
 head(data$cgm)
 ```
 - **`Basal`**: basal rates, including the delivery type (e.g. scheduled, temp, or suspend).
-```{r}
+```{r, comment=""}
 head(data$basal)
 ```
 - **`Bolus`**: insulin boluses, including the amounts delivered as a normal bolus and as an extended bolus.
-```{r}
+```{r, comment=""}
 head(data$bolus)
 ```
-- **`SMBG`**: self-measured blood glucose (SMBG).
-```{r}
-head(data$smbg)
+- **`SMBG`**: self-monitored blood glucose (SMBG).
+```{r, comment=""}
+head(data$SMBG)
 ```
 - **`Bolus Calculator`** or **`Food`**: carbohydrate intake. Tidepool exports carry one or the other depending on the uploading device, never both, and `aidR` uses whichever is present. If both or neither appear, `aidR` raises an error. The example contains a `Bolus Calculator` sheet:
-```{r}
+```{r, comment=""}
 head(data$bolus_calculator)
 ```
 - **`Device Event`**: device-level events such as alarms, suspends, resumes, and cannula/reservoir changes.
-```{r}
+```{r, comment=""}
 head(data$device_event)
 ```
 - **`Basal Schedules`**, **`BG Targets`**, **`Carb Ratios`**, **`Insulin Sensitivities`**: pump therapy settings as they changed over time.
-```{r}
+```{r, comment=""}
 head(data$basal_schedules)
 ```
 - **`Upload`**: metadata about each upload to Tidepool (device, time, software version), useful for tracing which device a given stretch of data came from.
-```{r}
+```{r, comment=""}
 head(data$upload)
 ```
 
 ## Cleaning files
 
-When `parse_data` is run with `clean_files = TRUE`, the cleaned data types are built from the following sheets and attributes:
+When `parse_data` is run with `clean = TRUE`, the cleaned data types are built from the following sheets and attributes:
 
 | Cleaned data type | Used sheets                       | Used attributes |
 |-------------------|-----------------------------------|-----------------|
@@ -84,7 +85,7 @@ When `parse_data` is run with `clean_files = TRUE`, the cleaned data types are b
 | `basal`           | `Basal`                           | `data$basal`    |
 | `bolus`           | `Bolus`                           | `data$bolus`    |
 | `carbs`           | `Bolus Calculator` or `Food`      | `data$carbs`    |
-| `SMBG`            | `SMBG`                            | `data$smbg`     |
+| `SMBG`            | `SMBG`                            | `data$SMBG`     |
 
 ## Notes
 

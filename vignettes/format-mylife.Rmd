@@ -32,22 +32,22 @@ Because the headers in a mylife export are language-specific, `aidR` cannot iden
 
 ## Entries and the data types they produce
 
-To inspect the raw entries, we parse the export with `clean_files = FALSE`, which returns the full information provided by mylife:
+To inspect the raw entries, we parse the export with `clean = FALSE`, which returns the full information provided by mylife:
 ```{r}
-data <- parse_data(id = "1", paths = path, clean_files = FALSE)
+data <- parse_data(id = "1", paths = path, clean = FALSE)
 ```
 All entries are preserved as-is under their original, language-specific label, so nothing in the export is lost. Possible labels include:
 
 - **Bolus entries**: insulin boluses. German label e.g. `Bolus`; unit `U`.
-```{r}
+```{r, comment=""}
 head(data$Bolus)
 ```
 - **Carbohydrate entries**: carbohydrate intake communicated to the pump. German label e.g. `Kohlenhydrate`; unit `g`.
-```{r}
+```{r, comment=""}
 head(data$Kohlenhydrate)
 ```
 - **Manual blood glucose entries**: self-monitored blood glucose (SMBG). German label e.g. `Blutzucker manuelle Eingabe`; unit `mg/dL` or `mmol/L`.
-```{r}
+```{r, comment=""}
 head(data$`Blutzucker manuelle Eingabe`)
 ```
 - **Ease-off** (`Ease-off`): start and duration of Ease-off mode.
@@ -61,7 +61,7 @@ Note that a mylife export contains **no CGM or basal data** - `bolus`, `carbs`, 
 
 ## Cleaning files
 
-When `parse_data` is run with `clean_files = TRUE`, the cleaned data types are built from the following raw files and attributes:
+When `parse_data` is run with `clean = TRUE`, the cleaned data types are built from the following raw files and attributes:
  
 | Cleaned data type | Used files           | Used attributes                                                                                                                |
 |-------------------|----------------------|--------------------------------------------------------------------------------------------------------------------------------|

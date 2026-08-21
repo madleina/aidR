@@ -12,7 +12,8 @@ filter_CGM(
 )
 }
 \arguments{
-\item{data_id}{A list with all data found for one individual.}
+\item{data_id}{A list with all data found for one individual. Filtering is
+only performed if the CGM data was cleaned and standardized.}
 
 \item{truncate_min_cgm}{CGM values smaller than this threshold will be truncated. Default 40 mg/dL, if NULL, no filtering is performed.}
 

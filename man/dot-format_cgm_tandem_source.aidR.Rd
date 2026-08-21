@@ -2,7 +2,7 @@
 % Please edit documentation in R/01g_tandem_source.R
 \name{.format_cgm_tandem_source.aidR}
 \alias{.format_cgm_tandem_source.aidR}
-\title{Format and clean CGM data from Tandem Source}
+\title{Format and clean CGM data from a Tandem Source export}
 \usage{
 .format_cgm_tandem_source.aidR(id, cgm)
 }
@@ -15,6 +15,6 @@
 A data frame containing the formatted and cleaned CGM data.
 }
 \description{
-Format and clean CGM data from Tandem Source
+Format and clean CGM data from a Tandem Source export
 }
 \keyword{internal}

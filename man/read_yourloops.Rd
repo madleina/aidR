@@ -2,18 +2,20 @@
 % Please edit documentation in R/01f_yourloops.R
 \name{read_yourloops}
 \alias{read_yourloops}
-\title{Read file from a Yourloops export}
+\title{Read a file from a YourLoops export}
 \usage{
 read_yourloops(id, filename)
 }
 \arguments{
 \item{id}{Character or numeric participant identifier.}
 
-\item{filename}{Character string corresponding to the filename of the Yourloops export.}
+\item{filename}{Character string with the filename of the file to be read.}
 }
 \value{
-An instance of class \code{yourloops}. NULL if the data was not parsed.
+An instance of class \code{yourloops}, wrapping a named list with the
+data of one data type.
 }
 \description{
-Read file from a Yourloops export
+Read a file from a YourLoops export
 }
+\keyword{internal}

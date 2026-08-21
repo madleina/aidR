@@ -2,7 +2,7 @@
 % Please edit documentation in R/01b_glooko.R
 \name{.read_glooko_file.aidR}
 \alias{.read_glooko_file.aidR}
-\title{Read the data from a Glooko file.}
+\title{Read the data from a Glooko file}
 \usage{
 .read_glooko_file.aidR(filename)
 }
@@ -10,9 +10,12 @@
 \item{filename}{Character string with the filename to be parsed.}
 }
 \value{
-A data frame with the content found in the file, with formatted timestamps and numeric columns. NULL if the file could not be parsed
+A named list with a single entry, named after the data type of the
+file and holding a data frame with formatted timestamps and numeric columns.
+\code{NULL} if the file is empty. Throws an error if the data type of a
+non-empty file could not be determined.
 }
 \description{
-Read the data from a Glooko file.
+Read the data from a Glooko file
 }
 \keyword{internal}

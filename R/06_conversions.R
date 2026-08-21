@@ -8,11 +8,14 @@
 # Public functions
 #------------------------
 
-#' Convert CGM data to a format compatible with the R-package iglu.
+#' Convert CGM data to a format compatible with the R-package iglu
 #'
-#' @param data A list with all data found for one or multiple individuals.
+#' @param data A list with all data found for one individual (the output of
+#'   \code{\link{parse_data}}) or for multiple individuals (the output of
+#'   \code{\link{merge_all}}). Requires cleaned and standardized CGM data.
 #'
-#' @return A data frame compatible with the R-package iglu.
+#' @return A data frame with columns \code{id}, \code{time} and \code{gl},
+#'   compatible with the R-package iglu.
 #' @export
 get_iglu_format <- function(data){
   if (!inherits(data, "list") || 
@@ -27,7 +30,7 @@ get_iglu_format <- function(data){
   return(iglu_df)
 }
 
-#' Write AID data (CGM, basal, bolus, carbs and SMBG, where available) to a json file in DIAX format.
+#' Write AID data (CGM, basal, bolus, carbs and SMBG, where available) to a JSON file in DIAX format
 #'
 #' Accepts either the output of \code{\link{parse_data}} for a single
 #' individual or the output of \code{\link{merge_all}} for
@@ -43,7 +46,7 @@ get_iglu_format <- function(data){
 #' @param ids Character or numeric vector with the individual(s) to write. 
 #'   Defaults to all ids found in \code{data}.
 #'
-#' @return No return value, called for side effects.
+#' @return No return value, called for side effects: one JSON file is written per id.
 #' @export
 write_DIAX_format <- function(data, prefix, ids = NULL){
   if (!inherits(data, "list")){
@@ -85,7 +88,7 @@ write_DIAX_format <- function(data, prefix, ids = NULL){
 # Helper functions
 #------------------------
 
-#' Mapping from aidR data types to DIAX field names.
+#' Mapping from aidR data types to DIAX field names
 #'
 #' @return A named list, mapping aidR type names to DIAX field names.
 #'
@@ -94,16 +97,16 @@ write_DIAX_format <- function(data, prefix, ids = NULL){
   list(cgm = "cgm", bolus = "bolus", basal = "basal_rate", carbs = "carbs", SMBG = "smbg")
 }
 
-#' Name of the column holding the series value, per aidR data type.
+#' Name of the column holding the series value, per aidR data type
 #'
 #' @return A named list, mapping aidR type names to column names.
 #'
 #' @keywords internal
 .diax_value_col.aidR <- function(){
-  list(cgm = "value", bolus = "total", basal = "rate", carbs = "carbs", SMBG = "value")
+  list(cgm = "value", bolus = "total", basal = "rate", carbs = "value", SMBG = "value")
 }
 
-#' Name of the column holding the device name, per aidR data type.
+#' Name of the column holding the device name, per aidR data type
 #'
 #' @return A named list, mapping aidR type names to column names (\code{NA} if
 #'   no device is recorded for that type).
@@ -114,7 +117,7 @@ write_DIAX_format <- function(data, prefix, ids = NULL){
        carbs = NA, SMBG = "sensor_name")
 }
 
-#' Format timestamps according to the DIAX ISO 8601 convention.
+#' Format timestamps according to the DIAX ISO 8601 convention
 #'
 #' Per the DIAX specification, timestamps are \code{"Y-m-d H:M:S"} when the
 #' timezone is unknown, or \code{"Y-m-d H:M:S Z"} (offset appended, no colon)
@@ -141,7 +144,7 @@ write_DIAX_format <- function(data, prefix, ids = NULL){
   ifelse(is.na(timezone_offset), time_str, paste(time_str, offset_str))
 }
 
-#' Build one DIAX time/value series from a standardized aidR data frame.
+#' Build one DIAX time/value series from a standardized aidR data frame
 #'
 #' @param type One of \code{"cgm"}, \code{"bolus"}, \code{"basal"}, \code{"carbs"} or \code{"SMBG"}.
 #' @param df The corresponding standardized aidR data frame.
@@ -163,7 +166,7 @@ write_DIAX_format <- function(data, prefix, ids = NULL){
   )
 }
 
-#' Determine the device name(s) recorded for one data type.
+#' Determine the device name(s) recorded for one data type
 #'
 #' @param type One of \code{"cgm"}, \code{"bolus"}, \code{"basal"}, \code{"carbs"} or \code{"SMBG"}.
 #' @param df The corresponding standardized aidR data frame.
@@ -187,12 +190,15 @@ write_DIAX_format <- function(data, prefix, ids = NULL){
   paste(sort(devices), collapse = ", ")
 }
 
-#' Get metadata explanation for timestamps (depending on local time, with or without timestamp)
+#' Describe the timestamp convention used, for the DIAX metadata
+#'
+#' The description depends on whether the timezone offset is known for all, some
+#' or none of the data points.
 #'
 #' @param data_id A list with the standardized aidR data frames present for
 #'   one individual, named by aidR type (\code{cgm}, \code{bolus}, ...).
 #'
-#' @return A named list to be used as the \code{metadata} entry for time of the DIAX list.
+#' @return A named list to be used as the \code{time} entry of the DIAX metadata.
 #'
 #' @keywords internal
 .diax_metadata_time.aidR <- function(data_id){
@@ -220,7 +226,7 @@ write_DIAX_format <- function(data, prefix, ids = NULL){
   }
 }
 
-#' Build the \code{metadata} section of a DIAX list.
+#' Build the \code{metadata} section of a DIAX list
 #'
 #' @param data_id A list with the standardized aidR data frames present for
 #'   one individual, named by aidR type (\code{cgm}, \code{bolus}, ...).
@@ -260,7 +266,7 @@ write_DIAX_format <- function(data, prefix, ids = NULL){
   metadata
 }
 
-#' Build a full DIAX list for one individual.
+#' Build a full DIAX list for one individual
 #'
 #' @param id Character or numeric participant identifier, stored as \code{unique_id}.
 #' @param data_id A list with the standardized aidR data frames for one

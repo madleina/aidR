@@ -2,7 +2,7 @@
 % Please edit documentation in R/01b_glooko.R
 \name{.format_cgm_glooko.aidR}
 \alias{.format_cgm_glooko.aidR}
-\title{Format and clean CGM data from Glooko.}
+\title{Format and clean CGM data from a Glooko export}
 \usage{
 .format_cgm_glooko.aidR(id, data)
 }
@@ -15,6 +15,6 @@
 A data frame containing the formatted and cleaned CGM data.
 }
 \description{
-Format and clean CGM data from Glooko.
+Format and clean CGM data from a Glooko export
 }
 \keyword{internal}

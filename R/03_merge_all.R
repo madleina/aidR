@@ -8,12 +8,15 @@
 # Public functions
 #------------------------
 
-#' Merge data available for all individuals, separately per data type.
+#' Merge data available for all individuals, separately per data type
 #'
-#' @param data A list with data found for all individual.
-#' @param types A vector with data type names to be merged.
+#' @param data A named list with the data of each individual (the output of
+#'   \code{\link{parse_data}}), named by participant identifier.
+#' @param types A character vector with the data type names to be merged.
+#'   Defaults to the five standardized types.
 #'
-#' @return A list with data found for all individual, merged for each data type.
+#' @return A named list with one data frame per data type, holding the data of
+#'   all individuals. Individuals without data of a given type contribute no rows.
 #' @export
 merge_all <- function(data, types = c("cgm", "basal", "bolus", "carbs", "SMBG")){
   # Merge: CGM, basal, bolus, carbs and SMBG (standardized formats)

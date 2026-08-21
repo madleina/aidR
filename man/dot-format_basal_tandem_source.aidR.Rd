@@ -2,7 +2,7 @@
 % Please edit documentation in R/01g_tandem_source.R
 \name{.format_basal_tandem_source.aidR}
 \alias{.format_basal_tandem_source.aidR}
-\title{Format and clean basal data from Tandem Source}
+\title{Format and clean basal data from a Tandem Source export}
 \usage{
 .format_basal_tandem_source.aidR(id, basal)
 }
@@ -15,6 +15,7 @@
 A data frame containing the formatted and cleaned basal data.
 }
 \description{
-Format and clean basal data from Tandem Source
+Tandem Source reports the insulin delivered since the previous entry; the rate
+is obtained by dividing it by the duration until the next entry.
 }
 \keyword{internal}

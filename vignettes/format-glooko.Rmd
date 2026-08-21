@@ -47,45 +47,45 @@ Because the headers in a Glooko export are language-specific, `aidR` cannot iden
 
 ## Files and the data types they produce
 
-To inspect the files, we parse the export with `clean_files = FALSE`, which returns the full information provided by Glooko:
+To inspect the files, we parse the export with `clean = FALSE`, which returns the full information provided by Glooko:
 
 ```{r}
-data <- parse_data(id = "1", paths = path, clean_files = FALSE)
+data <- parse_data(id = "1", paths = path, clean = FALSE)
 ```
 
 Each entry below describes one raw file and shows an example.
 
 - **`alarms_data_*.csv`**: pump alarms.
 
-```{r}
+```{r, comment=""}
 head(data$alarm)
 ```
 
-- **`bg_data_*.csv`**: self-measured blood glucose (SMBG).
+- **`bg_data_*.csv`**: self-monitored blood glucose (SMBG).
 
-```{r}
+```{r, comment=""}
 head(data$SMBG)
 ```
 
 - **`carbs_data_*.csv`** / **`cgm_carbs_data_*.csv`**: carbohydrate/meal events recorded by or imported from a CGM system. These are different from carbohydrate amounts entered into a pump's bolus calculator. In practice, these files are almost always empty in exports of AID users. They are therefore ignored when building the clean `carbs` output, which instead uses carbohydrate amounts recorded in the bolus files (see below).
 
 - **`cgm_data_*.csv`**: CGM data.
-```{r}
+```{r, comment=""}
 head(data$cgm)
 ```
 
 - **`Insulin data/basal_data_*.csv`**: basal rates. For Omnipod users these are often very sparse or missing. For these users, the few entries that do appear correspond to basal rates delivered while in manual mode; basal delivered in automated mode is unknown and can only be roughly approximated from the daily aggregated insulin.
-```{r}
+```{r, comment=""}
 head(data$basal)
 ```
 
 - **`Insulin data/bolus_data_*.csv`**: boluses. Also records whether a bolus was normal, square-wave, or dual-wave (although the duration for the latter two is unknown).
-```{r}
+```{r, comment=""}
 head(data$bolus)
 ```
 
 - **`Insulin data/insulin_data_*.csv`**: daily aggregated bolus, basal, and total insulin.
-```{r}
+```{r, comment=""}
 head(data$total_insulin)
 ```
 
@@ -93,7 +93,7 @@ head(data$total_insulin)
 
 ## Cleaning files
 
-When `parse_data` is run with `clean_files = TRUE`, the cleaned data types are built from the following raw files and attributes:
+When `parse_data` is run with `clean = TRUE`, the cleaned data types are built from the following raw files and attributes:
 
 | Cleaned data type | Used files                      | Used attributes |
 |-------------------|---------------------------------|-----------------|

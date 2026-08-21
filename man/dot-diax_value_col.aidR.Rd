@@ -2,7 +2,7 @@
 % Please edit documentation in R/06_conversions.R
 \name{.diax_value_col.aidR}
 \alias{.diax_value_col.aidR}
-\title{Name of the column holding the series value, per aidR data type.}
+\title{Name of the column holding the series value, per aidR data type}
 \usage{
 .diax_value_col.aidR()
 }
@@ -10,6 +10,6 @@
 A named list, mapping aidR type names to column names.
 }
 \description{
-Name of the column holding the series value, per aidR data type.
+Name of the column holding the series value, per aidR data type
 }
 \keyword{internal}

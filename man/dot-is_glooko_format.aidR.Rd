@@ -2,7 +2,7 @@
 % Please edit documentation in R/01b_glooko.R
 \name{.is_glooko_format.aidR}
 \alias{.is_glooko_format.aidR}
-\title{Check if a file corresponds to a file from a Glooko export.}
+\title{Check if a file comes from a Glooko export}
 \usage{
 .is_glooko_format.aidR(filename)
 }
@@ -10,9 +10,9 @@
 \item{filename}{Character string with the filename to be checked.}
 }
 \value{
-A logical value: \code{TRUE} if the file is a file from a Glooko export.
+A logical value: \code{TRUE} if the file comes from a Glooko export.
 }
 \description{
-Check if a file corresponds to a file from a Glooko export.
+Check if a file comes from a Glooko export
 }
 \keyword{internal}

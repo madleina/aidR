@@ -2,7 +2,7 @@
 % Please edit documentation in R/01b_glooko.R
 \name{.format_bolus_glooko.aidR}
 \alias{.format_bolus_glooko.aidR}
-\title{Format and clean bolus data from Glooko.}
+\title{Format and clean bolus data from a Glooko export}
 \usage{
 .format_bolus_glooko.aidR(id, data)
 }
@@ -15,6 +15,6 @@
 A data frame containing the formatted and cleaned bolus data.
 }
 \description{
-Format and clean bolus data from Glooko.
+Format and clean bolus data from a Glooko export
 }
 \keyword{internal}

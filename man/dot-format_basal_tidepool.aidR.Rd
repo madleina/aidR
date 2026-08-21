@@ -2,7 +2,7 @@
 % Please edit documentation in R/01e_tidepool.R
 \name{.format_basal_tidepool.aidR}
 \alias{.format_basal_tidepool.aidR}
-\title{Format and clean basal data from Tidepool}
+\title{Format and clean basal data from a Tidepool export}
 \usage{
 .format_basal_tidepool.aidR(id, basal)
 }
@@ -15,6 +15,6 @@
 A data frame containing the formatted and cleaned basal data.
 }
 \description{
-Format and clean basal data from Tidepool
+Format and clean basal data from a Tidepool export
 }
 \keyword{internal}

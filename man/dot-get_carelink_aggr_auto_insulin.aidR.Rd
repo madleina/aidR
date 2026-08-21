@@ -2,17 +2,17 @@
 % Please edit documentation in R/01c_carelink.R
 \name{.get_carelink_aggr_auto_insulin.aidR}
 \alias{.get_carelink_aggr_auto_insulin.aidR}
-\title{Parse all entries corresponding to aggregated auto insulin in a Carelink export.}
+\title{Parse all entries corresponding to daily aggregated insulin in a CareLink export}
 \usage{
 .get_carelink_aggr_auto_insulin.aidR(df)
 }
 \arguments{
-\item{df}{A data frame obtained from reading a Carelink file.}
+\item{df}{A data frame obtained from reading a CareLink file.}
 }
 \value{
-A data frame containing the target entries
+A data frame with the corresponding entries.
 }
 \description{
-Parse all entries corresponding to aggregated auto insulin in a Carelink export.
+Parse all entries corresponding to daily aggregated insulin in a CareLink export
 }
 \keyword{internal}

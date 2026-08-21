@@ -2,7 +2,7 @@
 % Please edit documentation in R/01e_tidepool.R
 \name{.format_bolus_tidepool.aidR}
 \alias{.format_bolus_tidepool.aidR}
-\title{Format and clean bolus data from Tidepool}
+\title{Format and clean bolus data from a Tidepool export}
 \usage{
 .format_bolus_tidepool.aidR(id, bolus)
 }
@@ -15,6 +15,6 @@
 A data frame containing the formatted and cleaned bolus data.
 }
 \description{
-Format and clean bolus data from Tidepool
+Format and clean bolus data from a Tidepool export
 }
 \keyword{internal}

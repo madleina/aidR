@@ -2,7 +2,7 @@
 % Please edit documentation in R/01d_mylife.R
 \name{clean.mylife}
 \alias{clean.mylife}
-\title{Format and clean the Mylife data to keep relevant columns only.}
+\title{Format and clean the mylife data to keep relevant columns only}
 \usage{
 \method{clean}{mylife}(data, id, ...)
 }
@@ -14,8 +14,11 @@
 \item{...}{Additional arguments passed to methods.}
 }
 \value{
-A named list with names \code{bolus} and \code{carbs}, and other names for data of other types.
+A named list with the cleaned data, with entries \code{bolus},
+\code{carbs} and \code{SMBG}. Entries are \code{NULL} if the export holds
+no data of that type.
 }
 \description{
-Format and clean the Mylife data to keep relevant columns only.
+The entry types are identified by their unit, since their labels are
+language-specific. Note that a mylife export contains no CGM and no basal data.
 }

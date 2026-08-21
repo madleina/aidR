@@ -2,17 +2,19 @@
 % Please edit documentation in R/02_merge_per_id.R
 \name{.merge_by_type.aidR}
 \alias{.merge_by_type.aidR}
-\title{Merge all data available for one individual and one data type.}
+\title{Merge all data available for one individual and one data type}
 \usage{
 .merge_by_type.aidR(data_id)
 }
 \arguments{
-\item{data_id}{A list with all data found for one individual.}
+\item{data_id}{A list with all data found for one individual, with one entry
+per parsed file.}
 }
 \value{
-A list with all data found for one individual, merged for each data type.
+A list with all data found for one individual, with one entry per data
+type.
 }
 \description{
-Merge all data available for one individual and one data type.
+Merge all data available for one individual and one data type
 }
 \keyword{internal}

@@ -39,49 +39,49 @@ Because YourLoops headers are language-independent, `aidR` identifies each file 
 
 ## Files and the data types they produce
 
-To inspect the raw files, we parse the export with `clean_files = FALSE`, which returns the full information provided by YourLoops:
+To inspect the raw files, we parse the export with `clean = FALSE`, which returns the full information provided by YourLoops:
 ```{r}
-data <- parse_data(id = "1", paths = path, clean_files = FALSE)
+data <- parse_data(id = "1", paths = path, clean = FALSE)
 ```
 Each entry below describes one raw file and shows an example.
 
 - **`cbg.csv`**: CGM data ("continuous blood glucose"), including the CGM model.
-```{r}
+```{r, comment=""}
 head(data$cgm)
 ```
 - **`basal.csv`**: basal rates, including the delivery type and the duration (given in milliseconds).
-```{r}
+```{r, comment=""}
 head(data$basal)
 ```
 - **`bolus.csv`**: insulin boluses, including the amount required versus delivered and the insulin on board.
-```{r}
+```{r, comment=""}
 head(data$bolus)
 ```
 - **`meals.csv`**: carbohydrate intake communicated to the bolus calculator.
-```{r}
+```{r, comment=""}
 head(data$meals)
 ```
 - **`rescuecarbs.csv`**: carbohydrates taken to treat a hypoglycaemic event.
-```{r}
+```{r, comment=""}
 head(data$rescuecarbs)
 ```
 - **`alarms.csv`**: alarms raised by the loop or the pump, with code and acknowledgement status.
-```{r}
+```{r, comment=""}
 head(data$alarms)
 ```
 - **`physicalActivities.csv`**: self-reported physical activity, with duration and reported intensity. Often sparse or missing entirely.
-```{r}
+```{r, comment=""}
 head(data$physicalActivities)
 ```
 - **`settings-cgm.csv`**, **`settings-pump.csv`**, **`settings-device.csv`**, **`settings-current-parameters.csv`**, **`settings-security-basals.csv`**: the CGM, pump, smartphone, loop-parameter, and security-basal configuration.
-```{r}
+```{r, comment=""}
 head(data$settings_pump)
 ```
 Note that a YourLoops export contains **no SMBG data**; `cgm`, `basal`, `bolus`, and `carbs` are the core data types available from this platform.
 
 ## Cleaning files
 
-When `parse_data` is run with `clean_files = TRUE`, the cleaned data types are built from the following raw files and attributes:
+When `parse_data` is run with `clean = TRUE`, the cleaned data types are built from the following raw files and attributes:
 
 | Cleaned data type | Used files                      | Used attributes                     |
 |-------------------|---------------------------------|-------------------------------------|

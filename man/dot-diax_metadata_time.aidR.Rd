@@ -2,7 +2,7 @@
 % Please edit documentation in R/06_conversions.R
 \name{.diax_metadata_time.aidR}
 \alias{.diax_metadata_time.aidR}
-\title{Get metadata explanation for timestamps (depending on local time, with or without timestamp)}
+\title{Describe the timestamp convention used, for the DIAX metadata}
 \usage{
 .diax_metadata_time.aidR(data_id)
 }
@@ -11,9 +11,10 @@
 one individual, named by aidR type (\code{cgm}, \code{bolus}, ...).}
 }
 \value{
-A named list to be used as the \code{metadata} entry for time of the DIAX list.
+A named list to be used as the \code{time} entry of the DIAX metadata.
 }
 \description{
-Get metadata explanation for timestamps (depending on local time, with or without timestamp)
+The description depends on whether the timezone offset is known for all, some
+or none of the data points.
 }
 \keyword{internal}

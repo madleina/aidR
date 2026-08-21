@@ -2,19 +2,19 @@
 % Please edit documentation in R/01f_yourloops.R
 \name{.format_cgm_yourloops.aidR}
 \alias{.format_cgm_yourloops.aidR}
-\title{Format and clean CGM data from Yourloops}
+\title{Format and clean CGM data from a YourLoops export}
 \usage{
 .format_cgm_yourloops.aidR(id, cgm)
 }
 \arguments{
 \item{id}{Character or numeric participant identifier.}
 
-\item{cgm}{A data frame containing the CGM data from a Yourloops file.}
+\item{cgm}{A data frame containing the CGM data from a YourLoops file.}
 }
 \value{
 A data frame containing the formatted and cleaned CGM data.
 }
 \description{
-Format and clean CGM data from Yourloops
+Format and clean CGM data from a YourLoops export
 }
 \keyword{internal}

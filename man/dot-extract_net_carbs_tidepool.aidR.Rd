@@ -2,17 +2,17 @@
 % Please edit documentation in R/01e_tidepool.R
 \name{.extract_net_carbs_tidepool.aidR}
 \alias{.extract_net_carbs_tidepool.aidR}
-\title{Extract net carbohydrate amount from json string given in "Nutrition" column of Food sheet}
+\title{Extract the net carbohydrate amount from the \code{Nutrition} column of the Food sheet}
 \usage{
 .extract_net_carbs_tidepool.aidR(json_str)
 }
 \arguments{
-\item{json_str}{A character string in json format, containing the net carbohydrate amount}
+\item{json_str}{A character string in JSON format, containing the net carbohydrate amount.}
 }
 \value{
-A numeric value with the net carbohydrate amount
+A numeric value with the net carbohydrate amount.
 }
 \description{
-Extract net carbohydrate amount from json string given in "Nutrition" column of Food sheet
+Extract the net carbohydrate amount from the \code{Nutrition} column of the Food sheet
 }
 \keyword{internal}

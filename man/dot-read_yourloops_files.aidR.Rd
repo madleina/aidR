@@ -2,18 +2,17 @@
 % Please edit documentation in R/01f_yourloops.R
 \name{.read_yourloops_files.aidR}
 \alias{.read_yourloops_files.aidR}
-\title{Read a file from a Yourloops export}
+\title{Read a file from a YourLoops export}
 \usage{
 .read_yourloops_files.aidR(filename)
 }
 \arguments{
-\item{filename}{A character string giving the path to the file.}
+\item{filename}{Character string with the filename of the file to be read.}
 }
 \value{
-A data frame containing the contents of the specified sheet, or
-\code{NULL} if the sheet does not exist in the file.
+A data frame containing the contents of the file.
 }
 \description{
-Read a file from a Yourloops export
+Read a file from a YourLoops export
 }
 \keyword{internal}

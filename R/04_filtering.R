@@ -10,7 +10,8 @@
 
 #' Filter CGM values
 #'
-#' @param data_id A list with all data found for one individual.
+#' @param data_id A list with all data found for one individual. Filtering is
+#'   only performed if the CGM data was cleaned and standardized.
 #' @param truncate_min_cgm CGM values smaller than this threshold will be truncated. Default 40 mg/dL, if NULL, no filtering is performed.
 #' @param truncate_max_cgm CGM values larger than this threshold will be truncated. Default 400 mg/dL, if NULL, no filtering is performed.
 #' @param min_minutes_difference_cgm CGM values are downsampled to this time interval (in minutes). Default 5 minutes, if NULL, no downsampling is performed.
@@ -38,14 +39,14 @@ filter_CGM <- function(data_id, truncate_min_cgm = 40, truncate_max_cgm = 400, m
 # Helper functions
 #------------------------
 
-#' Filter CGM data.
+#' Filter CGM data
 #'
-#' @param cgm A data frame containing the CGM data for one individual.
+#' @param cgm A data frame containing the cleaned CGM data for one individual.
 #' @param truncate_min_cgm CGM values smaller than this threshold will be truncated. Default 40 mg/dL, if NULL, no filtering is performed.
 #' @param truncate_max_cgm CGM values larger than this threshold will be truncated. Default 400 mg/dL, if NULL, no filtering is performed.
 #' @param min_minutes_difference_cgm CGM values are downsampled to this time interval (in minutes). Default 5 minutes, if NULL, no downsampling is performed.
 #'
-#' @return A list with all data found for one individual, sorted in time
+#' @return A data frame with the filtered CGM data.
 #' 
 #' @keywords internal
 .filter_cgm.aidR <- function(cgm, truncate_min_cgm = 40, truncate_max_cgm = 400, min_minutes_difference_cgm = 5){

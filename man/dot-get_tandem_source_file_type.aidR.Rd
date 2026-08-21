@@ -2,7 +2,7 @@
 % Please edit documentation in R/01g_tandem_source.R
 \name{.get_tandem_source_file_type.aidR}
 \alias{.get_tandem_source_file_type.aidR}
-\title{Get file type of a Tandem Source export.}
+\title{Get the data type of a file from a Tandem Source export}
 \usage{
 .get_tandem_source_file_type.aidR(filename)
 }
@@ -10,9 +10,10 @@
 \item{filename}{Character string with the filename to be checked.}
 }
 \value{
-A character string if file type could be determined, NULL there was no match. If multiple files types matched, an error is thrown.
+A character string with the data type, or \code{NULL} if there was no
+match. Throws an error if multiple data types matched.
 }
 \description{
-Get file type of a Tandem Source export.
+Get the data type of a file from a Tandem Source export
 }
 \keyword{internal}

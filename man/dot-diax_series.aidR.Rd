@@ -2,7 +2,7 @@
 % Please edit documentation in R/06_conversions.R
 \name{.diax_series.aidR}
 \alias{.diax_series.aidR}
-\title{Build one DIAX time/value series from a standardized aidR data frame.}
+\title{Build one DIAX time/value series from a standardized aidR data frame}
 \usage{
 .diax_series.aidR(type, df)
 }
@@ -15,6 +15,6 @@
 A list with entries \code{time} and \code{value}.
 }
 \description{
-Build one DIAX time/value series from a standardized aidR data frame.
+Build one DIAX time/value series from a standardized aidR data frame
 }
 \keyword{internal}

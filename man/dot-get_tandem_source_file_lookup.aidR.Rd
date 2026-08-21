@@ -2,7 +2,7 @@
 % Please edit documentation in R/01g_tandem_source.R
 \name{.get_tandem_source_file_lookup.aidR}
 \alias{.get_tandem_source_file_lookup.aidR}
-\title{A lookup with Tandem Source file characteristics.}
+\title{A lookup with Tandem Source file characteristics}
 \usage{
 .get_tandem_source_file_lookup.aidR()
 }
@@ -10,6 +10,6 @@
 A list with data types and their expected headers.
 }
 \description{
-A lookup with Tandem Source file characteristics.
+A lookup with Tandem Source file characteristics
 }
 \keyword{internal}

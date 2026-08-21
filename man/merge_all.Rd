@@ -2,18 +2,21 @@
 % Please edit documentation in R/03_merge_all.R
 \name{merge_all}
 \alias{merge_all}
-\title{Merge data available for all individuals, separately per data type.}
+\title{Merge data available for all individuals, separately per data type}
 \usage{
 merge_all(data, types = c("cgm", "basal", "bolus", "carbs", "SMBG"))
 }
 \arguments{
-\item{data}{A list with data found for all individual.}
+\item{data}{A named list with the data of each individual (the output of
+\code{\link{parse_data}}), named by participant identifier.}
 
-\item{types}{A vector with data type names to be merged.}
+\item{types}{A character vector with the data type names to be merged.
+Defaults to the five standardized types.}
 }
 \value{
-A list with data found for all individual, merged for each data type.
+A named list with one data frame per data type, holding the data of
+all individuals. Individuals without data of a given type contribute no rows.
 }
 \description{
-Merge data available for all individuals, separately per data type.
+Merge data available for all individuals, separately per data type
 }

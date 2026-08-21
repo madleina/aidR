@@ -2,19 +2,20 @@
 % Please edit documentation in R/01f_yourloops.R
 \name{.format_bolus_yourloops.aidR}
 \alias{.format_bolus_yourloops.aidR}
-\title{Format and clean bolus data from Yourloops}
+\title{Format and clean bolus data from a YourLoops export}
 \usage{
 .format_bolus_yourloops.aidR(id, bolus)
 }
 \arguments{
 \item{id}{Character or numeric participant identifier.}
 
-\item{bolus}{A data frame containing the bolus data from a Yourloops file.}
+\item{bolus}{A data frame containing the bolus data from a YourLoops file.}
 }
 \value{
 A data frame containing the formatted and cleaned bolus data.
 }
 \description{
-Format and clean bolus data from Yourloops
+Biphasic boluses are treated as two individual normal boluses, but are still
+flagged as biphasic in the \code{type} column.
 }
 \keyword{internal}

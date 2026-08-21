@@ -2,19 +2,20 @@
 % Please edit documentation in R/01d_mylife.R
 \name{.clean_mylife_carbs.aidR}
 \alias{.clean_mylife_carbs.aidR}
-\title{Format and clean carbohydrate entries of a Mylife export.}
+\title{Format and clean carbohydrate data from a mylife export}
 \usage{
 .clean_mylife_carbs.aidR(id, carbs)
 }
 \arguments{
 \item{id}{Character or numeric participant identifier.}
 
-\item{carbs}{A data frame containing the carbohydrate data from a Mylife file.}
+\item{carbs}{A data frame containing the carbohydrate data from a mylife file.}
 }
 \value{
 A data frame containing the formatted and cleaned carbohydrate data.
+\code{NULL} if there is no carbohydrate data.
 }
 \description{
-Format and clean carbohydrate entries of a Mylife export.
+Format and clean carbohydrate data from a mylife export
 }
 \keyword{internal}

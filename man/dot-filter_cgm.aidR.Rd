@@ -2,7 +2,7 @@
 % Please edit documentation in R/04_filtering.R
 \name{.filter_cgm.aidR}
 \alias{.filter_cgm.aidR}
-\title{Filter CGM data.}
+\title{Filter CGM data}
 \usage{
 .filter_cgm.aidR(
   cgm,
@@ -12,7 +12,7 @@
 )
 }
 \arguments{
-\item{cgm}{A data frame containing the CGM data for one individual.}
+\item{cgm}{A data frame containing the cleaned CGM data for one individual.}
 
 \item{truncate_min_cgm}{CGM values smaller than this threshold will be truncated. Default 40 mg/dL, if NULL, no filtering is performed.}
 
@@ -21,9 +21,9 @@
 \item{min_minutes_difference_cgm}{CGM values are downsampled to this time interval (in minutes). Default 5 minutes, if NULL, no downsampling is performed.}
 }
 \value{
-A list with all data found for one individual, sorted in time
+A data frame with the filtered CGM data.
 }
 \description{
-Filter CGM data.
+Filter CGM data
 }
 \keyword{internal}

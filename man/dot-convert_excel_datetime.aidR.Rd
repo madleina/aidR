@@ -2,7 +2,7 @@
 % Please edit documentation in R/01c_carelink.R
 \name{.convert_excel_datetime.aidR}
 \alias{.convert_excel_datetime.aidR}
-\title{Convert timestamps from a Excel file formatted as fractional days.}
+\title{Convert timestamps from an Excel file formatted as fractional days}
 \usage{
 .convert_excel_datetime.aidR(date_val, time_val)
 }
@@ -12,9 +12,10 @@
 \item{time_val}{The fractional value for the time of day.}
 }
 \value{
-A proper timestamp in POSIXct.
+A timestamp in POSIXct, or \code{NULL} if the values are not numeric
+and must be parsed as strings instead.
 }
 \description{
-Convert timestamps from a Excel file formatted as fractional days.
+Convert timestamps from an Excel file formatted as fractional days
 }
 \keyword{internal}

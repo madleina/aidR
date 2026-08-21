@@ -2,18 +2,21 @@
 % Please edit documentation in R/01e_tidepool.R
 \name{read_tidepool}
 \alias{read_tidepool}
-\title{Read file from a Tidepool export}
+\title{Read a file from a Tidepool export}
 \usage{
 read_tidepool(id, filename)
 }
 \arguments{
 \item{id}{Character or numeric participant identifier.}
 
-\item{filename}{Character string corresponding to the filename of the Tidepool export.}
+\item{filename}{Character string with the filename of the file to be read.}
 }
 \value{
-An instance of class \code{tidepool}.
+An instance of class \code{tidepool}, wrapping a named list with one
+entry per sheet of the export. Entries of optional sheets that are absent
+from the file are \code{NULL}.
 }
 \description{
-Read file from a Tidepool export
+Read a file from a Tidepool export
 }
+\keyword{internal}

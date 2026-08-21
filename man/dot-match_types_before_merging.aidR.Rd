@@ -2,7 +2,7 @@
 % Please edit documentation in R/01c_carelink.R
 \name{.match_types_before_merging.aidR}
 \alias{.match_types_before_merging.aidR}
-\title{Matches the column types of multiple data frames to have matching types.}
+\title{Match the column types of multiple data frames}
 \usage{
 .match_types_before_merging.aidR(dfs_new)
 }
@@ -13,6 +13,7 @@
 A list of data frames, with harmonized types.
 }
 \description{
-Matches the column types of multiple data frames to have matching types.
+Empty data frames are replaced by a zero-row data frame with the column types
+of the first non-empty data frame.
 }
 \keyword{internal}

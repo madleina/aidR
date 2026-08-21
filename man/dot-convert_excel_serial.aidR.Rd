@@ -2,7 +2,7 @@
 % Please edit documentation in R/01c_carelink.R
 \name{.convert_excel_serial.aidR}
 \alias{.convert_excel_serial.aidR}
-\title{Convert timestamps from a Excel file formatted as serial numbers.}
+\title{Convert timestamps from an Excel file formatted as serial numbers}
 \usage{
 .convert_excel_serial.aidR(serial)
 }
@@ -10,9 +10,9 @@
 \item{serial}{The serial value.}
 }
 \value{
-A proper timestamp in POSIXct.
+A timestamp in POSIXct.
 }
 \description{
-Convert timestamps from a Excel file formatted as serial numbers.
+Convert timestamps from an Excel file formatted as serial numbers
 }
 \keyword{internal}

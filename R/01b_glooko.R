@@ -8,12 +8,15 @@
 # Public functions
 #------------------------
 
-#' Read file from a Glooko export
+#' Read a file from a Glooko export
 #'
 #' @param id Character or numeric participant identifier.
-#' @param filename Character string corresponding to the filename of the Glooko export.
+#' @param filename Character string with the filename of the file to be read.
 #'
-#' @return An instance of class \code{glooko}. NULL if the data was not parsed.
+#' @return An instance of class \code{glooko}, wrapping a named list with the
+#'   data of one data type. \code{NULL} if the file is empty.
+#'
+#' @keywords internal
 read_glooko <- function(id, filename) {
   # Read, if possible
   data <- .read_glooko_file.aidR(filename)
@@ -26,13 +29,16 @@ read_glooko <- function(id, filename) {
   return(data)
 }
 
-#' Format and clean the Glooko data to keep relevant columns only.
+#' Format and clean the Glooko data to keep relevant columns only
 #' 
 #' @param data An instance of class \code{glooko}, wrapping a named list with data of a particular data type.
 #' @param id Character or numeric participant identifier.
 #' @param ... Additional arguments passed to methods.
 #'
-#' @return A named list with names \code{cgm}, \code{basal}, \code{bolus}, or \code{carbs}, or other names if data is of another type.
+#' @return A named list with the cleaned data, named according to the data type
+#'   of \code{data}: \code{cgm}, \code{basal}, \code{bolus} and \code{carbs}
+#'   (both are extracted from the bolus file), \code{total_insulin} or
+#'   \code{SMBG}. \code{NULL} for all other data types, which are not cleaned.
 #' @export
 clean.glooko <- function(data, id, ...) {
   if (is.null(data)) {
@@ -67,11 +73,11 @@ clean.glooko <- function(data, id, ...) {
 # Helper functions
 #------------------------
 
-#' Check if a file corresponds to a file from a Glooko export.
+#' Check if a file comes from a Glooko export
 #'
 #' @param filename Character string with the filename to be checked.
 #'
-#' @return A logical value: \code{TRUE} if the file is a file from a Glooko export.
+#' @return A logical value: \code{TRUE} if the file comes from a Glooko export.
 #'
 #' @keywords internal
 .is_glooko_format.aidR <- function(filename) {
@@ -119,13 +125,13 @@ clean.glooko <- function(data, id, ...) {
   return(name_ok && range_ok)
 }
 
-#' Format any file from a Glooko export by configuring timestamps and numeric values.
+#' Format any file from a Glooko export by configuring timestamps and numeric values
 #'
 #' @param filename Character string with the filename to be formatted.
 #' @param time_cols A numeric vector corresponding to the column indices that contain timestamps to be formatted.
 #' @param numeric_cols A numeric vector corresponding to the column indices that contain numeric values to be formatted.
 #'
-#' @return A data frame with the content of the filename and properly formatted time- and numeric columns.
+#' @return A data frame with the content of the file and properly formatted time- and numeric columns.
 #'
 #' @keywords internal
 .format_glooko_file.aidR <- function(filename, time_cols, numeric_cols) {
@@ -146,9 +152,9 @@ clean.glooko <- function(data, id, ...) {
 
 #' Check if a vector can be converted to numeric values
 #'
-#' @param vec Character vector to be checked
+#' @param vec Character vector to be checked.
 #'
-#' @return A logical value: \code{TRUE} if the vector can be converted to numeric values
+#' @return A logical value: \code{TRUE} if the vector can be converted to numeric values.
 #'
 #' @keywords internal
 .is_numeric_col.aidR <- function(vec) {
@@ -162,15 +168,16 @@ clean.glooko <- function(data, id, ...) {
   return(!not_numeric)
 }
 
-#' Check if a Glooko file corresponds to a particular data type.
+#' Check if a Glooko file corresponds to a particular data type
 #'
 #' @param filename Character string with the filename to be checked.
-#' @param expected_num_cols The expected number of columns of that file.
+#' @param expected_num_cols A numeric value with the expected number of columns of that file.
 #' @param numeric_cols A numeric vector corresponding to the column indices that contain numeric values.
 #' @param non_numeric_cols A numeric vector corresponding to the column indices that should not contain numeric values.
 #' @param expected_keyword A list with keys \code{name} and \code{col_ix}, corresponding to a keyword that should be present in a particular column.
 #'
 #' @return A logical value: \code{TRUE} if the file matches the data type format.
+#'   \code{FALSE} for empty files, whose columns can not be checked.
 #'
 #' @keywords internal
 .is_glooko_file_type.aidR <- function(filename, expected_num_cols, numeric_cols, non_numeric_cols = c(), expected_keyword = NULL) {
@@ -220,10 +227,11 @@ clean.glooko <- function(data, id, ...) {
   return(TRUE)
 }
 
-#' A lookup with Glooko file characteristics.
+#' A lookup with Glooko file characteristics
 #'
-#' @return A list with data types and their expected file formats, including the number of columns, the column indices of the time- and
-#' numeric columns and expected keywords in the header.
+#' @return A list with data types and their expected file formats, including the
+#' number of columns, the column indices of the time- and numeric columns and
+#' expected keywords in the header.
 #'
 #' @keywords internal
 .get_glooko_file_lookup.aidR <- function() {
@@ -258,11 +266,14 @@ clean.glooko <- function(data, id, ...) {
   return(glooko_files)
 }
 
-#' Read the data from a Glooko file.
+#' Read the data from a Glooko file
 #'
 #' @param filename Character string with the filename to be parsed.
 #'
-#' @return A data frame with the content found in the file, with formatted timestamps and numeric columns. NULL if the file could not be parsed
+#' @return A named list with a single entry, named after the data type of the
+#'   file and holding a data frame with formatted timestamps and numeric columns.
+#'   \code{NULL} if the file is empty. Throws an error if the data type of a
+#'   non-empty file could not be determined.
 #'
 #' @keywords internal
 .read_glooko_file.aidR <- function(filename) {
@@ -294,7 +305,7 @@ clean.glooko <- function(data, id, ...) {
 # Format CGM
 #------------------------
 
-#' Format and clean CGM data from Glooko.
+#' Format and clean CGM data from a Glooko export
 #'
 #' @param id Character or numeric participant identifier.
 #' @param data A data frame containing the CGM data from a Glooko file.
@@ -331,7 +342,7 @@ clean.glooko <- function(data, id, ...) {
 # Functions for basal
 #------------------------------
 
-#' Format and clean basal data from Glooko.
+#' Format and clean basal data from a Glooko export
 #'
 #' @param id Character or numeric participant identifier.
 #' @param data A data frame containing the basal data from a Glooko file.
@@ -357,8 +368,8 @@ clean.glooko <- function(data, id, ...) {
            pump_name = NA # pump name: not known (!= Serial number)
     ) %>% 
     rename(
-      timestamp = .data$Timestamp,
-      rate = .data$Rate
+      timestamp = "Timestamp",
+      rate = "Rate"
     ) %>%
     select("id", "format", "timestamp", "timezone_offset", "duration", "rate",
            "unit", "pump_name")
@@ -370,7 +381,7 @@ clean.glooko <- function(data, id, ...) {
 # Functions for bolus
 #------------------------------
 
-#' Format and clean bolus data from Glooko.
+#' Format and clean bolus data from a Glooko export
 #'
 #' @param id Character or numeric participant identifier.
 #' @param data A data frame containing the bolus data from a Glooko file.
@@ -437,10 +448,11 @@ clean.glooko <- function(data, id, ...) {
 # Functions for carbs
 #------------------------------
 
-#' Format and clean carbohydrate data from Glooko.
+#' Format and clean carbohydrate data from a Glooko export
 #'
 #' @param id Character or numeric participant identifier.
-#' @param data A data frame containing the carbohydrate data from a Glooko file.
+#' @param data A data frame containing the bolus data from a Glooko file, which
+#'   holds the carbohydrates entered into the bolus calculator.
 #'
 #' @return A data frame containing the formatted and cleaned carbohydrate data.
 #' @keywords internal
@@ -452,10 +464,10 @@ clean.glooko <- function(data, id, ...) {
                      format = "glooko",
                      timestamp = data[, 1],
                      timezone_offset = NA,
-                     carbs = data[, 4])
+                     value = data[, 4])
   
   data <- data %>%
-    filter(.data$carbs > 0) %>%
+    filter(.data$value > 0) %>%
     mutate(
       unit = "g",
       label = NA,
@@ -470,10 +482,10 @@ clean.glooko <- function(data, id, ...) {
 # Functions for total insulin
 #------------------------------
 
-#' Format and clean total insulin data from Glooko.
+#' Format and clean daily aggregated insulin data from a Glooko export
 #'
 #' @param id Character or numeric participant identifier.
-#' @param data A data frame containing the total insulin data from a Glooko file.
+#' @param data A data frame containing the daily aggregated insulin data from a Glooko file.
 #'
 #' @return A data frame containing the formatted and cleaned total insulin data.
 #' @keywords internal
@@ -505,7 +517,7 @@ clean.glooko <- function(data, id, ...) {
 # Functions for SMBG (BG)
 #------------------------------
 
-#' Format and clean SMBG (bg sheet) data from Glooko.
+#' Format and clean SMBG data from a Glooko export
 #'
 #' @param id Character or numeric participant identifier.
 #' @param data A data frame containing the SMBG data from a Glooko file.

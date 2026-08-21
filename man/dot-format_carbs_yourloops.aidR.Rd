@@ -2,19 +2,19 @@
 % Please edit documentation in R/01f_yourloops.R
 \name{.format_carbs_yourloops.aidR}
 \alias{.format_carbs_yourloops.aidR}
-\title{Format and clean carbs data from Yourloops}
+\title{Format and clean carbohydrate data from a YourLoops export}
 \usage{
 .format_carbs_yourloops.aidR(id, carbs)
 }
 \arguments{
 \item{id}{Character or numeric participant identifier.}
 
-\item{carbs}{A data frame containing the carbs data from a Yourloops file.}
+\item{carbs}{A data frame containing the meal data from a YourLoops file.}
 }
 \value{
-A data frame containing the formatted and cleaned carbs data.
+A data frame containing the formatted and cleaned carbohydrate data.
 }
 \description{
-Format and clean carbs data from Yourloops
+Format and clean carbohydrate data from a YourLoops export
 }
 \keyword{internal}

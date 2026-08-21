@@ -2,8 +2,7 @@
 % Please edit documentation in R/01c_carelink.R
 \name{.open_carelink_file.aidR}
 \alias{.open_carelink_file.aidR}
-\title{Open a Carelink file. Works if file is in xlsx or csv format.
-Throws error if file extension does not match either.}
+\title{Open a CareLink file}
 \usage{
 .open_carelink_file.aidR(filename)
 }
@@ -11,10 +10,10 @@ Throws error if file extension does not match either.}
 \item{filename}{Character string with the filename to be opened.}
 }
 \value{
-A data frame.
+A data frame with a single column \code{V1}, holding each line of the
+file as a semicolon-separated string.
 }
 \description{
-Open a Carelink file. Works if file is in xlsx or csv format.
-Throws error if file extension does not match either.
+Works if the file is in xlsx or csv format, throws an error otherwise.
 }
 \keyword{internal}

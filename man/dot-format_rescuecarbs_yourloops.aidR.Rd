@@ -2,19 +2,20 @@
 % Please edit documentation in R/01f_yourloops.R
 \name{.format_rescuecarbs_yourloops.aidR}
 \alias{.format_rescuecarbs_yourloops.aidR}
-\title{Format and clean rescuecarbs data from Yourloops}
+\title{Format and clean rescue carbohydrate data from a YourLoops export}
 \usage{
 .format_rescuecarbs_yourloops.aidR(id, carbs)
 }
 \arguments{
 \item{id}{Character or numeric participant identifier.}
 
-\item{carbs}{A data frame containing the rescuecarbs data from a Yourloops file.}
+\item{carbs}{A data frame containing the rescue carbohydrate data from a YourLoops file.}
 }
 \value{
-A data frame containing the formatted and cleaned rescuecarbs data.
+A data frame containing the formatted and cleaned carbohydrate data,
+flagged as hypoglycemia treatment.
 }
 \description{
-Format and clean rescuecarbs data from Yourloops
+Format and clean rescue carbohydrate data from a YourLoops export
 }
 \keyword{internal}

@@ -2,18 +2,20 @@
 % Please edit documentation in R/01d_mylife.R
 \name{read_mylife}
 \alias{read_mylife}
-\title{Read file from a Mylife export}
+\title{Read a file from a mylife export}
 \usage{
 read_mylife(id, filename)
 }
 \arguments{
 \item{id}{Character or numeric participant identifier.}
 
-\item{filename}{Character string corresponding to the filename of the Mylife export.}
+\item{filename}{Character string with the filename of the file to be read.}
 }
 \value{
-An instance of class \code{mylife}.
+An instance of class \code{mylife}, wrapping a named list with one
+entry per entry type found in the file. \code{NULL} if the file is empty.
 }
 \description{
-Read file from a Mylife export
+Read a file from a mylife export
 }
+\keyword{internal}

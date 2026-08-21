@@ -2,7 +2,7 @@
 % Please edit documentation in R/01b_glooko.R
 \name{.format_glooko_file.aidR}
 \alias{.format_glooko_file.aidR}
-\title{Format any file from a Glooko export by configuring timestamps and numeric values.}
+\title{Format any file from a Glooko export by configuring timestamps and numeric values}
 \usage{
 .format_glooko_file.aidR(filename, time_cols, numeric_cols)
 }
@@ -14,9 +14,9 @@
 \item{numeric_cols}{A numeric vector corresponding to the column indices that contain numeric values to be formatted.}
 }
 \value{
-A data frame with the content of the filename and properly formatted time- and numeric columns.
+A data frame with the content of the file and properly formatted time- and numeric columns.
 }
 \description{
-Format any file from a Glooko export by configuring timestamps and numeric values.
+Format any file from a Glooko export by configuring timestamps and numeric values
 }
 \keyword{internal}

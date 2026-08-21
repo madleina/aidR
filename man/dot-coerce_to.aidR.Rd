@@ -19,7 +19,7 @@
 }
 \description{
 Wrapper around the \code{as.*} functions, dispatching on
-a target type name as returned by \code{\link{.most_general_class}}. An
+a target type name as returned by \code{\link{.most_general_class.aidR}}. An
 unrecognised target leaves the vector unchanged.
 }
 \keyword{internal}

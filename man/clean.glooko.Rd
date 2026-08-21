@@ -2,7 +2,7 @@
 % Please edit documentation in R/01b_glooko.R
 \name{clean.glooko}
 \alias{clean.glooko}
-\title{Format and clean the Glooko data to keep relevant columns only.}
+\title{Format and clean the Glooko data to keep relevant columns only}
 \usage{
 \method{clean}{glooko}(data, id, ...)
 }
@@ -14,8 +14,11 @@
 \item{...}{Additional arguments passed to methods.}
 }
 \value{
-A named list with names \code{cgm}, \code{basal}, \code{bolus}, or \code{carbs}, or other names if data is of another type.
+A named list with the cleaned data, named according to the data type
+of \code{data}: \code{cgm}, \code{basal}, \code{bolus} and \code{carbs}
+(both are extracted from the bolus file), \code{total_insulin} or
+\code{SMBG}. \code{NULL} for all other data types, which are not cleaned.
 }
 \description{
-Format and clean the Glooko data to keep relevant columns only.
+Format and clean the Glooko data to keep relevant columns only
 }

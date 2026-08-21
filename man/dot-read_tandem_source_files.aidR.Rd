@@ -7,7 +7,7 @@
 .read_tandem_source_files.aidR(filename)
 }
 \arguments{
-\item{filename}{A character string giving the path to the file.}
+\item{filename}{Character string with the filename of the file to be read.}
 }
 \value{
 A data frame containing the contents of the specified file.

@@ -2,9 +2,7 @@
 % Please edit documentation in R/01a_common_functions.R
 \name{.get_all_files_in_path.aidR}
 \alias{.get_all_files_in_path.aidR}
-\title{Recursively traverse a directory and return all contained files.
-Zip archives encountered at any level are automatically extracted to
-temporary directories and traversed recursively, including nested ZIP files.}
+\title{Recursively traverse a directory and return all contained files}
 \usage{
 .get_all_files_in_path.aidR(path)
 }
@@ -16,11 +14,14 @@ A character vector containing normalized paths to all discovered
 non-ZIP files.
 }
 \description{
-macOS metadata files and folders such as __MACOSX, .DS_Store,
-and ._* files are ignored automatically.
+ZIP archives encountered at any level are automatically extracted to
+temporary directories and traversed recursively, including nested ZIP files.
 }
 \details{
+macOS metadata files and folders such as __MACOSX, .DS_Store,
+and ._* files are ignored automatically.
+
 ZIP archives are extracted into temporary directories created via
-\code{\link[=tempfile]{tempfile()}}. Invalid or corrupted ZIP archives are skipped with a warning.
+\code{tempfile()}. Invalid or corrupted ZIP archives are skipped with a warning.
 }
 \keyword{internal}

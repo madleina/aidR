@@ -2,19 +2,23 @@
 % Please edit documentation in R/01c_carelink.R
 \name{.read_carelink_raw.aidR}
 \alias{.read_carelink_raw.aidR}
-\title{Read file from a Carelink export}
+\title{Read the raw content of a CareLink file, split into its sections}
 \usage{
 .read_carelink_raw.aidR(id, filename)
 }
 \arguments{
 \item{id}{Character or numeric participant identifier.}
 
-\item{filename}{Character string corresponding to the filename of the Carelink export.}
+\item{filename}{Character string with the filename of the file to be read.}
 }
 \value{
-A list of three data frames containing (1) many different information, (2) daily aggregated insulin and (3) CGM measurement data.
+A list with entries \code{dfs}, \code{sensor_name} and \code{pump_name}.
+\code{dfs} is a list of three data frames containing (1) pump and sensor
+events of many different types, (2) daily aggregated insulin and (3) CGM
+measurement data. \code{sensor_name} and \code{pump_name} are the device
+names read from the file header, \code{NA} if the header is absent.
 }
 \description{
-Read file from a Carelink export
+Read the raw content of a CareLink file, split into its sections
 }
 \keyword{internal}

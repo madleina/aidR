@@ -2,7 +2,7 @@
 % Please edit documentation in R/01b_glooko.R
 \name{.is_glooko_file_type.aidR}
 \alias{.is_glooko_file_type.aidR}
-\title{Check if a Glooko file corresponds to a particular data type.}
+\title{Check if a Glooko file corresponds to a particular data type}
 \usage{
 .is_glooko_file_type.aidR(
   filename,
@@ -15,7 +15,7 @@
 \arguments{
 \item{filename}{Character string with the filename to be checked.}
 
-\item{expected_num_cols}{The expected number of columns of that file.}
+\item{expected_num_cols}{A numeric value with the expected number of columns of that file.}
 
 \item{numeric_cols}{A numeric vector corresponding to the column indices that contain numeric values.}
 
@@ -25,8 +25,9 @@
 }
 \value{
 A logical value: \code{TRUE} if the file matches the data type format.
+\code{FALSE} for empty files, whose columns can not be checked.
 }
 \description{
-Check if a Glooko file corresponds to a particular data type.
+Check if a Glooko file corresponds to a particular data type
 }
 \keyword{internal}

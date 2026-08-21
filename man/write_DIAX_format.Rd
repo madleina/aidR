@@ -2,7 +2,7 @@
 % Please edit documentation in R/06_conversions.R
 \name{write_DIAX_format}
 \alias{write_DIAX_format}
-\title{Write AID data (CGM, basal, bolus, carbs and SMBG, where available) to a json file in DIAX format.}
+\title{Write AID data (CGM, basal, bolus, carbs and SMBG, where available) to a JSON file in DIAX format}
 \usage{
 write_DIAX_format(data, prefix, ids = NULL)
 }
@@ -18,7 +18,7 @@ filename, e.g. \code{prefix = "output/id_"} writes
 Defaults to all ids found in \code{data}.}
 }
 \value{
-No return value, called for side effects.
+No return value, called for side effects: one JSON file is written per id.
 }
 \description{
 Accepts either the output of \code{\link{parse_data}} for a single

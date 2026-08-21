@@ -2,7 +2,7 @@
 % Please edit documentation in R/01b_glooko.R
 \name{.format_SMBG_glooko.aidR}
 \alias{.format_SMBG_glooko.aidR}
-\title{Format and clean SMBG (bg sheet) data from Glooko.}
+\title{Format and clean SMBG data from a Glooko export}
 \usage{
 .format_SMBG_glooko.aidR(id, data)
 }
@@ -15,6 +15,6 @@
 A data frame containing the formatted and cleaned SMBG data.
 }
 \description{
-Format and clean SMBG (bg sheet) data from Glooko.
+Format and clean SMBG data from a Glooko export
 }
 \keyword{internal}

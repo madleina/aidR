@@ -2,7 +2,7 @@
 % Please edit documentation in R/01c_carelink.R
 \name{.convert_timestamp_carelink.aidR}
 \alias{.convert_timestamp_carelink.aidR}
-\title{Convert character timestamps to POSIXct timestamps}
+\title{Convert timestamps of a CareLink file to POSIXct timestamps}
 \usage{
 .convert_timestamp_carelink.aidR(timestamp, date_val = NULL, time_val = NULL)
 }
@@ -14,9 +14,9 @@
 \item{time_val}{The fractional value for the time of day, used if timestamp can not be parsed directly.}
 }
 \value{
-A proper timestamp in POSIXct.
+A vector of timestamps in POSIXct.
 }
 \description{
-Convert character timestamps to POSIXct timestamps
+Convert timestamps of a CareLink file to POSIXct timestamps
 }
 \keyword{internal}

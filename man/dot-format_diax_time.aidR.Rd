@@ -2,7 +2,7 @@
 % Please edit documentation in R/06_conversions.R
 \name{.format_diax_time.aidR}
 \alias{.format_diax_time.aidR}
-\title{Format timestamps according to the DIAX ISO 8601 convention.}
+\title{Format timestamps according to the DIAX ISO 8601 convention}
 \usage{
 .format_diax_time.aidR(timestamp, timezone_offset)
 }

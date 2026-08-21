@@ -2,7 +2,7 @@
 % Please edit documentation in R/01b_glooko.R
 \name{.format_basal_glooko.aidR}
 \alias{.format_basal_glooko.aidR}
-\title{Format and clean basal data from Glooko.}
+\title{Format and clean basal data from a Glooko export}
 \usage{
 .format_basal_glooko.aidR(id, data)
 }
@@ -15,6 +15,6 @@
 A data frame containing the formatted and cleaned basal data.
 }
 \description{
-Format and clean basal data from Glooko.
+Format and clean basal data from a Glooko export
 }
 \keyword{internal}

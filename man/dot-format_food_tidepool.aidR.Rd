@@ -2,7 +2,7 @@
 % Please edit documentation in R/01e_tidepool.R
 \name{.format_food_tidepool.aidR}
 \alias{.format_food_tidepool.aidR}
-\title{Format and clean food data from Tidepool}
+\title{Format and clean carbohydrate data from the Food sheet of a Tidepool export}
 \usage{
 .format_food_tidepool.aidR(id, food)
 }
@@ -12,9 +12,9 @@
 \item{food}{A data frame containing the food data from a Tidepool file.}
 }
 \value{
-A data frame containing the formatted and cleaned food data.
+A data frame containing the formatted and cleaned carbohydrate data.
 }
 \description{
-Format and clean food data from Tidepool
+Format and clean carbohydrate data from the Food sheet of a Tidepool export
 }
 \keyword{internal}

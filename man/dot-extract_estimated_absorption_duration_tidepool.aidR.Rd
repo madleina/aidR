@@ -2,19 +2,21 @@
 % Please edit documentation in R/01e_tidepool.R
 \name{.extract_estimated_absorption_duration_tidepool.aidR}
 \alias{.extract_estimated_absorption_duration_tidepool.aidR}
-\title{Extract estimated absorption duration from json string given in Bolus Calculator sheet}
+\title{Extract the estimated absorption duration from the Food sheet of a Tidepool export}
 \usage{
 .extract_estimated_absorption_duration_tidepool.aidR(row, data)
 }
 \arguments{
-\item{row}{The current row index to parse}
+\item{row}{The current row index to parse.}
 
-\item{data}{The full data frame}
+\item{data}{The full data frame with the food data from a Tidepool file.}
 }
 \value{
-A numeric value with the estimated absorption duration, NA if not found.
+A numeric value with the estimated absorption duration in seconds,
+\code{NA} if not found.
 }
 \description{
-Extract estimated absorption duration from json string given in Bolus Calculator sheet
+The duration is either part of the JSON string in the \code{Nutrition} column,
+or part of the JSON string in the \code{Payload} column.
 }
 \keyword{internal}

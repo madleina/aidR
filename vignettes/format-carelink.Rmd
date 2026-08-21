@@ -36,10 +36,10 @@ writeLines(readLines(path, n = 10))
 
 ## Sections and the data types they produce
 
-To inspect the files, we parse the export with `clean_files = FALSE`, which returns the full information provided by CareLink:
+To inspect the files, we parse the export with `clean = FALSE`, which returns the full information provided by CareLink:
 
 ```{r}
-data <- parse_data(id = "1", paths = path, clean_files = FALSE)
+data <- parse_data(id = "1", paths = path, clean = FALSE)
 ```
 
 Because all information is present in one file, most of the parsing work happens up front: the file is split into sections, and the large "Pump" section is then split further into individual event types based on which columns are populated on each row. 
@@ -52,88 +52,88 @@ The list below describes the differnt sections and the information we can get fr
 
   - basal rates.
 
-```{r}
+```{r, comment=""}
 head(data$basal)
 ```
 
   - boluses. Records whether a bolus was normal, square-wave, or dual-wave, along with the delivered volume and, for extended boluses, the duration.
 
-```{r}
+```{r, comment=""}
 head(data$bolus)
 ```
 
   - bolus wizard (BWZ) entries, i.e. the carbohydrates communicated to the bolus calculator together with the resulting recommendation. `aidR` matches these against the bolus events so that a
     carbohydrate entry can be linked to the bolus it triggered.
 
-```{r}
+```{r, comment=""}
 head(data$bwz)
 ```
 
-  - self-measured blood glucose (SMBG) entries.
+  - self-monitored blood glucose (SMBG) entries.
 
-```{r}
+```{r, comment=""}
 head(data$SMBG)
 ```
 
   - alerts and alarms raised by the pump.
 
-```{r}
+```{r, comment=""}
 head(data$alerts)
 ```
 
   - prime events (tubing/cannula fills).
 
-```{r}
+```{r, comment=""}
 head(data$prime)
 ```
 
   - temp basal events.
 
-```{r}
+```{r, comment=""}
 head(data$temp_basal)
 ```
 
   - correction-bolus information (not present in this example).
 
-```{r}
+```{r, comment=""}
 head(data$corr_bolus_info)
 ```
 
   - sensor calibrations.
 
-```{r}
+```{r, comment=""}
 head(data$sensor_calibration)
 ```
 
   - insulin action curve changes.
 
-```{r}
+```{r, comment=""}
 head(data$insulin_action_curve)
 ```
 
   - device change events.
 
-```{r}
+```{r, comment=""}
 head(data$device_changes)
 ```
 
 - **Aggregated Auto Insulin Data section**: daily aggregated insulin delivered in automated mode.
 
-```{r}
+```{r, comment=""}
 head(data$aggr_daily_insulin)
 ```
 
 - **Sensor section**: CGM data.
 
-```{r}
+```{r, comment=""}
 head(data$cgm)
 ```
 
 ## Cleaning files
 
-When `parse_data` is run with `clean_files = TRUE`, the cleaned data types are built from the following raw files and attributes:
+When `parse_data` is run with `clean = TRUE`, the cleaned data types are built from the following raw files and attributes:
 
-| Cleaned data type |  Used files            | Used attributes |
+| Cleaned data type |  Used files            | Used attributes of `clean = FALSE` |
 |-------------------|------------------------|-----------------|
 | `cgm`             | `carelink_example.csv` | `data$cgm`      |
 | `basal`           | `carelink_example.csv` | `data$basal`    |

@@ -2,7 +2,7 @@
 % Please edit documentation in R/01c_carelink.R
 \name{clean.carelink}
 \alias{clean.carelink}
-\title{Format and clean the Carelink data to keep relevant columns only.}
+\title{Format and clean the CareLink data to keep relevant columns only}
 \usage{
 \method{clean}{carelink}(data, id, ...)
 }
@@ -14,8 +14,10 @@
 \item{...}{Additional arguments passed to methods.}
 }
 \value{
-A named list with names \code{cgm}, \code{basal}, \code{bolus}, and \code{carbs}, and other names for data of other types.
+A named list with the cleaned data, with entries \code{cgm},
+\code{basal}, \code{bolus}, \code{carbs} (extracted from the bolus wizard
+entries) and \code{SMBG}.
 }
 \description{
-Format and clean the Carelink data to keep relevant columns only.
+Format and clean the CareLink data to keep relevant columns only
 }

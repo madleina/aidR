@@ -2,7 +2,7 @@
 % Please edit documentation in R/01f_yourloops.R
 \name{.is_yourloops_format.aidR}
 \alias{.is_yourloops_format.aidR}
-\title{Check if a file corresponds to a file from a Yourloops export.}
+\title{Check if a file comes from a YourLoops export}
 \usage{
 .is_yourloops_format.aidR(filename)
 }
@@ -10,9 +10,9 @@
 \item{filename}{Character string with the filename to be checked.}
 }
 \value{
-A logical value: \code{TRUE} if the file is a file from a Yourloops export.
+A logical value: \code{TRUE} if the file comes from a YourLoops export.
 }
 \description{
-Check if a file corresponds to a file from a Yourloops export.
+Check if a file comes from a YourLoops export
 }
 \keyword{internal}

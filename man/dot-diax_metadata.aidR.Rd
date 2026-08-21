@@ -2,7 +2,7 @@
 % Please edit documentation in R/06_conversions.R
 \name{.diax_metadata.aidR}
 \alias{.diax_metadata.aidR}
-\title{Build the \code{metadata} section of a DIAX list.}
+\title{Build the \code{metadata} section of a DIAX list}
 \usage{
 .diax_metadata.aidR(data_id)
 }
@@ -14,6 +14,6 @@ one individual, named by aidR type (\code{cgm}, \code{bolus}, ...).}
 A named list to be used as the \code{metadata} entry of the DIAX list.
 }
 \description{
-Build the \code{metadata} section of a DIAX list.
+Build the \code{metadata} section of a DIAX list
 }
 \keyword{internal}

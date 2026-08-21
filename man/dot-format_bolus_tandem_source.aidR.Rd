@@ -2,7 +2,7 @@
 % Please edit documentation in R/01g_tandem_source.R
 \name{.format_bolus_tandem_source.aidR}
 \alias{.format_bolus_tandem_source.aidR}
-\title{Format and clean bolus data from Tandem Source}
+\title{Format and clean bolus data from a Tandem Source export}
 \usage{
 .format_bolus_tandem_source.aidR(id, bolus)
 }
@@ -15,6 +15,6 @@
 A data frame containing the formatted and cleaned bolus data.
 }
 \description{
-Format and clean bolus data from Tandem Source
+Format and clean bolus data from a Tandem Source export
 }
 \keyword{internal}

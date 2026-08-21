@@ -2,19 +2,19 @@
 % Please edit documentation in R/01b_glooko.R
 \name{.format_total_insulin_glooko.aidR}
 \alias{.format_total_insulin_glooko.aidR}
-\title{Format and clean total insulin data from Glooko.}
+\title{Format and clean daily aggregated insulin data from a Glooko export}
 \usage{
 .format_total_insulin_glooko.aidR(id, data)
 }
 \arguments{
 \item{id}{Character or numeric participant identifier.}
 
-\item{data}{A data frame containing the total insulin data from a Glooko file.}
+\item{data}{A data frame containing the daily aggregated insulin data from a Glooko file.}
 }
 \value{
 A data frame containing the formatted and cleaned total insulin data.
 }
 \description{
-Format and clean total insulin data from Glooko.
+Format and clean daily aggregated insulin data from a Glooko export
 }
 \keyword{internal}

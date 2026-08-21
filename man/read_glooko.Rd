@@ -2,18 +2,20 @@
 % Please edit documentation in R/01b_glooko.R
 \name{read_glooko}
 \alias{read_glooko}
-\title{Read file from a Glooko export}
+\title{Read a file from a Glooko export}
 \usage{
 read_glooko(id, filename)
 }
 \arguments{
 \item{id}{Character or numeric participant identifier.}
 
-\item{filename}{Character string corresponding to the filename of the Glooko export.}
+\item{filename}{Character string with the filename of the file to be read.}
 }
 \value{
-An instance of class \code{glooko}. NULL if the data was not parsed.
+An instance of class \code{glooko}, wrapping a named list with the
+data of one data type. \code{NULL} if the file is empty.
 }
 \description{
-Read file from a Glooko export
+Read a file from a Glooko export
 }
+\keyword{internal}

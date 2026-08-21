@@ -2,7 +2,7 @@
 % Please edit documentation in R/01e_tidepool.R
 \name{.format_cgm_tidepool.aidR}
 \alias{.format_cgm_tidepool.aidR}
-\title{Format and clean CGM data from Tidepool}
+\title{Format and clean CGM data from a Tidepool export}
 \usage{
 .format_cgm_tidepool.aidR(id, cgm)
 }
@@ -15,6 +15,6 @@
 A data frame containing the formatted and cleaned CGM data.
 }
 \description{
-Format and clean CGM data from Tidepool
+Format and clean CGM data from a Tidepool export
 }
 \keyword{internal}

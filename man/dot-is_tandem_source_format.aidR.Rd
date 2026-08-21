@@ -2,7 +2,7 @@
 % Please edit documentation in R/01g_tandem_source.R
 \name{.is_tandem_source_format.aidR}
 \alias{.is_tandem_source_format.aidR}
-\title{Check if a file corresponds to a file from a Tandem Source export.}
+\title{Check if a file comes from a Tandem Source export}
 \usage{
 .is_tandem_source_format.aidR(filename)
 }
@@ -10,9 +10,9 @@
 \item{filename}{Character string with the filename to be checked.}
 }
 \value{
-A logical value: \code{TRUE} if the file is a file from a Tandem Source export.
+A logical value: \code{TRUE} if the file comes from a Tandem Source export.
 }
 \description{
-Check if a file corresponds to a file from a Tandem Source export.
+Check if a file comes from a Tandem Source export
 }
 \keyword{internal}

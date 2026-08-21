@@ -2,19 +2,19 @@
 % Please edit documentation in R/01c_carelink.R
 \name{.get_carelink_basal_rates.aidR}
 \alias{.get_carelink_basal_rates.aidR}
-\title{Parse all entries corresponding to basal rates in a Carelink export.}
+\title{Parse all entries corresponding to basal rates in a CareLink export}
 \usage{
 .get_carelink_basal_rates.aidR(df, pump_name)
 }
 \arguments{
-\item{df}{A data frame obtained from reading a Carelink file.}
+\item{df}{A data frame obtained from reading a CareLink file.}
 
-\item{pump_name}{A string denoting the name of the pump, NA if unknown.}
+\item{pump_name}{A character string with the name of the pump, \code{NA} if unknown.}
 }
 \value{
-A data frame containing the target entries
+A data frame with the corresponding entries.
 }
 \description{
-Parse all entries corresponding to basal rates in a Carelink export.
+Parse all entries corresponding to basal rates in a CareLink export
 }
 \keyword{internal}

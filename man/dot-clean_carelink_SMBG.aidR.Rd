@@ -2,19 +2,19 @@
 % Please edit documentation in R/01c_carelink.R
 \name{.clean_carelink_SMBG.aidR}
 \alias{.clean_carelink_SMBG.aidR}
-\title{Format and clean SMBG entries of a Carelink export.}
+\title{Format and clean SMBG data from a CareLink export}
 \usage{
 .clean_carelink_SMBG.aidR(id, SMBG)
 }
 \arguments{
 \item{id}{Character or numeric participant identifier.}
 
-\item{bwz}{A data frame containing the SMBG data from a Carelink file.}
+\item{SMBG}{A data frame containing the SMBG data from a CareLink file.}
 }
 \value{
 A data frame containing the formatted and cleaned SMBG data.
 }
 \description{
-Format and clean SMBG entries of a Carelink export.
+Format and clean SMBG data from a CareLink export
 }
 \keyword{internal}

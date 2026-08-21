@@ -2,7 +2,7 @@
 % Please edit documentation in R/01e_tidepool.R
 \name{.is_tidepool_format.aidR}
 \alias{.is_tidepool_format.aidR}
-\title{Check if a file corresponds to a file from a Tidepool export.}
+\title{Check if a file comes from a Tidepool export}
 \usage{
 .is_tidepool_format.aidR(filename)
 }
@@ -10,9 +10,9 @@
 \item{filename}{Character string with the filename to be checked.}
 }
 \value{
-A logical value: \code{TRUE} if the file is a file from a Tidepool export.
+A logical value: \code{TRUE} if the file comes from a Tidepool export.
 }
 \description{
-Check if a file corresponds to a file from a Tidepool export.
+Check if a file comes from a Tidepool export
 }
 \keyword{internal}

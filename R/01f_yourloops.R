@@ -1,6 +1,6 @@
 ##################################
 #                                #
-#   Read Yourloops data          #
+#   Read YourLoops data          #
 #                                #
 ##################################
 
@@ -8,12 +8,15 @@
 # Public functions
 #------------------------
 
-#' Read file from a Yourloops export
+#' Read a file from a YourLoops export
 #'
 #' @param id Character or numeric participant identifier.
-#' @param filename Character string corresponding to the filename of the Yourloops export.
+#' @param filename Character string with the filename of the file to be read.
 #'
-#' @return An instance of class \code{yourloops}. NULL if the data was not parsed.
+#' @return An instance of class \code{yourloops}, wrapping a named list with the
+#'   data of one data type.
+#'
+#' @keywords internal
 read_yourloops <- function(id, filename) {
   # Get file type
   file_type <- .get_yourloops_file_type.aidR(filename)
@@ -27,20 +30,23 @@ read_yourloops <- function(id, filename) {
   return(data)
 }
 
-#' Format and clean the Yourloops data to keep relevant columns only.
+#' Format and clean the YourLoops data to keep relevant columns only
 #'
 #' @param data An instance of class \code{yourloops}, wrapping a named list with data of a particular data type.
 #' @param id Character or numeric participant identifier.
 #' @param ... Additional arguments passed to methods.
 #'
-#' @return A named list with names \code{cgm}, \code{basal}, \code{bolus}, or \code{carbs}, or other names if data is of another type.
+#' @return A named list with the cleaned data, named according to the data type
+#'   of \code{data}: \code{cgm}, \code{basal}, \code{bolus} or \code{carbs} (from
+#'   meals or from rescue carbohydrates). \code{NULL} for all other data types,
+#'   which are not cleaned. Note that a YourLoops export contains no SMBG data.
 #' @export
 clean.yourloops <- function(data, id, ...) {
   if (is.null(data)) {
     return(NULL)
   }
   if (!("yourloops" %in% class(data))) {
-    stop("Expected Yourloops format.")
+    stop("Expected YourLoops format.")
   }
 
   # Format if CGM, basal, bolus and carb data (no SMBG given)
@@ -64,11 +70,11 @@ clean.yourloops <- function(data, id, ...) {
 # Helper functions
 #------------------------
 
-#' Check if a file corresponds to a file from a Yourloops export.
+#' Check if a file comes from a YourLoops export
 #'
 #' @param filename Character string with the filename to be checked.
 #'
-#' @return A logical value: \code{TRUE} if the file is a file from a Yourloops export.
+#' @return A logical value: \code{TRUE} if the file comes from a YourLoops export.
 #'
 #' @keywords internal
 .is_yourloops_format.aidR <- function(filename) {
@@ -76,7 +82,7 @@ clean.yourloops <- function(data, id, ...) {
   return(!is.null(file_type))
 }
 
-#' A lookup with Yourloop file characteristics.
+#' A lookup with YourLoops file characteristics
 #'
 #' @return A list with data types and their expected headers.
 #'
@@ -100,11 +106,12 @@ clean.yourloops <- function(data, id, ...) {
   return(yourloop_files)
 }
 
-#' Get file type of a Yourloops export.
+#' Get the data type of a file from a YourLoops export
 #'
 #' @param filename Character string with the filename to be checked.
 #'
-#' @return A character string if file type could be determined, NULL there was no match. If multiple files types matched, an error is thrown.
+#' @return A character string with the data type, or \code{NULL} if there was no
+#'   match. Throws an error if multiple data types matched.
 #'
 #' @keywords internal
 .get_yourloops_file_type.aidR <- function(filename) {
@@ -135,17 +142,16 @@ clean.yourloops <- function(data, id, ...) {
   } else if (length(match) == 1) {
     return(names(match))
   } else {
-    # more than one match -> should never happen as colnames of yourloop files are unique
-    stop("More than one match in Yourloop files - should never happen, check lookup!")
+    # more than one match -> should never happen as colnames of YourLoops files are unique
+    stop("More than one match in YourLoops files - should never happen, check lookup!")
   }
 }
 
-#' Read a file from a Yourloops export
+#' Read a file from a YourLoops export
 #'
-#' @param filename A character string giving the path to the file.
+#' @param filename Character string with the filename of the file to be read.
 #'
-#' @return A data frame containing the contents of the specified sheet, or
-#'   \code{NULL} if the sheet does not exist in the file.
+#' @return A data frame containing the contents of the file.
 #' @keywords internal
 .read_yourloops_files.aidR <- function(filename) {
   # Open file(s)
@@ -153,11 +159,14 @@ clean.yourloops <- function(data, id, ...) {
   return(f)
 }
 
-#' Format timestamp to get local (wall-clock) time of a Yourloops export
+#' Format timestamps to get local (wall-clock) time of a YourLoops export
 #'
-#' @param file A data frame.
+#' Timestamps are given in Zulu (UTC) time; the timezone offset is added to
+#' obtain local time. Data frames without these two columns are left unchanged.
 #'
-#' @return A data frame where the timezone has been formatted to local time.
+#' @param file A data frame obtained from reading a YourLoops file.
+#'
+#' @return A data frame where the timestamps have been converted to local time.
 #' @keywords internal
 .format_timestamp_yourloops.aidR <- function(file) {
   # Format timestamp and add timezone (important!)
@@ -174,10 +183,10 @@ clean.yourloops <- function(data, id, ...) {
 # Format CGM
 #------------------------
 
-#' Format and clean CGM data from Yourloops
+#' Format and clean CGM data from a YourLoops export
 #'
 #' @param id Character or numeric participant identifier.
-#' @param cgm A data frame containing the CGM data from a Yourloops file.
+#' @param cgm A data frame containing the CGM data from a YourLoops file.
 #'
 #' @return A data frame containing the formatted and cleaned CGM data.
 #' @keywords internal
@@ -205,10 +214,10 @@ clean.yourloops <- function(data, id, ...) {
 # Functions for basal
 #------------------------------
 
-#' Format and clean basal data from Yourloops
+#' Format and clean basal data from a YourLoops export
 #'
 #' @param id Character or numeric participant identifier.
-#' @param basal A data frame containing the basal data from a Yourloops file.
+#' @param basal A data frame containing the basal data from a YourLoops file.
 #'
 #' @return A data frame containing the formatted and cleaned basal data.
 #' @keywords internal
@@ -234,10 +243,13 @@ clean.yourloops <- function(data, id, ...) {
 # Functions for bolus
 #------------------------------
 
-#' Format and clean bolus data from Yourloops
+#' Format and clean bolus data from a YourLoops export
+#'
+#' Biphasic boluses are treated as two individual normal boluses, but are still
+#' flagged as biphasic in the \code{type} column.
 #'
 #' @param id Character or numeric participant identifier.
-#' @param bolus A data frame containing the bolus data from a Yourloops file.
+#' @param bolus A data frame containing the bolus data from a YourLoops file.
 #'
 #' @return A data frame containing the formatted and cleaned bolus data.
 #' @keywords internal
@@ -269,12 +281,12 @@ clean.yourloops <- function(data, id, ...) {
 # Functions for carbs
 #------------------------------
 
-#' Format and clean carbs data from Yourloops
+#' Format and clean carbohydrate data from a YourLoops export
 #'
 #' @param id Character or numeric participant identifier.
-#' @param carbs A data frame containing the carbs data from a Yourloops file.
+#' @param carbs A data frame containing the meal data from a YourLoops file.
 #'
-#' @return A data frame containing the formatted and cleaned carbs data.
+#' @return A data frame containing the formatted and cleaned carbohydrate data.
 #' @keywords internal
 .format_carbs_yourloops.aidR <- function(id, carbs) {
   # Format timestamp
@@ -285,13 +297,13 @@ clean.yourloops <- function(data, id, ...) {
       id = id,
       format = "yourloops",
       timezone_offset = -.data$timezoneOffSet / 60, # take -offset as we've added it to timestamp before
-      carbs = .data$carbsValue,
+      value = .data$carbsValue,
       unit = "g",
       label = paste0("is_input_meal_fat_", .data$is_input_meal_fat),
       estimated_absorption_duration = NA,
       is_hypo_treatment = NA
     ) %>%
-    select("id", "format", "timestamp", "timezone_offset", "carbs", "unit", 
+    select("id", "format", "timestamp", "timezone_offset", "value", "unit", 
            "label", "estimated_absorption_duration", "is_hypo_treatment")
   
   return(carbs)
@@ -301,12 +313,13 @@ clean.yourloops <- function(data, id, ...) {
 # Functions for rescuecarbs
 #------------------------------
 
-#' Format and clean rescuecarbs data from Yourloops
+#' Format and clean rescue carbohydrate data from a YourLoops export
 #'
 #' @param id Character or numeric participant identifier.
-#' @param carbs A data frame containing the rescuecarbs data from a Yourloops file.
+#' @param carbs A data frame containing the rescue carbohydrate data from a YourLoops file.
 #'
-#' @return A data frame containing the formatted and cleaned rescuecarbs data.
+#' @return A data frame containing the formatted and cleaned carbohydrate data,
+#'   flagged as hypoglycemia treatment.
 #' @keywords internal
 .format_rescuecarbs_yourloops.aidR <- function(id, carbs) {
   # Format timestamp
@@ -317,13 +330,13 @@ clean.yourloops <- function(data, id, ...) {
       id = id,
       format = "yourloops",
       timezone_offset = -.data$timezoneOffSet / 60, # take -offset as we've added it to timestamp before
-      carbs = .data$confirmedCarbs,
+      value = .data$confirmedCarbs,
       unit = "g",
       label = "rescuecarbs",
       estimated_absorption_duration = NA,
       is_hypo_treatment = TRUE
     ) %>%
-    select("id", "format", "timestamp", "timezone_offset", "carbs", "unit", 
+    select("id", "format", "timestamp", "timezone_offset", "value", "unit", 
            "label", "estimated_absorption_duration", "is_hypo_treatment")
   
   return(carbs)

@@ -10,7 +10,7 @@
 \item{dfs}{A list of data frames.}
 }
 \value{
-The input list with mismatched columns coerced to a common type
+The input list with mismatched columns coerced to a common type.
 }
 \description{
 Prepares a list of data frames for row-binding by resolving column type

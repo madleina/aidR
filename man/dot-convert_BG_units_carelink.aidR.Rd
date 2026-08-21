@@ -2,17 +2,18 @@
 % Please edit documentation in R/01c_carelink.R
 \name{.convert_BG_units_carelink.aidR}
 \alias{.convert_BG_units_carelink.aidR}
-\title{Converts blood glucose units to mg/dL in a Carelink file.}
+\title{Convert blood glucose units to mg/dL in a CareLink file}
 \usage{
 .convert_BG_units_carelink.aidR(df)
 }
 \arguments{
-\item{df}{A data frame.}
+\item{df}{A data frame obtained from reading a CareLink file.}
 }
 \value{
-A data frame, with mmol/L converted to mg/dL
+A data frame, with all mmol/L columns converted to mg/dL and renamed
+accordingly.
 }
 \description{
-Converts blood glucose units to mg/dL in a Carelink file.
+Convert blood glucose units to mg/dL in a CareLink file
 }
 \keyword{internal}

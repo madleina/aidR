@@ -2,17 +2,17 @@
 % Please edit documentation in R/01c_carelink.R
 \name{.get_carelink_correction_bolus_info.aidR}
 \alias{.get_carelink_correction_bolus_info.aidR}
-\title{Parse all entries corresponding to correction boluses in a Carelink export.}
+\title{Parse all entries corresponding to correction boluses in a CareLink export}
 \usage{
 .get_carelink_correction_bolus_info.aidR(df)
 }
 \arguments{
-\item{df}{A data frame obtained from reading a Carelink file.}
+\item{df}{A data frame obtained from reading a CareLink file.}
 }
 \value{
-A data frame containing the target entries
+A data frame with the corresponding entries.
 }
 \description{
-Parse all entries corresponding to correction boluses in a Carelink export.
+Parse all entries corresponding to correction boluses in a CareLink export
 }
 \keyword{internal}

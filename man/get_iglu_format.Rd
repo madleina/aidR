@@ -2,16 +2,19 @@
 % Please edit documentation in R/06_conversions.R
 \name{get_iglu_format}
 \alias{get_iglu_format}
-\title{Convert CGM data to a format compatible with the R-package iglu.}
+\title{Convert CGM data to a format compatible with the R-package iglu}
 \usage{
 get_iglu_format(data)
 }
 \arguments{
-\item{data}{A list with all data found for one or multiple individuals.}
+\item{data}{A list with all data found for one individual (the output of
+\code{\link{parse_data}}) or for multiple individuals (the output of
+\code{\link{merge_all}}). Requires cleaned and standardized CGM data.}
 }
 \value{
-A data frame compatible with the R-package iglu.
+A data frame with columns \code{id}, \code{time} and \code{gl},
+compatible with the R-package iglu.
 }
 \description{
-Convert CGM data to a format compatible with the R-package iglu.
+Convert CGM data to a format compatible with the R-package iglu
 }

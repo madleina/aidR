@@ -4,24 +4,27 @@
 \alias{parse_data}
 \title{Parse data files for a given participant ID}
 \usage{
-parse_data(id, paths, clean_files = TRUE)
+parse_data(id, paths, clean = TRUE)
 }
 \arguments{
-\item{id}{Character or numeric. Participant identifier used for logging and
-passed through to the format-specific readers.}
+\item{id}{Character or numeric participant identifier. Used for logging and
+stored in the \code{id} column of the cleaned data.}
 
 \item{paths}{Character vector. One or more file or directory paths to search
 for data files. Directories are traversed recursively; ZIP archives are
 extracted automatically.}
 
-\item{clean_files}{Logical, if \code{TRUE}, files will be cleaned and formatted.}
+\item{clean}{Logical, if \code{TRUE} (the default), the main data types (CGM,
+basal, bolus, carbohydrates and SMBG) are cleaned and standardized. If
+\code{FALSE}, all data is returned as found in the export.}
 }
 \value{
 A list with all data found for one individual, merged per data type.
-Returns \code{NULL} if no valid data files are found.
+\code{NULL} if no valid data files were found.
 }
 \description{
 Iterates over one or more paths, discovers all contained files (including
 inside ZIP archives), and dispatches each file to the appropriate
-device-specific reader based on its format.
+format-specific reader. Supported formats are Glooko, CareLink, mylife,
+Tidepool, YourLoops and Tandem Source.
 }

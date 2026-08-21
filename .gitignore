@@ -53,3 +53,5 @@ rsconnect/
 inst/extdata/.DS_Store
 .Rbuildignore
 *.Rproj
+/doc/
+/Meta/

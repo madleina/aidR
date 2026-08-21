@@ -2,7 +2,7 @@
 % Please edit documentation in R/01e_tidepool.R
 \name{.format_bolus_calculator_tidepool.aidR}
 \alias{.format_bolus_calculator_tidepool.aidR}
-\title{Format and clean carbohydrates from bolus calculator data from Tidepool}
+\title{Format and clean carbohydrate data from the Bolus Calculator sheet of a Tidepool export}
 \usage{
 .format_bolus_calculator_tidepool.aidR(id, bolus_calculator)
 }
@@ -12,9 +12,10 @@
 \item{bolus_calculator}{A data frame containing the bolus calculator data from a Tidepool file.}
 }
 \value{
-A data frame containing the formatted and cleaned carbohydrates from bolus calculator data.
+A data frame containing the formatted and cleaned carbohydrate data.
+\code{NULL} if no carbohydrates were entered.
 }
 \description{
-Format and clean carbohydrates from bolus calculator data from Tidepool
+Format and clean carbohydrate data from the Bolus Calculator sheet of a Tidepool export
 }
 \keyword{internal}

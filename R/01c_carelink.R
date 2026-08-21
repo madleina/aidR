@@ -1,6 +1,6 @@
 ##################################
 #                                #
-#   Read Carelink data           #
+#   Read CareLink data           #
 #                                #
 ##################################
 
@@ -8,12 +8,15 @@
 # Public functions
 #------------------------
 
-#' Read file from a Carelink export
+#' Read a file from a CareLink export
 #'
 #' @param id Character or numeric participant identifier.
-#' @param filename Character string corresponding to the filename of the Carelink export.
+#' @param filename Character string with the filename of the file to be read.
 #'
-#' @return An instance of class \code{carelink}.
+#' @return An instance of class \code{carelink}, wrapping a named list with the
+#'   data of the different types found in the file.
+#'
+#' @keywords internal
 read_carelink <- function(id, filename){
   # Read raw: 3 data frames with (1) many different informations, (2) daily aggregated insulin and (3) CGM measurement data.
   raw <- .read_carelink_raw.aidR(id, filename)
@@ -57,17 +60,19 @@ read_carelink <- function(id, filename){
   return(data)
 }
 
-#' Format and clean the Carelink data to keep relevant columns only.
+#' Format and clean the CareLink data to keep relevant columns only
 #'
 #' @param data An instance of class \code{carelink}, wrapping a named list with data of different types.
 #' @param id Character or numeric participant identifier.
 #' @param ... Additional arguments passed to methods.
 #'
-#' @return A named list with names \code{cgm}, \code{basal}, \code{bolus}, and \code{carbs}, and other names for data of other types.
+#' @return A named list with the cleaned data, with entries \code{cgm},
+#'   \code{basal}, \code{bolus}, \code{carbs} (extracted from the bolus wizard
+#'   entries) and \code{SMBG}.
 #' @export
 clean.carelink <- function(data, id, ...){
   if (is.null(data)){ return(NULL) }
-  if (!("carelink" %in% class(data))){ stop("Expected Carelink format.") }
+  if (!("carelink" %in% class(data))){ stop("Expected CareLink format.") }
   
   # Remove class attribute for ease
   data <- unclass(data)
@@ -87,12 +92,16 @@ clean.carelink <- function(data, id, ...){
 # Helper functions
 #------------------------
 
-#' Read file from a Carelink export
+#' Read the raw content of a CareLink file, split into its sections
 #'
 #' @param id Character or numeric participant identifier.
-#' @param filename Character string corresponding to the filename of the Carelink export.
+#' @param filename Character string with the filename of the file to be read.
 #'
-#' @return A list of three data frames containing (1) many different information, (2) daily aggregated insulin and (3) CGM measurement data.
+#' @return A list with entries \code{dfs}, \code{sensor_name} and \code{pump_name}.
+#'   \code{dfs} is a list of three data frames containing (1) pump and sensor
+#'   events of many different types, (2) daily aggregated insulin and (3) CGM
+#'   measurement data. \code{sensor_name} and \code{pump_name} are the device
+#'   names read from the file header, \code{NA} if the header is absent.
 #'
 #' @keywords internal
 .read_carelink_raw.aidR <- function(id, filename){
@@ -136,7 +145,7 @@ clean.carelink <- function(data, id, ...){
     
     # Split properly
     df <- data.frame(x = df[-(1:2),])
-    df <- df %>% separate_wider_delim(.data$x, delim = sep, names = col_names)
+    df <- df %>% separate_wider_delim("x", delim = sep, names = col_names)
     
     # Set NAs
     df[df == ""] <- NA
@@ -191,16 +200,19 @@ clean.carelink <- function(data, id, ...){
   return(list(dfs = dfs_new, sensor_name = sensor_name, pump_name = pump_name))
 }
 
-#' Check if a file corresponds to a file from a Carelink export.
+#' Check if a file comes from a CareLink export
+#'
+#' CareLink is used for Medtronic MiniMed devices only, which is what the check
+#' looks for in the file header.
 #'
 #' @param filename Character string with the filename to be checked.
 #'
-#' @return A logical value: \code{TRUE} if the file is a file from a Carelink export.
+#' @return A logical value: \code{TRUE} if the file comes from a CareLink export.
 #'
 #' @keywords internal
 .is_carelink_format.aidR <- function(filename){
   tryCatch({
-    # Carelink: only for Medtronic
+    # CareLink: only for Medtronic
     data <- .open_carelink_file.aidR(filename)
     if (!grepl("MiniMed", data[1,])){ return(FALSE) }
     TRUE
@@ -209,12 +221,14 @@ clean.carelink <- function(data, id, ...){
   error = function(e) FALSE)
 }
 
-#' Open a Carelink file. Works if file is in xlsx or csv format.
-#' Throws error if file extension does not match either.
+#' Open a CareLink file
+#'
+#' Works if the file is in xlsx or csv format, throws an error otherwise.
 #'
 #' @param filename Character string with the filename to be opened.
 #'
-#' @return A data frame.
+#' @return A data frame with a single column \code{V1}, holding each line of the
+#'   file as a semicolon-separated string.
 #'
 #' @keywords internal
 .open_carelink_file.aidR <- function(filename){
@@ -227,17 +241,18 @@ clean.carelink <- function(data, id, ...){
   } else if (file_ext(filename) == "csv"){
     data <- read.csv(filename, skip = 0, check.names = F, header = F, sep = "\n")
   } else {
-    stop("Unknown file extension for Carelink: ", file_ext(filename), ".")
+    stop("Unknown file extension for CareLink: ", file_ext(filename), ".")
   }
   return(data)
 }
 
-#' Convert timestamps from a Excel file formatted as fractional days.
+#' Convert timestamps from an Excel file formatted as fractional days
 #'
 #' @param date_val The fractional value for the date.
 #' @param time_val The fractional value for the time of day.
 #'
-#' @return A proper timestamp in POSIXct.
+#' @return A timestamp in POSIXct, or \code{NULL} if the values are not numeric
+#'   and must be parsed as strings instead.
 #'
 #' @keywords internal
 .convert_excel_datetime.aidR <- function(date_val, time_val) {
@@ -252,11 +267,11 @@ clean.carelink <- function(data, id, ...){
   return(NULL)
 }
 
-#' Convert timestamps from a Excel file formatted as serial numbers.
+#' Convert timestamps from an Excel file formatted as serial numbers
 #'
 #' @param serial The serial value.
 #'
-#' @return A proper timestamp in POSIXct.
+#' @return A timestamp in POSIXct.
 #'
 #' @keywords internal
 .convert_excel_serial.aidR <- function(serial) {
@@ -269,13 +284,13 @@ clean.carelink <- function(data, id, ...){
   )
 }
 
-#' Convert character timestamps to POSIXct timestamps
+#' Convert timestamps of a CareLink file to POSIXct timestamps
 #'
 #' @param timestamp The timestamp from the file.
 #' @param date_val The fractional value for the date, used if timestamp can not be parsed directly.
 #' @param time_val The fractional value for the time of day, used if timestamp can not be parsed directly.
 #'
-#' @return A proper timestamp in POSIXct.
+#' @return A vector of timestamps in POSIXct.
 #'
 #' @keywords internal
 .convert_timestamp_carelink.aidR <- function(timestamp, date_val = NULL, time_val = NULL) {
@@ -308,8 +323,10 @@ clean.carelink <- function(data, id, ...){
   return(dt)
 }
 
-#' Throws if there are columns with non-NA entries in a data frame that are not present in subset.
-#' Safety check to ensure no relevant columns are missed.
+#' Check that no relevant columns were missed when splitting a data frame
+#'
+#' Throws an error if there are columns with non-NA entries in \code{df} that are
+#' not present in \code{subset}.
 #'
 #' @param df The full data frame.
 #' @param subset The subsetted data frame.
@@ -330,11 +347,12 @@ clean.carelink <- function(data, id, ...){
   }
 }
 
-#' Converts blood glucose units to mg/dL in a Carelink file.
+#' Convert blood glucose units to mg/dL in a CareLink file
 #'
-#' @param df A data frame.
+#' @param df A data frame obtained from reading a CareLink file.
 #'
-#' @return A data frame, with mmol/L converted to mg/dL
+#' @return A data frame, with all mmol/L columns converted to mg/dL and renamed
+#'   accordingly.
 #'
 #' @keywords internal
 .convert_BG_units_carelink.aidR <- function(df){
@@ -350,7 +368,10 @@ clean.carelink <- function(data, id, ...){
   return(df)
 }
 
-#' Matches the column types of multiple data frames to have matching types.
+#' Match the column types of multiple data frames
+#'
+#' Empty data frames are replaced by a zero-row data frame with the column types
+#' of the first non-empty data frame.
 #'
 #' @param dfs_new A list of data frames.
 #'
@@ -373,11 +394,11 @@ clean.carelink <- function(data, id, ...){
 # Functions for parsing
 #------------------------
 
-#' Parse all entries corresponding to SMBG in a Carelink export.
+#' Parse all entries corresponding to SMBG in a CareLink export
 #'
-#' @param df A data frame obtained from reading a Carelink file.
+#' @param df A data frame obtained from reading a CareLink file.
 #'
-#' @return A data frame containing the target entries
+#' @return A data frame with the corresponding entries.
 #'
 #' @keywords internal
 .get_carelink_SMBG.aidR <- function(df){
@@ -390,12 +411,12 @@ clean.carelink <- function(data, id, ...){
   return(SMBG)
 }
 
-#' Parse all entries corresponding to basal rates in a Carelink export.
+#' Parse all entries corresponding to basal rates in a CareLink export
 #'
-#' @param df A data frame obtained from reading a Carelink file.
-#' @param pump_name A string denoting the name of the pump, NA if unknown.
+#' @param df A data frame obtained from reading a CareLink file.
+#' @param pump_name A character string with the name of the pump, \code{NA} if unknown.
 #' 
-#' @return A data frame containing the target entries
+#' @return A data frame with the corresponding entries.
 #'
 #' @keywords internal
 .get_carelink_basal_rates.aidR <- function(df, pump_name){
@@ -420,12 +441,12 @@ clean.carelink <- function(data, id, ...){
   return(basal_rates)
 }
 
-#' Parse all entries corresponding to temporary basal rates in a Carelink export.
+#' Parse all entries corresponding to temporary basal rates in a CareLink export
 #'
-#' @param df A data frame obtained from reading a Carelink file.
-#' @param pump_name A string denoting the name of the pump, NA if unknown.
+#' @param df A data frame obtained from reading a CareLink file.
+#' @param pump_name A character string with the name of the pump, \code{NA} if unknown.
 #' 
-#' @return A data frame containing the target entries
+#' @return A data frame with the corresponding entries.
 #'
 #' @keywords internal
 .get_carelink_temp_basal.aidR <- function(df, pump_name){
@@ -441,12 +462,12 @@ clean.carelink <- function(data, id, ...){
   return(temp_basal)
 }
 
-#' Parse all entries corresponding to bolus deliveries in a Carelink export.
+#' Parse all entries corresponding to bolus deliveries in a CareLink export
 #'
-#' @param df A data frame obtained from reading a Carelink file.
-#' @param pump_name A string denoting the name of the pump, NA if unknown.
+#' @param df A data frame obtained from reading a CareLink file.
+#' @param pump_name A character string with the name of the pump, \code{NA} if unknown.
 #'
-#' @return A data frame containing the target entries
+#' @return A data frame with the corresponding entries.
 #'
 #' @keywords internal
 .get_carelink_bolus.aidR <- function(df, pump_name){
@@ -463,7 +484,7 @@ clean.carelink <- function(data, id, ...){
       # Mark groups of timestamps within <1 min difference
       time_group = cumsum(c(TRUE, diff(.data$timestamp) >= dminutes(1)))
     ) %>%
-    group_by(across(-c(.data$`Bolus Volume Delivered (U)`, .data$timestamp, .data$Index)), .data$time_group, .add = TRUE) %>%
+    group_by(across(-c("Bolus Volume Delivered (U)", "timestamp", "Index")), .data$time_group, .add = TRUE) %>%
     summarise(
       Index = min(.data$Index, na.rm = T),
       timestamp = min(.data$timestamp, na.rm = TRUE),
@@ -484,11 +505,11 @@ clean.carelink <- function(data, id, ...){
   return(bolus)
 }
 
-#' Parse all entries corresponding to prime events in a Carelink export.
+#' Parse all entries corresponding to prime events in a CareLink export
 #'
-#' @param df A data frame obtained from reading a Carelink file.
+#' @param df A data frame obtained from reading a CareLink file.
 #'
-#' @return A data frame containing the target entries
+#' @return A data frame with the corresponding entries.
 #'
 #' @keywords internal
 .get_carelink_prime.aidR <- function(df){
@@ -500,11 +521,11 @@ clean.carelink <- function(data, id, ...){
   return(prime)
 }
 
-#' Parse all entries corresponding to alerts in a Carelink export.
+#' Parse all entries corresponding to alerts in a CareLink export
 #'
-#' @param df A data frame obtained from reading a Carelink file.
+#' @param df A data frame obtained from reading a CareLink file.
 #'
-#' @return A data frame containing the target entries
+#' @return A data frame with the corresponding entries.
 #'
 #' @keywords internal
 .get_carelink_alerts.aidR <- function(df){
@@ -516,11 +537,11 @@ clean.carelink <- function(data, id, ...){
   return(alerts)
 }
 
-#' Parse all entries corresponding to correction boluses in a Carelink export.
+#' Parse all entries corresponding to correction boluses in a CareLink export
 #'
-#' @param df A data frame obtained from reading a Carelink file.
+#' @param df A data frame obtained from reading a CareLink file.
 #'
-#' @return A data frame containing the target entries
+#' @return A data frame with the corresponding entries.
 #'
 #' @keywords internal
 .get_carelink_correction_bolus_info.aidR <- function(df){
@@ -535,11 +556,11 @@ clean.carelink <- function(data, id, ...){
   return(corr_bolus_info)
 }
 
-#' Parse all entries corresponding to the bolus wizard in a Carelink export.
+#' Parse all entries corresponding to the bolus wizard in a CareLink export
 #'
-#' @param df A data frame obtained from reading a Carelink file.
+#' @param df A data frame obtained from reading a CareLink file.
 #'
-#' @return A data frame containing the target entries
+#' @return A data frame with the corresponding entries.
 #'
 #' @keywords internal
 .get_carelink_BWZ.aidR <- function(df){
@@ -555,7 +576,7 @@ clean.carelink <- function(data, id, ...){
   return(bwz)
 }
 
-#' Match bolus wizard entries to bolus entries from a Carelink export
+#' Match bolus wizard entries to bolus entries from a CareLink export
 #'
 #' @param bolus A data frame containing bolus entries.
 #' @param bwz A data frame containing bolus wizard entries.
@@ -582,11 +603,11 @@ clean.carelink <- function(data, id, ...){
   return(bolus)
 }
 
-#' Parse all entries corresponding to sensor calibration in a Carelink export.
+#' Parse all entries corresponding to sensor calibration in a CareLink export
 #'
-#' @param df A data frame obtained from reading a Carelink file.
+#' @param df A data frame obtained from reading a CareLink file.
 #'
-#' @return A data frame containing the target entries
+#' @return A data frame with the corresponding entries.
 #'
 #' @keywords internal
 .get_carelink_sensor_calibration.aidR <- function(df){
@@ -598,11 +619,11 @@ clean.carelink <- function(data, id, ...){
   return(sensor)
 }
 
-#' Parse all entries corresponding to insulin action curve over time in a Carelink export.
+#' Parse all entries corresponding to insulin action curve over time in a CareLink export
 #'
-#' @param df A data frame obtained from reading a Carelink file.
+#' @param df A data frame obtained from reading a CareLink file.
 #'
-#' @return A data frame containing the target entries
+#' @return A data frame with the corresponding entries.
 #'
 #' @keywords internal
 .get_carelink_insulin_action_curve_over_time.aidR <- function(df){
@@ -614,11 +635,11 @@ clean.carelink <- function(data, id, ...){
   return(iac)
 }
 
-#' Parse all entries corresponding to device changes in a Carelink export.
+#' Parse all entries corresponding to device changes in a CareLink export
 #'
-#' @param df A data frame obtained from reading a Carelink file.
+#' @param df A data frame obtained from reading a CareLink file.
 #'
-#' @return A data frame containing the target entries
+#' @return A data frame with the corresponding entries.
 #'
 #' @keywords internal
 .get_carelink_device_changes.aidR <- function(df){
@@ -630,11 +651,11 @@ clean.carelink <- function(data, id, ...){
   return(changes)
 }
 
-#' Parse all entries corresponding to aggregated auto insulin in a Carelink export.
+#' Parse all entries corresponding to daily aggregated insulin in a CareLink export
 #'
-#' @param df A data frame obtained from reading a Carelink file.
+#' @param df A data frame obtained from reading a CareLink file.
 #'
-#' @return A data frame containing the target entries
+#' @return A data frame with the corresponding entries.
 #'
 #' @keywords internal
 .get_carelink_aggr_auto_insulin.aidR <- function(df){
@@ -646,11 +667,12 @@ clean.carelink <- function(data, id, ...){
   return(agg_insulin)
 }
 
-#' Parse all entries corresponding to CGM data in a Carelink export.
+#' Parse all entries corresponding to CGM data in a CareLink export
 #'
-#' @param df A data frame obtained from reading a Carelink file.
+#' @param df A data frame obtained from reading a CareLink file.
+#' @param sensor_name A character string with the name of the sensor, \code{NA} if unknown.
 #'
-#' @return A data frame containing the target entries
+#' @return A data frame with the corresponding entries.
 #'
 #' @keywords internal
 .get_carelink_CGM.aidR <- function(df, sensor_name){
@@ -671,11 +693,11 @@ clean.carelink <- function(data, id, ...){
   return(CGM)
 }
 
-#' Parse all entries corresponding to sensor exceptions in a Carelink export.
+#' Parse all entries corresponding to sensor exceptions in a CareLink export
 #'
-#' @param df A data frame obtained from reading a Carelink file.
+#' @param df A data frame obtained from reading a CareLink file.
 #'
-#' @return A data frame containing the target entries
+#' @return A data frame with the corresponding entries.
 #'
 #' @keywords internal
 .get_carelink_sensor_exceptions.aidR <- function(df){
@@ -690,10 +712,10 @@ clean.carelink <- function(data, id, ...){
 # Functions for cleaning
 #------------------------
 
-#' Format and clean CGM entries of a Carelink export.
+#' Format and clean CGM data from a CareLink export
 #'
 #' @param id Character or numeric participant identifier.
-#' @param cgm A data frame containing the CGM data from a Carelink file.
+#' @param cgm A data frame containing the CGM data from a CareLink file.
 #'
 #' @return A data frame containing the formatted and cleaned CGM data.
 #'
@@ -713,10 +735,10 @@ clean.carelink <- function(data, id, ...){
   return(cgm)
 }
 
-#' Format and clean basal entries of a Carelink export.
+#' Format and clean basal data from a CareLink export
 #'
 #' @param id Character or numeric participant identifier.
-#' @param basal A data frame containing the basal data from a Carelink file.
+#' @param basal A data frame containing the basal data from a CareLink file.
 #'
 #' @return A data frame containing the formatted and cleaned basal data.
 #'
@@ -736,10 +758,10 @@ clean.carelink <- function(data, id, ...){
   return(basal)
 }
 
-#' Format and clean bolus entries of a Carelink export.
+#' Format and clean bolus data from a CareLink export
 #'
 #' @param id Character or numeric participant identifier.
-#' @param bolus A data frame containing the bolus data from a Carelink file.
+#' @param bolus A data frame containing the bolus data from a CareLink file.
 #'
 #' @return A data frame containing the formatted and cleaned bolus data.
 #'
@@ -778,15 +800,16 @@ clean.carelink <- function(data, id, ...){
   # Remove all boluses where nothing was delivered
   # Reason: all boluses appear 2x, once with bolus selected and once with delivered
   bolus <- bolus |> 
-    filter(!is.na(total))
+    filter(!is.na(.data$total))
   
   return(bolus)
 }
 
-#' Format and clean carbohydrate entries of a Carelink export.
+#' Format and clean carbohydrate data from a CareLink export
 #'
 #' @param id Character or numeric participant identifier.
-#' @param bwz A data frame containing the carbohydrate data from a Carelink file.
+#' @param bwz A data frame containing the bolus wizard entries from a CareLink
+#'   file, which hold the carbohydrates entered into the bolus calculator.
 #'
 #' @return A data frame containing the formatted and cleaned carbohydrate data.
 #'
@@ -798,22 +821,22 @@ clean.carelink <- function(data, id, ...){
     mutate(id = id,
            format = "carelink", 
            timezone_offset = NA,
-           carbs = as.numeric(.data$`BWZ Carb Input (grams)`),
+           value = as.numeric(.data$`BWZ Carb Input (grams)`),
            unit = "g",
            label = NA, 
            estimated_absorption_duration = NA,
            is_hypo_treatment = NA
     ) %>% 
-    select("id", "format", "timestamp", "timezone_offset", "carbs", "unit",
+    select("id", "format", "timestamp", "timezone_offset", "value", "unit",
            "label", "estimated_absorption_duration", "is_hypo_treatment")
   
   return(carbs)
 }
 
-#' Format and clean SMBG entries of a Carelink export.
+#' Format and clean SMBG data from a CareLink export
 #' 
 #' @param id Character or numeric participant identifier.
-#' @param bwz A data frame containing the SMBG data from a Carelink file.
+#' @param SMBG A data frame containing the SMBG data from a CareLink file.
 #'
 #' @return A data frame containing the formatted and cleaned SMBG data.
 #'

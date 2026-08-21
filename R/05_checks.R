@@ -13,9 +13,10 @@
 #' @param id Character or numeric participant identifier.
 #' @param data_id A list with all data found for one individual.
 #' @param necessary_types A character vector with type names for which data should be available.
-#' @param allow_total_insulin_instead_of_basal Logical, if \code{TRUE}, missing basal rate data will fall back to checking \code{total_daily_insulin} before issuing a warning. Useful for Omnipod exports, where basal rates are commonly absent during loop mode.
+#' @param allow_total_insulin_instead_of_basal Logical, if \code{TRUE}, missing basal rate data will fall back to checking \code{total_insulin} before issuing a warning. Useful for Omnipod exports, where basal rates are commonly absent during loop mode.
 #'
-#' @return No return value, called for side effects.
+#' @return No return value, called for side effects. Issues a warning for every
+#'   data type with missing data.
 #' @export
 check_completeness <- function(id, data_id,
                                necessary_types = c("cgm", "basal", "bolus", "carbs"),
@@ -58,9 +59,10 @@ check_completeness <- function(id, data_id,
 #' @param first_date A character string representing the first date for which data should be available.
 #' @param last_date A character string representing the last date (included) for which data should be available.
 #' @param necessary_types A character vector with type names for which data should be available.
-#' @param allow_total_insulin_instead_of_basal Logical, if \code{TRUE}, missing basal rate data will fall back to checking \code{total_daily_insulin} before issuing a warning. Useful for Omnipod exports, where basal rates are commonly absent during loop mode.
+#' @param allow_total_insulin_instead_of_basal Logical, if \code{TRUE}, missing basal rate data will fall back to checking \code{total_insulin} before issuing a warning. Useful for Omnipod exports, where basal rates are commonly absent during loop mode.
 #'
-#' @return No return value, called for side effects.
+#' @return No return value, called for side effects. Issues a warning for every
+#'   data type with missing days.
 #' @export
 check_completeness_range <- function(id, data_id, first_date, last_date, 
                                      necessary_types = c("cgm", "basal", "bolus", "carbs"),
@@ -108,11 +110,11 @@ check_completeness_range <- function(id, data_id, first_date, last_date,
 # Helper functions
 #------------------------
 
-#' Formats date ranges.
+#' Format date ranges
 #'
-#' @param dates A vector with dates
+#' @param dates A vector with dates.
 #'
-#' @return A string with all consecutive dates collapsed into ranges
+#' @return A string with all consecutive dates collapsed into ranges.
 #' 
 #' @keywords internal
 .format_date_ranges.aidR <- function(dates) {

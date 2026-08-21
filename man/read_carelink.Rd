@@ -2,18 +2,20 @@
 % Please edit documentation in R/01c_carelink.R
 \name{read_carelink}
 \alias{read_carelink}
-\title{Read file from a Carelink export}
+\title{Read a file from a CareLink export}
 \usage{
 read_carelink(id, filename)
 }
 \arguments{
 \item{id}{Character or numeric participant identifier.}
 
-\item{filename}{Character string corresponding to the filename of the Carelink export.}
+\item{filename}{Character string with the filename of the file to be read.}
 }
 \value{
-An instance of class \code{carelink}.
+An instance of class \code{carelink}, wrapping a named list with the
+data of the different types found in the file.
 }
 \description{
-Read file from a Carelink export
+Read a file from a CareLink export
 }
+\keyword{internal}

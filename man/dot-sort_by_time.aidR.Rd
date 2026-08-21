@@ -2,17 +2,18 @@
 % Please edit documentation in R/02_merge_per_id.R
 \name{.sort_by_time.aidR}
 \alias{.sort_by_time.aidR}
-\title{Sort data frames of all data types according to timestamps.}
+\title{Sort data frames of all data types according to timestamps}
 \usage{
 .sort_by_time.aidR(data_id)
 }
 \arguments{
-\item{data_id}{A list with all data found for one individual.}
+\item{data_id}{A list with all data found for one individual, with one entry
+per data type.}
 }
 \value{
-A list with all data found for one individual, sorted in time
+A list with all data found for one individual, sorted in time.
 }
 \description{
-Sort data frames of all data types according to timestamps.
+Sort data frames of all data types according to timestamps
 }
 \keyword{internal}

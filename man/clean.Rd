@@ -7,11 +7,17 @@
 clean(data, id, ...)
 }
 \arguments{
-\item{data}{The data to clean.}
+\item{data}{The data to clean, an instance of one of the format-specific
+classes (\code{glooko}, \code{carelink}, \code{mylife}, \code{tidepool},
+\code{yourloops} or \code{tandem_source}).}
 
 \item{id}{Character or numeric participant identifier.}
 
 \item{...}{Additional arguments passed to methods.}
+}
+\value{
+A named list with the cleaned data, see the format-specific methods
+(e.g. \code{\link{clean.glooko}}).
 }
 \description{
 Generic function for cleaning data

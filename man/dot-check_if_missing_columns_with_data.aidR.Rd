@@ -2,8 +2,7 @@
 % Please edit documentation in R/01c_carelink.R
 \name{.check_if_missing_columns_with_data.aidR}
 \alias{.check_if_missing_columns_with_data.aidR}
-\title{Throws if there are columns with non-NA entries in a data frame that are not present in subset.
-Safety check to ensure no relevant columns are missed.}
+\title{Check that no relevant columns were missed when splitting a data frame}
 \usage{
 .check_if_missing_columns_with_data.aidR(df, subset)
 }
@@ -16,7 +15,7 @@ Safety check to ensure no relevant columns are missed.}
 Called for its side effects. Returns \code{NULL} invisibly.
 }
 \description{
-Throws if there are columns with non-NA entries in a data frame that are not present in subset.
-Safety check to ensure no relevant columns are missed.
+Throws an error if there are columns with non-NA entries in \code{df} that are
+not present in \code{subset}.
 }
 \keyword{internal}

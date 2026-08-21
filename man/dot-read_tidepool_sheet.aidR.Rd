@@ -7,9 +7,9 @@
 .read_tidepool_sheet.aidR(filename, sheet)
 }
 \arguments{
-\item{filename}{A character string giving the path to the Excel file.}
+\item{filename}{Character string with the filename of the file to be read.}
 
-\item{sheet}{A character string giving the name of the sheet to read.}
+\item{sheet}{Character string with the name of the sheet to be read.}
 }
 \value{
 A data frame containing the contents of the specified sheet, or

@@ -2,19 +2,20 @@
 % Please edit documentation in R/01e_tidepool.R
 \name{.format_SMBG_tidepool.aidR}
 \alias{.format_SMBG_tidepool.aidR}
-\title{Format and clean SMBG data from Tidepool}
+\title{Format and clean SMBG data from a Tidepool export}
 \usage{
 .format_SMBG_tidepool.aidR(id, SMBG)
 }
 \arguments{
 \item{id}{Character or numeric participant identifier.}
 
-\item{cgm}{A data frame containing the SMBG data from a Tidepool file.}
+\item{SMBG}{A data frame containing the SMBG data from a Tidepool file.}
 }
 \value{
 A data frame containing the formatted and cleaned SMBG data.
+\code{NULL} if the export contains no SMBG sheet.
 }
 \description{
-Format and clean SMBG data from Tidepool
+Format and clean SMBG data from a Tidepool export
 }
 \keyword{internal}

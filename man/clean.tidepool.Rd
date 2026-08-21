@@ -2,7 +2,7 @@
 % Please edit documentation in R/01e_tidepool.R
 \name{clean.tidepool}
 \alias{clean.tidepool}
-\title{Format and clean the Tidepool data to keep relevant columns only.}
+\title{Format and clean the Tidepool data to keep relevant columns only}
 \usage{
 \method{clean}{tidepool}(data, id, ...)
 }
@@ -14,8 +14,11 @@
 \item{...}{Additional arguments passed to methods.}
 }
 \value{
-A named list with names \code{cgm}, \code{basal}, \code{bolus}, and \code{carbs}, and other names for data of other types.
+A named list with the cleaned data, with entries \code{cgm},
+\code{basal}, \code{bolus}, \code{SMBG} and \code{carbs}. Carbohydrates are
+taken from the Food sheet or, if that sheet is absent, from the Bolus
+Calculator sheet.
 }
 \description{
-Format and clean the Tidepool data to keep relevant columns only.
+Format and clean the Tidepool data to keep relevant columns only
 }

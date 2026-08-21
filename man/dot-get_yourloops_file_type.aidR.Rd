@@ -2,7 +2,7 @@
 % Please edit documentation in R/01f_yourloops.R
 \name{.get_yourloops_file_type.aidR}
 \alias{.get_yourloops_file_type.aidR}
-\title{Get file type of a Yourloops export.}
+\title{Get the data type of a file from a YourLoops export}
 \usage{
 .get_yourloops_file_type.aidR(filename)
 }
@@ -10,9 +10,10 @@
 \item{filename}{Character string with the filename to be checked.}
 }
 \value{
-A character string if file type could be determined, NULL there was no match. If multiple files types matched, an error is thrown.
+A character string with the data type, or \code{NULL} if there was no
+match. Throws an error if multiple data types matched.
 }
 \description{
-Get file type of a Yourloops export.
+Get the data type of a file from a YourLoops export
 }
 \keyword{internal}

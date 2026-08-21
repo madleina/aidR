@@ -2,19 +2,20 @@
 % Please edit documentation in R/01c_carelink.R
 \name{.clean_carelink_carbs.aidR}
 \alias{.clean_carelink_carbs.aidR}
-\title{Format and clean carbohydrate entries of a Carelink export.}
+\title{Format and clean carbohydrate data from a CareLink export}
 \usage{
 .clean_carelink_carbs.aidR(id, bwz)
 }
 \arguments{
 \item{id}{Character or numeric participant identifier.}
 
-\item{bwz}{A data frame containing the carbohydrate data from a Carelink file.}
+\item{bwz}{A data frame containing the bolus wizard entries from a CareLink
+file, which hold the carbohydrates entered into the bolus calculator.}
 }
 \value{
 A data frame containing the formatted and cleaned carbohydrate data.
 }
 \description{
-Format and clean carbohydrate entries of a Carelink export.
+Format and clean carbohydrate data from a CareLink export
 }
 \keyword{internal}
