@@ -18,16 +18,16 @@ library(dplyr)
 ```
 ## Overview
 
-Data exported from automated insulin delivery (AID) systems are highly heterogeneous: each platform uses its own file format, variable names, data types, and units. The **aidR** package provides reading functions for the most prevalent AID platforms and standardizes their exports into tidy, platform-independent formats for continuous glucose monitoring (CGM), basal insulin, bolus insulin, carbohydrate data, self-monitored blood glucose (SMBG), and potentially other data types. As a result, a downstream analysis can be written once and applied consistently across data from different AID systems.
+Data exported from automated insulin delivery (AID) systems are highly heterogeneous: each platform uses its own file format, variable names, data types, and units. The **aidR** package provides (i) functions to read exports of the most prevalent AID platforms and (ii) functions to standardize them into tidy, platform-independent formats for continuous glucose monitoring (CGM), basal insulin, bolus insulin, carbohydrate data, and self-monitored blood glucose (SMBG). As a result, a downstream analysis can be written once and applied consistently across data from different AID systems.
 
 The package supports the following steps:
 
 - **Read** every export file belonging to one subject (`parse_data(clean = FALSE)`).
 - **Clean** the most important data types (CGM, basal, bolus, carbohydrate, and SMBG) into an interchangeable format (`parse_data(clean = TRUE)`).
 - **Filter** the merged data, e.g. to remove artefactual or duplicated CGM readings (`filter_CGM()`).
-- **Check completeness** of the merged data, e.g. to flag missing data types or missing days (`check_completeness()`, `check_completeness_range()`).
+- **Check completeness** of the merged data, e.g. to flag missing data types or missing days (`check_completeness()`, `check_completeness_range()`), and verify that the insulin recorded in the individual data points matches the daily totals reported by the export (`check_insulin_totals()`).
 - **Merge across subjects** into one long-format data set for the whole study population (`merge_all()`).
-- **Convert** the standardized data into other formats (e.g. DIAX) and into the layout expected by other R packages (e.g. iglu).
+- **Convert** the standardized data into other formats (e.g. [DIAX](https://github.com/Center-for-Diabetes-Technology/DIAX)) and into the layout expected by other R packages (e.g. [iglu](https://irinagain.github.io/iglu/)).
 
 The rest of this vignette walks through each step, describes the supported export formats, and shows how to filter, check, and convert the resulting data.
 
@@ -63,7 +63,11 @@ data <- parse_data(id = "1", paths = "./exports/my_export_file.csv")
 ```
 If several exports are available for one subject, e.g. for different time ranges, `paths` can be a vector holding all of the file names:
 ```{r, eval=FALSE}
-data <- parse_data(id = "1", paths = c("./exports/my_export_file_id_1_month_1.csv", "./exports/my_export_file_id_1_month_2.csv", "./exports/my_export_file_id_1_month_3.csv"))
+data <- parse_data(id = "1", paths = c("./exports/my_export_file_id_1_month_1.csv", 
+                                       "./exports/my_export_file_id_1_month_2.csv", 
+                                       "./exports/my_export_file_id_1_month_3.csv"
+                                       )
+                   )
 ```
 A path may point to a single file (e.g. a Tidepool or CareLink export), a folder (e.g. a Glooko or YourLoops export), or a zip archive. aidR detects this automatically, reads every file it finds within the path, and merges them into a single named list for that subject, with one entry per data type.
 
@@ -94,6 +98,27 @@ The additional platform-specific data types from before (e.g. `device_event`, `b
 - **`SMBG`**: `id`, `format`, `timestamp`, `timezone_offset`, `value`, `unit`, and `sensor_name`
 
 This layout is the same for all platforms and can therefore be merged across subjects.
+Note: `timestamp` is always given in local (wall-clock) time. When exports denoted a timezone offset (only available for Tidepool and YourLoops exports), this value is stored in `timezone_offset`. To get the UTC time,calculate: `UTC = timestamp - timezone_offset`
+
+In addition, two data types hold the daily insulin totals, with one row per day rather than one row per data point:
+
+- **`total_basal`**: `id`, `format`, `date`, `total_basal`, and `source`
+- **`total_bolus`**: `id`, `format`, `date`, `total_bolus`, and `source`
+
+`total_basal` and `total_bolus` give the insulin delivered on that day, in units. Where a platform reports a daily aggregate itself, that value is used and `source` is `"reported"`; otherwise the total is summed over the cleaned `basal` (as `rate * duration`) or `bolus` data and `source` is `"summed"`:
+
+| Format | `total_basal` | `total_bolus` |
+|---------------|------------|------------|
+| Glooko        | reported   | reported   |
+| Tandem Source | reported   | summed     |
+| CareLink      | summed     | summed     |
+| Tidepool      | summed     | summed     |
+| YourLoops     | summed     | summed     |
+| mylife        | -          | summed     |
+
+The distinction matters, because a summed total is only ever as complete as the underlying record. Omnipod users on Glooko are the clearest case: their basal rates cover manual mode only, so summing them would badly understate the insulin actually delivered, while the reported aggregate covers automated mode as well. Note also that the first and last day of an export are usually partial, so a summed total is short on those days.
+
+There is no `total_basal` for mylife, since a mylife export contains no basal data.
 
 ## Filtering
 
@@ -125,9 +150,30 @@ In this case, it appears that there is a gap in all data types spanning from 201
 
 Both functions accept a `necessary_types` argument to restrict (or extend) which data types are checked.
 
+## Checking the daily insulin totals
+
+`check_completeness()` asks whether data is *present*. `check_insulin_totals()` asks whether it *adds up*: it compares the insulin summed over the individual `basal` and `bolus` entries against the daily totals in `total_basal` and `total_bolus`, and warns for every day where the two disagree.
+
+This is only informative where the daily total was reported by the export itself, i.e. where `source == "reported"`. Where `aidR` summed the total itself (`source == "summed"`), the two agree by construction and are skipped. In practice, this means the check has content for Glooko (basal and bolus) and for Tandem Source (basal only).
+
+A mismatch means the individual data points do not cover the whole day. The Glooko example export shows the typical picture for an Omnipod user:
+```{r}
+glooko_path <- system.file("extdata", "glooko_example.zip", package = "aidR")
+data_glooko <- parse_data(id = "1", paths = glooko_path)
+check_insulin_totals("1", data_glooko)
+```
+The warning names the days that disagree. To see *how far* they disagree, use the comparison that the function returns invisibly:
+```{r}
+totals <- suppressWarnings(check_insulin_totals("1", data_glooko))
+totals
+```
+The bolus totals agree exactly, while the summed basal is a small fraction of the reported one. This is the signature of an Omnipod user: the export records the basal rates delivered in manual mode only, so almost all of the basal insulin - everything delivered in automated mode - is missing from `basal`, but is still included in `total_basal`. For such subjects, an analysis based on `basal` would badly understate the insulin actually delivered, whereas `total_basal` remains correct.
+
+A day is flagged when the absolute difference exceeds both `abs_tol` (1 U by default) and `rel_tol` times the reported total (10% by default), so small rounding differences do not trigger a warning. The function also warns if a day is reported more than once with conflicting values, which happens when two overlapping exports were parsed for the same subject, and if there is no `basal` or `bolus` data at all although a daily total was reported.
+
 ## Merging data across subjects
 
-Once every subject's data has been parsed and cleaned, `merge_all()` combines them into one long-format data set per data type, adding an `id` column so subjects can be told apart:
+Once every subject's data has been parsed and cleaned, `merge_all()` combines them into one long-format data set per data type:
 ```{r, comment=""}
 path_2 <- system.file("extdata", "glooko_example.zip", package = "aidR")
 data_2  <- parse_data(id = "2", paths = path_2) # Note: clean = TRUE by default
@@ -186,6 +232,7 @@ for (id in ids) {
   all_data[[id]]          <- parse_data(id, input$paths[input$id == id])
   all_data[[id]]          <- filter_CGM(all_data[[id]])
   check_completeness(id, all_data[[id]])
+  check_insulin_totals(id, all_data[[id]])
 }
 combined <- merge_all(all_data)
 # write DIAX files

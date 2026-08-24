@@ -30,8 +30,6 @@ filter_CGM <- function(data_id, truncate_min_cgm = 40, truncate_max_cgm = 400, m
                                     min_minutes_difference_cgm = min_minutes_difference_cgm)
   }
   
-  # TODO implement other filters, if necessary (e.g. carbs?)
-  
   return(data_id)
 }
 

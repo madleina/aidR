@@ -89,6 +89,10 @@ clean.mylife <- function(data, id, ...){
   data_new$carbs <- .clean_mylife_carbs.aidR(id, bind_rows(data[carbs_in_list]))
   data_new$SMBG <- .clean_mylife_SMBG.aidR(id, bind_rows(data[smbg_in_list]))
   
+  # Daily insulin totals: not reported by mylife -> sum the standardized data
+  # Note: no total_basal, as a mylife export contains no basal data
+  data_new$total_bolus <- .total_bolus_per_day.aidR(data_new$bolus)
+  
   return(data_new)
 }
 

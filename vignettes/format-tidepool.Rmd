@@ -46,7 +46,7 @@ Each entry below describes one sheet and the information it provides.
 ```{r, comment=""}
 head(data$cgm)
 ```
-- **`Basal`**: basal rates, including the delivery type (e.g. scheduled, temp, or suspend).
+- **`Basal`**: basal rates, including their duration.
 ```{r, comment=""}
 head(data$basal)
 ```
@@ -79,15 +79,18 @@ head(data$upload)
 
 When `parse_data` is run with `clean = TRUE`, the cleaned data types are built from the following sheets and attributes:
 
-| Cleaned data type | Used sheets                       | Used attributes |
+| Cleaned data type | Used sheets                       | Used attributes from `clean = FALSE` |
 |-------------------|-----------------------------------|-----------------|
 | `cgm`             | `CGM`                             | `data$cgm`      |
 | `basal`           | `Basal`                           | `data$basal`    |
 | `bolus`           | `Bolus`                           | `data$bolus`    |
 | `carbs`           | `Bolus Calculator` or `Food`      | `data$carbs`    |
 | `SMBG`            | `SMBG`                            | `data$SMBG`     |
+| `total_basal`     | `Basal`                           | `data$basal`    |
+| `total_bolus`     | `Bolus`                           | `data$bolus`    |
 
 ## Notes
 
 - CGM and SMBG values are reported in mg/dL or mmol/L depending on the account settings; `aidR` converts them to mg/dL automatically.
 - Timestamps carry a per-row UTC offset, so `timezone_offset` is populated (unlike most other export formats, where only local wall-clock time is available).
+- Tidepool reports no daily insulin aggregate, so `total_basal` and `total_bolus` are summed from the cleaned `basal` and `bolus` data and carry `source = "summed"`.

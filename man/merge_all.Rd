@@ -4,14 +4,17 @@
 \alias{merge_all}
 \title{Merge data available for all individuals, separately per data type}
 \usage{
-merge_all(data, types = c("cgm", "basal", "bolus", "carbs", "SMBG"))
+merge_all(
+  data,
+  types = c("cgm", "basal", "bolus", "carbs", "SMBG", "total_basal", "total_bolus")
+)
 }
 \arguments{
 \item{data}{A named list with the data of each individual (the output of
 \code{\link{parse_data}}), named by participant identifier.}
 
 \item{types}{A character vector with the data type names to be merged.
-Defaults to the five standardized types.}
+Defaults to the five standardized types and the two daily insulin totals.}
 }
 \value{
 A named list with one data frame per data type, holding the data of

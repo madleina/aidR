@@ -82,6 +82,10 @@ clean.tidepool <- function(data, id, ...){
     stop(paste0("No data on carbohydrates available!"))
   }
 
+  # Daily insulin totals: not reported by Tidepool -> sum the standardized data
+  data_new$total_basal <- .total_basal_per_day.aidR(data_new$basal)
+  data_new$total_bolus <- .total_bolus_per_day.aidR(data_new$bolus)
+  
   # Found everything
   return(data_new)
 }

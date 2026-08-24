@@ -32,7 +32,7 @@ writeLines(readLines(path, n = 10))
 
 ## How aidR detects this format
 
-`aidR` identifies a CareLink export by the keyword `MiniMed`: CareLink only accepts uploads from Medtronic MiniMed pumps, and MiniMed pumps can only upload to CareLink, so the presence of `MiniMed` uniquely marks the format.
+`aidR` identifies a CareLink export by the keyword `MiniMed` in the first line.
 
 ## Sections and the data types they produce
 
@@ -140,9 +140,12 @@ When `parse_data` is run with `clean = TRUE`, the cleaned data types are built f
 | `bolus`           | `carelink_example.csv` | `data$bolus`    |
 | `carbs`           | `carelink_example.csv` | `data$bwz`      |
 | `SMBG`            | `carelink_example.csv` | `data$SMBG`     |
+| `total_basal`     | `carelink_example.csv` | `data$basal`    |
+| `total_bolus`     | `carelink_example.csv` | `data$bolus`    |
 
 ## Notes
 
 - CGM and SMBG values are reported in mg/dL or mmol/L depending on account settings; `aidR` converts to mg/dL automatically.
 - `timezone_offset` is always `NA`, since CareLink exports report only local (wall-clock) time.
+- CareLink does not report a daily insulin aggregate that `aidR` uses, so `total_basal` and `total_bolus` are summed from the cleaned `basal` and `bolus` data and carry `source = "summed"`.
 

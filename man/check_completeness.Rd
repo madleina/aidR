@@ -7,8 +7,7 @@
 check_completeness(
   id,
   data_id,
-  necessary_types = c("cgm", "basal", "bolus", "carbs"),
-  allow_total_insulin_instead_of_basal = TRUE
+  necessary_types = c("cgm", "basal", "bolus", "carbs")
 )
 }
 \arguments{
@@ -17,8 +16,6 @@ check_completeness(
 \item{data_id}{A list with all data found for one individual.}
 
 \item{necessary_types}{A character vector with type names for which data should be available.}
-
-\item{allow_total_insulin_instead_of_basal}{Logical, if \code{TRUE}, missing basal rate data will fall back to checking \code{total_insulin} before issuing a warning. Useful for Omnipod exports, where basal rates are commonly absent during loop mode.}
 }
 \value{
 No return value, called for side effects. Issues a warning for every

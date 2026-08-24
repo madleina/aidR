@@ -53,9 +53,13 @@ clean.yourloops <- function(data, id, ...) {
   if (names(data) == "cgm") {
     return(list(cgm = .format_cgm_yourloops.aidR(id, data$cgm)))
   } else if (names(data) == "basal") {
-    return(list(basal = .format_basal_yourloops.aidR(id, data$basal)))
+    basal <- .format_basal_yourloops.aidR(id, data$basal)
+    return(list(basal = basal,
+                total_basal = .total_basal_per_day.aidR(basal)))
   } else if (names(data) == "bolus") {
-    return(list(bolus = .format_bolus_yourloops.aidR(id, data$bolus)))
+    bolus <- .format_bolus_yourloops.aidR(id, data$bolus)
+    return(list(bolus = bolus,
+                total_bolus = .total_bolus_per_day.aidR(bolus)))
   } else if (names(data) == "meals") {
     return(list(carbs = .format_carbs_yourloops.aidR(id, data$meals)))
   } else if (names(data) == "rescuecarbs") {
@@ -201,7 +205,7 @@ clean.yourloops <- function(data, id, ...) {
     id = id,
     format = "yourloops",
     timestamp = cgm$timestamp,
-    timezone_offset = -cgm$timezoneOffSet / 60, # take -offset as we've added it to timestamp before
+    timezone_offset = cgm$timezoneOffSet / 60,
     value = cgm$value,
     unit = "mg/dL",
     sensor_name = cgm$cgmModel
@@ -233,7 +237,7 @@ clean.yourloops <- function(data, id, ...) {
       unit = "U/h",
       pump_name = NA # not given in file
     ) %>%
-    mutate(timezone_offset = -.data$timezoneOffSet / 60) |> # take -offset as we've added it to timestamp before
+    mutate(timezone_offset = .data$timezoneOffSet / 60) |>
     select("id", "format", "timestamp", "timezone_offset", "duration", "rate", "unit", "pump_name")
   
   return(basal)
@@ -263,7 +267,7 @@ clean.yourloops <- function(data, id, ...) {
     mutate(
       id = id,
       format = "yourloops",
-      timezone_offset = -.data$timezoneOffSet / 60, # take -offset as we've added it to timestamp before
+      timezone_offset = .data$timezoneOffSet / 60,
       normal = .data$delivered,
       total = .data$normal,
       extended = NA,
@@ -296,7 +300,7 @@ clean.yourloops <- function(data, id, ...) {
     mutate(
       id = id,
       format = "yourloops",
-      timezone_offset = -.data$timezoneOffSet / 60, # take -offset as we've added it to timestamp before
+      timezone_offset = .data$timezoneOffSet / 60,
       value = .data$carbsValue,
       unit = "g",
       label = paste0("is_input_meal_fat_", .data$is_input_meal_fat),
@@ -329,7 +333,7 @@ clean.yourloops <- function(data, id, ...) {
     mutate(
       id = id,
       format = "yourloops",
-      timezone_offset = -.data$timezoneOffSet / 60, # take -offset as we've added it to timestamp before
+      timezone_offset = .data$timezoneOffSet / 60,
       value = .data$confirmedCarbs,
       unit = "g",
       label = "rescuecarbs",

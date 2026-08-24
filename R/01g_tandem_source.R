@@ -37,9 +37,10 @@ read_tandem_source <- function(id, filename) {
 #' @param ... Additional arguments passed to methods.
 #'
 #' @return A named list with the cleaned data, named according to the data type
-#'   of \code{data}: \code{cgm}, \code{basal}, \code{bolus} and \code{carbs}
-#'   (both are extracted from the bolus file) or \code{SMBG}. \code{NULL} for all
-#'   other data types, which are not cleaned.
+#'   of \code{data}: \code{cgm}, \code{basal}, \code{bolus}, \code{carbs} and
+#'   \code{total_bolus} (the latter three are extracted from the bolus file),
+#'   \code{total_basal} (extracted from the hourly basal file) or \code{SMBG}.
+#'   \code{NULL} for all other data types, which are not cleaned.
 #' @export
 clean.tandem_source <- function(data, id, ...) {
   if (is.null(data)) {
@@ -55,8 +56,12 @@ clean.tandem_source <- function(data, id, ...) {
   } else if (names(data) == "basal") {
     return(list(basal = .format_basal_tandem_source.aidR(id, data$basal)))
   } else if (names(data) == "bolus") {
-    return(list(bolus = .format_bolus_tandem_source.aidR(id, data$bolus),
-                carbs = .format_carbs_tandem_source.aidR(id, data$bolus)))
+    bolus <- .format_bolus_tandem_source.aidR(id, data$bolus)
+    return(list(bolus = bolus,
+                carbs = .format_carbs_tandem_source.aidR(id, data$bolus),
+                total_bolus = .total_bolus_per_day.aidR(bolus)))
+  } else if (names(data) == "hourly_basal") {
+    return(list(total_basal = .format_total_basal_tandem_source.aidR(id, data$hourly_basal)))
   } else if (names(data) == "bg") {
     return(list(SMBG = .format_bg_tandem_source.aidR(id, data$bg)))
   }
@@ -217,6 +222,45 @@ clean.tandem_source <- function(data, id, ...) {
     select("id", "format", "timestamp", "timezone_offset", "duration", "rate", "unit", "pump_name")
   
   return(basal)
+}
+
+#' Total basal insulin per day, as reported by a Tandem Source export
+#'
+#' Tandem Source reports the basal insulin delivered in each hour of the day, in
+#' one file with one row per day and one column per hour. Summing over the 24
+#' hourly columns gives the total basal insulin delivered on that day.
+#'
+#' @param id Character or numeric participant identifier.
+#' @param hourly_basal A data frame containing the hourly basal data from a
+#'   Tandem Source file.
+#'
+#' @return A data frame with columns \code{id}, \code{format}, \code{date},
+#'   \code{total_basal} and \code{source}, holding one row per day.
+#' @keywords internal
+.format_total_basal_tandem_source.aidR <- function(id, hourly_basal) {
+  if (is.null(hourly_basal) || nrow(hourly_basal) == 0){ return(NULL) }
+  
+  # First two columns are the serial number and the date, the remaining 24 are
+  # the hours of the day (12 AM ... 11 PM)
+  hours <- hourly_basal[, 3:ncol(hourly_basal), drop = FALSE]
+  hours <- as.data.frame(lapply(hours, as.numeric))
+  
+  res <- data.frame(
+    id = id,
+    format = "tandem_source",
+    date = date(as_datetime(hourly_basal$`Event Date`)),
+    total_basal = apply(hours, 1, .sum_or_na.aidR),
+    source = "reported"
+  )
+  
+  # Note: there may be several entries per day if more than one pump was used
+  res <- res %>% 
+    group_by(.data$id, .data$format, .data$date, .data$source) %>% 
+    summarise(total_basal = .sum_or_na.aidR(.data$total_basal), .groups = "drop") %>% 
+    as.data.frame() %>% 
+    select("id", "format", "date", "total_basal", "source")
+  
+  return(res[order(res$date), ])
 }
 
 #------------------------------

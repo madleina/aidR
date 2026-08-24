@@ -13,12 +13,13 @@
 #' @param data A named list with the data of each individual (the output of
 #'   \code{\link{parse_data}}), named by participant identifier.
 #' @param types A character vector with the data type names to be merged.
-#'   Defaults to the five standardized types.
+#'   Defaults to the five standardized types and the two daily insulin totals.
 #'
 #' @return A named list with one data frame per data type, holding the data of
 #'   all individuals. Individuals without data of a given type contribute no rows.
 #' @export
-merge_all <- function(data, types = c("cgm", "basal", "bolus", "carbs", "SMBG")){
+merge_all <- function(data, types = c("cgm", "basal", "bolus", "carbs", "SMBG",
+                                      "total_basal", "total_bolus")){
   # Merge: CGM, basal, bolus, carbs and SMBG (standardized formats)
   
   result <- list()

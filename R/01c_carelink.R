@@ -85,6 +85,10 @@ clean.carelink <- function(data, id, ...){
   data_new$carbs <- .clean_carelink_carbs.aidR(id, data$bwz)
   data_new$SMBG <- .clean_carelink_SMBG.aidR(id, data$SMBG)
   
+  # Daily insulin totals: not reported by CareLink -> sum the standardized data
+  data_new$total_basal <- .total_basal_per_day.aidR(data_new$basal)
+  data_new$total_bolus <- .total_bolus_per_day.aidR(data_new$bolus)
+  
   return(data_new)
 }
 

@@ -37,8 +37,10 @@ read_glooko <- function(id, filename) {
 #'
 #' @return A named list with the cleaned data, named according to the data type
 #'   of \code{data}: \code{cgm}, \code{basal}, \code{bolus} and \code{carbs}
-#'   (both are extracted from the bolus file), \code{total_insulin} or
-#'   \code{SMBG}. \code{NULL} for all other data types, which are not cleaned.
+#'   (both are extracted from the bolus file), \code{total_basal} and
+#'   \code{total_bolus} (both are extracted from the daily aggregated insulin
+#'   file) or \code{SMBG}. \code{NULL} for all other data types, which are not
+#'   cleaned.
 #' @export
 clean.glooko <- function(data, id, ...) {
   if (is.null(data)) {
@@ -60,7 +62,10 @@ clean.glooko <- function(data, id, ...) {
       carbs = .format_carbs_glooko.aidR(id, data)
     ))
   } else if (names(data) == "total_insulin") {
-    return(list(total_insulin = .format_total_insulin_glooko.aidR(id, data)))
+    return(list(
+      total_basal = .format_total_basal_glooko.aidR(id, data),
+      total_bolus = .format_total_bolus_glooko.aidR(id, data)
+    ))
   } else if (names(data) == "SMBG") {
     return(list(SMBG = .format_SMBG_glooko.aidR(id, data)))
   } 
@@ -501,16 +506,43 @@ clean.glooko <- function(data, id, ...) {
     mutate(
       id = id,
       format = "glooko",
+      date = date(.data$Timestamp),
       total_bolus = .data$`Total Bolus (U)`,
       total_insulin = .data$`Total Insulin (U)`,
-      total_basal = .data$`Total Basal (U)`,
-      timezone_offset = NA
+      total_basal = .data$`Total Basal (U)`
     ) %>%
-    rename(timestamp = .data$Timestamp) %>%
-    select("id", "format", "timestamp", "timezone_offset", "total_bolus", 
-           "total_insulin", "total_basal")
+    select("id", "format", "date", "total_bolus", 
+           "total_basal", "total_insulin")
 
   return(data)
+}
+
+#' Total basal insulin per day, as reported by a Glooko export
+#'
+#' @param id Character or numeric participant identifier.
+#' @param data A data frame containing the daily aggregated insulin data from a Glooko file.
+#'
+#' @return A data frame with columns \code{id}, \code{format}, \code{date},
+#'   \code{total_basal} and \code{source}, holding one row per day.
+#' @keywords internal
+.format_total_basal_glooko.aidR <- function(id, data) {
+  .format_total_insulin_glooko.aidR(id, data) %>% 
+    mutate(source = "reported") %>% 
+    select("id", "format", "date", "total_basal", "source")
+}
+
+#' Total bolus insulin per day, as reported by a Glooko export
+#'
+#' @param id Character or numeric participant identifier.
+#' @param data A data frame containing the daily aggregated insulin data from a Glooko file.
+#'
+#' @return A data frame with columns \code{id}, \code{format}, \code{date},
+#'   \code{total_bolus} and \code{source}, holding one row per day.
+#' @keywords internal
+.format_total_bolus_glooko.aidR <- function(id, data) {
+  .format_total_insulin_glooko.aidR(id, data) %>% 
+    mutate(source = "reported") %>% 
+    select("id", "format", "date", "total_bolus", "source")
 }
 
 #------------------------------

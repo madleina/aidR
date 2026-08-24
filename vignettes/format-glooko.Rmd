@@ -30,12 +30,12 @@ files <- list.files(tmpdir, recursive = TRUE)
 A Glooko export is a folder (possibly zipped) containing CSV files for several data types:
 
 ```{r, comment = "", echo = FALSE}
-files
+sub("^[^/]+/", "", files) # removes glooko_example/ prefix
 ```
 
 A single data type may be split across two or more files, which are then numbered `cgm_data_1.csv`, `cgm_data_2.csv`, and so on; `aidR` reads and concatenates all files matching a given type.
 
-Every file begins with a one-line header, such as `Name:First Last,Date Range:2024-01-01 - 2024-03-01`, followed by the column headers. Both the one-line header and the column headers are language-specific and vary with the language of the user's Glooko account:
+Every file begins with a one-line header, such as `Name:Jane Doe,Date Range:2024-01-01 - 2024-03-01`, followed by the column headers. Both the one-line header and the column headers are language-specific and vary with the language of the user's Glooko account (example in German):
 
 ```{r, comment = "", echo = FALSE}
 writeLines(readLines(file.path(tmpdir, files[4]), n = 10))
@@ -69,6 +69,10 @@ head(data$SMBG)
 
 - **`carbs_data_*.csv`** / **`cgm_carbs_data_*.csv`**: carbohydrate/meal events recorded by or imported from a CGM system. These are different from carbohydrate amounts entered into a pump's bolus calculator. In practice, these files are almost always empty in exports of AID users. They are therefore ignored when building the clean `carbs` output, which instead uses carbohydrate amounts recorded in the bolus files (see below).
 
+```{r, comment=""}
+head(data$carbs_manual)
+```
+
 - **`cgm_data_*.csv`**: CGM data.
 ```{r, comment=""}
 head(data$cgm)
@@ -79,7 +83,7 @@ head(data$cgm)
 head(data$basal)
 ```
 
-- **`Insulin data/bolus_data_*.csv`**: boluses. Also records whether a bolus was normal, square-wave, or dual-wave (although the duration for the latter two is unknown).
+- **`Insulin data/bolus_data_*.csv`**: boluses. Also records whether a bolus was normal, square-wave, or dual-wave through the amounts listed under initial and extended delivery (although the duration is unknown).
 ```{r, comment=""}
 head(data$bolus)
 ```
@@ -89,23 +93,26 @@ head(data$bolus)
 head(data$total_insulin)
 ```
 
-- **`Manual data/` files** (`exercise_data_*`, `food_data_*`, `manual_insulin_data_*`, `medication_data_*`, `notes_data_*`): self-reported entries made by the user in the Glooko app - exercise, food intake, manual insulin deliveries, medication, and free-text notes, respectively. These are often very sparse or missing entirely.
+- **`Manual data/` files** (`exercise_data_*`, `food_data_*`, `manual_insulin_data_*`, `medication_data_*`, `notes_data_*`): self-reported entries made by the user in the Glooko app - exercise, food intake, manual insulin deliveries, medication, and free-text notes, respectively. These are often very sparse or missing entirely. If present, they are available through `data$exercise`, `data$food`, `data$manual_insulin`, `data$medication` and `data$notes`, respectively.
 
 ## Cleaning files
 
 When `parse_data` is run with `clean = TRUE`, the cleaned data types are built from the following raw files and attributes:
 
-| Cleaned data type | Used files                      | Used attributes |
+| Cleaned data type | Used files                      | Used attributes of `clean = FALSE` |
 |-------------------|---------------------------------|-----------------|
 | `cgm`             | `cgm_data_*.csv`                | `data$cgm`      |
 | `basal`           | `Insulin data/basal_data_*.csv` | `data$basal`    |
 | `bolus`           | `Insulin data/bolus_data_*.csv` | `data$bolus`    |
 | `carbs`           | `Insulin data/bolus_data_*.csv` | `data$bolus`    |
 | `SMBG`            | `bg_data_*.csv`                 | `data$SMBG`     |
+| `total_basal`     | `Insulin data/insulin_data_*.csv` | `data$total_insulin` |
+| `total_bolus`     | `Insulin data/insulin_data_*.csv` | `data$total_insulin` |
 
 ## Notes
 
 - CGM and SMBG values are reported in mg/dL or mmol/L depending on account settings; `aidR` converts to mg/dL automatically.
 - `timezone_offset` is always `NA`, since Glooko exports report only local (wall-clock) time.
 - Serial numbers are reported for some data types (e.g. basal, bolus) but are not mapped to a device/pump name.
+- Glooko is the only supported platform that reports the daily aggregated insulin itself, so `total_basal` and `total_bolus` both have `source = "reported"`. This matters for Omnipod users, whose basal rates cover manual mode only: their `basal` is sparse, while `total_basal` still holds the full amount delivered.
 - `sensor_name` for CGM is always `NA`, since Glooko exports do not report it.

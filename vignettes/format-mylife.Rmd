@@ -68,11 +68,13 @@ When `parse_data` is run with `clean = TRUE`, the cleaned data types are built f
 | `bolus`           | `mylife_example.csv` | All entries whose unit is `U`, i.e. bolus entries.                                                                             |
 | `carbs`           | `mylife_example.csv` | All entries whose unit is `g`, including regular carbohydrates, slowly resorbing carbohydrates, and hypo carbohydrate entries. |
 | `SMBG`            | `mylife_example.csv` | All entries whose unit is `mg/dL` or `mmol/L`, i.e. manual blood glucose entries.                                              |
+| `total_bolus`     | `mylife_example.csv` | The cleaned `bolus` data, summed per day.                                                                                      |
 
 ## Notes
 
 - SMBG values may be reported in mg/dL or mmol/L depending on the account settings; `aidR` converts them to mg/dL automatically.
 - `timezone_offset` is always `NA`, since mylife exports report only local (wall-clock) time.
+- There is no `total_basal`, since a mylife export contains no basal data. `total_bolus` is summed from the cleaned `bolus` data and carries `source = "summed"`.
 - `estimated_absorption_duration` is parsed out of the free-text information column for slowly resorbing carbs (e.g. `"... 2h ..."`) and is `NA` when not stated.
 - `is_hypo_treatment` is likewise derived from the information column, by looking for the marker `HypoTreatment`.
 - `label` retains the original, language-specific event label, so the source of each carbohydrate entry stays traceable after merging across platforms.

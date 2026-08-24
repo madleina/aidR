@@ -62,7 +62,7 @@ head(data$bolus)
 ```{r, comment=""}
 head(data$SMBG)
 ```
-- **`*-Hourly-basal-delivery.csv`**: basal insulin aggregated per hour, with one column per hour of the day. This aggregated file is not used to build the cleaned `basal`, which is derived from `*-Basal-doses.csv` instead.
+- **`*-Hourly-basal-delivery.csv`**: basal insulin aggregated per hour, with one column per hour of the day. This aggregated file is not used to build the cleaned `basal`, which is derived from `*-Basal-doses.csv` instead; it is used for `total_basal`.
 ```{r, comment=""}
 head(data$hourly_basal)
 ```
@@ -70,17 +70,20 @@ head(data$hourly_basal)
 
 When `parse_data` is run with `clean = TRUE`, the cleaned data types are built from the following raw files and attributes:
 
-Cleaned data type | Used files                      | Used attributes |
+Cleaned data type | Used files                      | Used attributes from `clean = FALSE` |
 |-----------------|---------------------------------|-----------------|
-| cgm             | *-CGM.csv                       | data$cgm        |
-| basal           | *-Basal-doses.csv               | data$basal      |
-| bolus           | *-Bolus.csv                     | data$bolus      |
-| carbs           | *-Bolus.csv                     | data$bolus      |
-| SMBG            | -BG.csv                         | data$bg         |
+| cgm             | *-CGM.csv                       | `data$cgm`        |
+| basal           | *-Basal-doses.csv               | `data$basal`      |
+| bolus           | *-Bolus.csv                     | `data$bolus`      |
+| carbs           | *-Bolus.csv                     | `data$bolus`      |
+| SMBG            | *-BG.csv                        | `data$bg`         |
+| total_basal     | *-Hourly-basal-delivery.csv     | `data$hourly_basal` |
+| total_bolus     | *-Bolus.csv                     | `data$bolus`      |
 
 ## Notes
 
 - CGM and SMBG values are reported in mg/dL or mmol/L depending on the account settings; `aidR` converts them to mg/dL automatically.
 - `timezone_offset` is always `NA`, since Tandem Source exports report only local (wall-clock) time.
 - The device type is stored as `pump_name` for insulin data and `sensor_name` for glucose data.
+- The hourly basal file reports the basal insulin delivered in each hour of the day, one row per day and one column per hour. `aidR` sums the 24 hourly columns into `total_basal`, which therefore carries `source = "reported"`. `total_bolus`, in contrast, is summed from the cleaned `bolus` data and carries `source = "summed"`.
 - Because basal durations are inferred from consecutive timestamps, the final basal entry of an export has no successor and its duration is therefore unknown.

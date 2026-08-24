@@ -204,7 +204,7 @@ write_DIAX_format <- function(data, prefix, ids = NULL){
 .diax_metadata_time.aidR <- function(data_id){
   # Time: with or without timezone
   all_local <- all(sapply(data_id, function(df) all(is.na(df$timezone_offset))))
-  some_local <- all(sapply(data_id, function(df) any(is.na(df$timezone_offset))))
+  some_local <- any(sapply(data_id, function(df) any(is.na(df$timezone_offset))))
   
   if (all_local){
     return(list(unit = "Y-m-d H:M:S",
@@ -245,10 +245,6 @@ write_DIAX_format <- function(data, prefix, ids = NULL){
   units <- list(cgm = "mg/dL", bolus = "U", basal = "U/h", carbs = "g", SMBG = "mg/dL")
   type_map <- .diax_series_map.aidR()
 
-  # Time: with or without timezone
-  all_local <- all(sapply(data_id, function(df) all(is.na(df$timezone_offset))))
-  some_local <- all(sapply(data_id, function(df) any(is.na(df$timezone_offset))))
-  
   metadata <- list(
     unique_id = "id number of the subject",
     time = .diax_metadata_time.aidR(data_id)

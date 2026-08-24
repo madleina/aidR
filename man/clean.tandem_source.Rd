@@ -15,9 +15,10 @@
 }
 \value{
 A named list with the cleaned data, named according to the data type
-of \code{data}: \code{cgm}, \code{basal}, \code{bolus} and \code{carbs}
-(both are extracted from the bolus file) or \code{SMBG}. \code{NULL} for all
-other data types, which are not cleaned.
+of \code{data}: \code{cgm}, \code{basal}, \code{bolus}, \code{carbs} and
+\code{total_bolus} (the latter three are extracted from the bolus file),
+\code{total_basal} (extracted from the hourly basal file) or \code{SMBG}.
+\code{NULL} for all other data types, which are not cleaned.
 }
 \description{
 Format and clean the Tandem Source data to keep relevant columns only

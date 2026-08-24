@@ -246,3 +246,97 @@ clean <- function(data, id, ...) UseMethod("clean")
   }
   unique(recurse(path))
 }
+
+#-------------------------------
+# Daily insulin totals
+#-------------------------------
+
+#' Sum a vector, ignoring missing values
+#'
+#' Unlike \code{sum(x, na.rm = TRUE)}, a vector without a single non-missing
+#' value yields \code{NA} rather than zero.
+#'
+#' @param x A numeric vector.
+#'
+#' @return The sum over all non-missing values of \code{x}, or \code{NA} if
+#'   \code{x} holds no non-missing value.
+#'
+#' @keywords internal
+.sum_or_na.aidR <- function(x){
+  if (all(is.na(x))){ return(NA_real_) }
+  
+  return(sum(x, na.rm = TRUE))
+}
+
+#' Aggregate a standardized data frame into one value per day
+#'
+#' @param df A standardized data frame, with columns \code{id}, \code{format}
+#'   and \code{timestamp}.
+#' @param values A numeric vector of the same length as \code{nrow(df)}, holding
+#'   the value to be summed per day.
+#' @param name Character string with the name of the resulting value column.
+#' @param source Character string describing where the daily total comes from,
+#'   either \code{"reported"} (given by the export) or \code{"summed"}
+#'   (aggregated by aidR).
+#'
+#' @return A data frame with columns \code{id}, \code{format}, \code{date},
+#'   \code{name} and \code{source}, holding one row per day. \code{NULL} if
+#'   \code{df} is empty.
+#'
+#' @keywords internal
+.aggregate_per_day.aidR <- function(df, values, name, source){
+  if (is.null(df) || nrow(df) == 0){ return(NULL) }
+  
+  day <- as.character(date(df$timestamp))
+  total <- tapply(values, day, .sum_or_na.aidR)
+  
+  res <- data.frame(
+    id     = df$id[1],
+    format = df$format[1],
+    date   = as.Date(names(total)),
+    total  = as.numeric(total),
+    source = source
+  )
+  names(res)[names(res) == "total"] <- name
+  rownames(res) <- NULL
+  
+  return(res[order(res$date), ])
+}
+
+#' Total basal insulin delivered per day, summed over the recorded basal rates
+#'
+#' Used by all formats that do not report a daily basal aggregate themselves.
+#' Note that the resulting total is only complete if the export records the
+#' basal rates of the entire day.
+#'
+#' @param basal A standardized basal data frame, with columns \code{id},
+#'   \code{format}, \code{timestamp}, \code{rate} and \code{duration}.
+#'
+#' @return A data frame with columns \code{id}, \code{format}, \code{date},
+#'   \code{total_basal} and \code{source}, holding one row per day.
+#'   \code{NULL} if \code{basal} is empty.
+#'
+#' @keywords internal
+.total_basal_per_day.aidR <- function(basal){
+  if (is.null(basal) || nrow(basal) == 0){ return(NULL) }
+  
+  .aggregate_per_day.aidR(basal, as.numeric(basal$rate) * as.numeric(basal$duration), "total_basal", "summed")
+}
+
+#' Total bolus insulin delivered per day, summed over the recorded boluses
+#'
+#' Used by all formats that do not report a daily bolus aggregate themselves.
+#'
+#' @param bolus A standardized bolus data frame, with columns \code{id},
+#'   \code{format}, \code{timestamp} and \code{total}.
+#'
+#' @return A data frame with columns \code{id}, \code{format}, \code{date},
+#'   \code{total_bolus} and \code{source}, holding one row per day.
+#'   \code{NULL} if \code{bolus} is empty.
+#'
+#' @keywords internal
+.total_bolus_per_day.aidR <- function(bolus){
+  if (is.null(bolus) || nrow(bolus) == 0){ return(NULL) }
+  
+  .aggregate_per_day.aidR(bolus, bolus$total, "total_bolus", "summed")
+}
