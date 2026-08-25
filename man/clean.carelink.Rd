@@ -15,7 +15,7 @@
 }
 \value{
 A named list with the cleaned data, with entries \code{cgm},
-\code{basal}, \code{bolus}, \code{carbs} (extracted from the bolus wizard
+\code{bolus}, \code{carbs} (extracted from the bolus wizard
 entries) and \code{SMBG}.
 }
 \description{

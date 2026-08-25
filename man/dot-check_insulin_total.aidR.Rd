@@ -4,7 +4,7 @@
 \alias{.check_insulin_total.aidR}
 \title{Compare the summed and the reported daily insulin of one data type}
 \usage{
-.check_insulin_total.aidR(id, data_id, type, rel_tol, abs_tol, midnight_tol_h)
+.check_insulin_total.aidR(id, data_id, type, rel_tol, abs_tol)
 }
 \arguments{
 \item{id}{Character or numeric participant identifier.}
@@ -16,8 +16,6 @@
 \item{rel_tol}{Numeric, the relative tolerance of the comparison.}
 
 \item{abs_tol}{Numeric, the absolute tolerance of the comparison.}
-
-\item{midnight_tol_h}{Numeric, tolerance around midnight, in hours.}
 }
 \value{
 A data frame with one row per checked day, or \code{NULL} if there is

@@ -14,8 +14,9 @@
 \value{
 A list with entries \code{dfs}, \code{sensor_name} and \code{pump_name}.
 \code{dfs} is a list of three data frames containing (1) pump and sensor
-events of many different types, (2) daily aggregated insulin and (3) CGM
-measurement data. \code{sensor_name} and \code{pump_name} are the device
+events of many different types, (2) daily aggregated auto (closed-loop)
+insulin and (3) CGM measurement data. \code{sensor_name} and
+\code{pump_name} are the device
 names read from the file header, \code{NA} if the header is absent.
 }
 \description{

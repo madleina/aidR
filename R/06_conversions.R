@@ -30,6 +30,88 @@ get_iglu_format <- function(data){
   return(iglu_df)
 }
 
+#' Convert CGM data to a format compatible with the R-package cgmquantify
+#'
+#' Builds the data frame that the metric functions of the R-package
+#' \href{https://CRAN.R-project.org/package=cgmquantify}{cgmquantify}
+#' expect, with columns \code{Time}, \code{glucose}, \code{Date}, \code{time_of_day} and
+#' \code{type_of_event}. This is the same layout that \code{cgmquantify::readfile()}
+#' produces from a Dexcom export.
+#'
+#' Note that cgmquantify always related to a single subject.
+#'
+#' @param data A list with all data found for one individual (the output of
+#'   \code{\link{parse_data}}) or for multiple individuals (the output of
+#'   \code{\link{merge_all}}). Requires cleaned and standardized CGM data.
+#' @param id Character or numeric participant identifier, naming the individual
+#'   to convert. Can be omitted if \code{data} holds the CGM data of a single
+#'   individual.
+#'
+#' @return A data frame with columns \code{Time} (\code{POSIXct}), \code{glucose}
+#'   (mg/dL), \code{Date}, \code{time_of_day} and \code{type_of_event}
+#'   (\code{1} above 180 mg/dL, \code{-1} below 70 mg/dL and \code{0} in
+#'   between), sorted by time and compatible with the R-package cgmquantify.
+#' @export
+get_cgmquantify_format <- function(data, id = NULL){
+  if (!inherits(data, "list") || 
+      !("cgm" %in% names(data)) || 
+      !("value" %in% names(data$cgm))){
+    stop("Require a list with attribute 'cgm'. 
+         Please make sure parse_data() was run with clean = TRUE.")
+  }
+  
+  cgm <- data$cgm
+  
+  # cgmquantify summarizes one individual at a time -> pick exactly one
+  all_ids <- unique(as.character(cgm$id))
+  if (is.null(id)){
+    if (length(all_ids) > 1){
+      stop("CGM data of more than one individual found (", paste(all_ids, collapse = ", "), 
+           "), but the cgmquantify metrics are defined for a single individual. 
+           Please provide the individual to convert via 'id'.")
+    }
+    id <- all_ids
+  } else {
+    id <- as.character(id)
+    if (length(id) != 1){ stop("Require a single 'id', got ", length(id), ".") }
+    if (!(id %in% all_ids)){ stop("No CGM data found for id ", id, "!") }
+  }
+  cgm <- cgm[as.character(cgm$id) == id, , drop = FALSE]
+  
+  # The cgmquantify metrics assume mg/dL (should never happen)
+  units <- unique(as.character(cgm$unit))
+  units <- units[!is.na(units)]
+  if (length(units) > 0 && !all(units == "mg/dL")){
+    stop("Id ", id, ": Expected CGM data in mg/dL, found ", paste(units, collapse = ", "), 
+         ". The cgmquantify metrics assume mg/dL.")
+  }
+  
+  # Remove NA 
+  n_missing <- sum(is.na(cgm$value))
+  if (n_missing > 0){
+    warning("Id ", id, ": Dropped ", n_missing, " CGM ", 
+            ifelse(n_missing == 1, "value", "values"), " that are NA!")
+    cgm <- cgm[!is.na(cgm$value), , drop = FALSE]
+  }
+  
+  # Sort time
+  cgm <- cgm[order(cgm$timestamp), , drop = FALSE]
+  
+  # Date and time of day are derived from the local (wall-clock) time, 
+  # independently of the timezone the timestamps are tagged with
+  value <- as.numeric(cgm$value)
+  cgmquantify_df <- data.frame(
+    Time          = cgm$timestamp,
+    glucose       = value,
+    Date          = as.Date(format(cgm$timestamp, "%Y-%m-%d")),
+    time_of_day   = hms::as_hms(format(cgm$timestamp, "%H:%M:%S")),
+    type_of_event = as.numeric(ifelse(value > 180, 1, ifelse(value < 70, -1, 0)))
+  )
+  rownames(cgmquantify_df) <- NULL
+  
+  return(cgmquantify_df)
+}
+
 #' Write AID data (CGM, basal, bolus, carbs and SMBG, where available) to a JSON file in DIAX format
 #'
 #' Accepts either the output of \code{\link{parse_data}} for a single

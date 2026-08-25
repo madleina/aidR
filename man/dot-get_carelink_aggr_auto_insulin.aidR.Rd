@@ -2,7 +2,7 @@
 % Please edit documentation in R/01c_carelink.R
 \name{.get_carelink_aggr_auto_insulin.aidR}
 \alias{.get_carelink_aggr_auto_insulin.aidR}
-\title{Parse all entries corresponding to daily aggregated insulin in a CareLink export}
+\title{Parse all entries corresponding to the daily aggregated auto (closed-loop) insulin in a CareLink export}
 \usage{
 .get_carelink_aggr_auto_insulin.aidR(df)
 }
@@ -13,6 +13,6 @@
 A data frame with the corresponding entries.
 }
 \description{
-Parse all entries corresponding to daily aggregated insulin in a CareLink export
+Parse all entries corresponding to the daily aggregated auto (closed-loop) insulin in a CareLink export
 }
 \keyword{internal}

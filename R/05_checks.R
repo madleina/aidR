@@ -99,9 +99,8 @@ check_completeness_range <- function(id, data_id, first_date, last_date,
 #' mode only (e.g. Omnipod on Glooko): the basal insulin delivered in automated
 #' mode is missing from the basal rates, but is included in the reported total.
 #'
-#' The first and the last day of an export are usually only partially covered.
-#' They are therefore skipped, unless the basal rates show that the day is
-#' covered from midnight to midnight (up to \code{midnight_tol_h}).
+#' Note that the first and the last day of an export are usually only partially
+#' covered, so a mismatch on those days is expected.
 #'
 #' @param id Character or numeric participant identifier.
 #' @param data_id A list with all data found for one individual.

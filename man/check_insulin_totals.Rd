@@ -4,13 +4,7 @@
 \alias{check_insulin_totals}
 \title{Check that the summed insulin matches the daily totals reported by an export}
 \usage{
-check_insulin_totals(
-  id,
-  data_id,
-  rel_tol = 0.1,
-  abs_tol = 1,
-  midnight_tol_h = 1
-)
+check_insulin_totals(id, data_id, rel_tol = 0.1, abs_tol = 1)
 }
 \arguments{
 \item{id}{Character or numeric participant identifier.}
@@ -22,10 +16,6 @@ check_insulin_totals(
 \item{abs_tol}{Numeric, the absolute tolerance of the comparison, in units of
 insulin. A day is flagged when the absolute difference exceeds both
 \code{abs_tol} and \code{rel_tol} times the reported total.}
-
-\item{midnight_tol_h}{Numeric, how many hours the basal rates of the first and
-the last day may deviate from midnight for the day to still count as fully
-covered.}
 }
 \value{
 Invisibly, a data frame with one row per checked day, holding the
@@ -45,7 +35,6 @@ day. The most common cause are AID systems that record basal rates for manual
 mode only (e.g. Omnipod on Glooko): the basal insulin delivered in automated
 mode is missing from the basal rates, but is included in the reported total.
 
-The first and the last day of an export are usually only partially covered.
-They are therefore skipped, unless the basal rates show that the day is
-covered from midnight to midnight (up to \code{midnight_tol_h}).
+Note that the first and the last day of an export are usually only partially
+covered, so a mismatch on those days is expected.
 }

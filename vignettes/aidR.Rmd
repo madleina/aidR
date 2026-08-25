@@ -26,10 +26,11 @@ The package supports the following steps:
 - **Clean** the most important data types (CGM, basal, bolus, carbohydrate, and SMBG) into an interchangeable format (`parse_data(clean = TRUE)`).
 - **Filter** the merged data, e.g. to remove artefactual or duplicated CGM readings (`filter_CGM()`).
 - **Check completeness** of the merged data, e.g. to flag missing data types or missing days (`check_completeness()`, `check_completeness_range()`), and verify that the insulin recorded in the individual data points matches the daily totals reported by the export (`check_insulin_totals()`).
+- **Plot** a day of one subject, with CGM, basal, bolus, carbohydrate, and SMBG data in one figure (`plot_day()`).
 - **Merge across subjects** into one long-format data set for the whole study population (`merge_all()`).
-- **Convert** the standardized data into other formats (e.g. [DIAX](https://github.com/Center-for-Diabetes-Technology/DIAX)) and into the layout expected by other R packages (e.g. [iglu](https://irinagain.github.io/iglu/)).
+- **Convert** the standardized data into other formats (e.g. [DIAX](https://github.com/Center-for-Diabetes-Technology/DIAX)) and into the layout expected by other R packages (e.g. [iglu](https://irinagain.github.io/iglu/) and [cgmquantify](https://CRAN.R-project.org/package=cgmquantify)).
 
-The rest of this vignette walks through each step, describes the supported export formats, and shows how to filter, check, and convert the resulting data.
+The rest of this vignette walks through each step, describes the supported export formats, and shows how to filter, check, plot, and convert the resulting data.
 
 ## Installation
 
@@ -111,14 +112,14 @@ In addition, two data types hold the daily insulin totals, with one row per day 
 |---------------|------------|------------|
 | Glooko        | reported   | reported   |
 | Tandem Source | reported   | summed     |
-| CareLink      | summed     | summed     |
+| CareLink      | -          | summed     |
 | Tidepool      | summed     | summed     |
 | YourLoops     | summed     | summed     |
 | mylife        | -          | summed     |
 
 The distinction matters, because a summed total is only ever as complete as the underlying record. Omnipod users on Glooko are the clearest case: their basal rates cover manual mode only, so summing them would badly understate the insulin actually delivered, while the reported aggregate covers automated mode as well. Note also that the first and last day of an export are usually partial, so a summed total is short on those days.
 
-There is no `total_basal` for mylife, since a mylife export contains no basal data.
+There is no `total_basal` for mylife, since a mylife export contains no basal data at all, and none for CareLink, since a CareLink export reports only the *scheduled* basal rates rather than the basal insulin effectively delivered. For the same reason, neither platform yields a cleaned `basal` data type.
 
 ## Filtering
 
@@ -171,6 +172,31 @@ The bolus totals agree exactly, while the summed basal is a small fraction of th
 
 A day is flagged when the absolute difference exceeds both `abs_tol` (1 U by default) and `rel_tol` times the reported total (10% by default), so small rounding differences do not trigger a warning. The function also warns if a day is reported more than once with conflicting values, which happens when two overlapping exports were parsed for the same subject, and if there is no `basal` or `bolus` data at all although a daily total was reported.
 
+## Plotting single days
+
+`plot_day()` draws one day of a subject's data as two stacked panels: the CGM trace over the shaded target range with the SMBG measurements as diamonds, and the therapy below it - the basal rate as a filled step area, the boluses as labelled circles, and the carbohydrates as labelled boxes, headed by the insulin delivered over the whole day. Both panels share a 0-24 h axis of the local (wall-clock) time, with a legend underneath.
+```{r, fig.width=9, fig.height=6.5, out.width="100%"}
+plot_day(data_clean, id = "1", days = "2019-01-11")
+```
+
+A data type that is absent is simply left out, so the function also works for exports that carry no basal data at all, such as CareLink. CGM data is the one exception: it anchors the plot and determines which days are available, so a mylife export - which holds no CGM data - cannot be plotted.
+
+Boluses and carbohydrate entries often come in quick succession - a meal bolus followed by a correction, or a meal split across two entries - and their markers would then overlap and become unreadable. `plot_day()` moves such markers apart just far enough to be legible and draws a small leader line from the marker to the time it actually occurred, so that no marker silently claims the wrong time.
+
+An extended bolus (a square or a dual wave) is drawn as a line spanning its duration, labelled with the extended amount, in its own lane above the circles. The circle shows only the part that was delivered immediately, so a square wave - which delivers nothing at once - has a line but no circle. The day below has both: two carbohydrate entries and two boluses 11 minutes apart, and a dual wave delivering 1.75 U immediately and 5.25 U over the following half hour.
+```{r, fig.width=9, fig.height=6.5, out.width="100%"}
+plot_day(data_clean, id = "1", days = "2019-04-01")
+```
+
+The total daily dose in the header is split into its basal and its bolus part. Both are taken from `total_basal` and `total_bolus`, i.e. from the daily aggregate the platform reports where it reports one, and are summed over the day otherwise. The header therefore covers insulin that the drawn data does not: for an Omnipod user on Glooko the basal panel is nearly empty, because only the manual-mode rates are recorded, while the header still reports the full basal dose. A total that is not recorded at all - `total_basal` for a CareLink export, say - is shown as `-`, and the TDD along with it.
+
+Small correction boluses can crowd the panel without adding much. `min_bolus` leaves them out. It is compared against the *total* of a bolus, so that a small immediate part followed by a large extended one is kept, and it changes only what is drawn - the totals in the header still cover the whole day:
+```{r, fig.width=9, fig.height=6.5, out.width="100%"}
+plot_day(data_clean, id = "1", days = "2019-01-10", min_bolus = 1)
+```
+
+`days` takes several days at once and defaults to every day that has CGM data, i.e. one plot per day - for a long export it is usually worth naming the days explicitly. `id` may be omitted while `data` holds a single subject, and is required as soon as it holds more, as after `merge_all()`. The target range (`target`), the limits of the glucose axis (`ylim_cgm`), and the title (`main`) can all be adjusted.
+
 ## Merging data across subjects
 
 Once every subject's data has been parsed and cleaned, `merge_all()` combines them into one long-format data set per data type:
@@ -190,7 +216,7 @@ By default, `merge_all()` returns the five core types (`cgm`, `basal`, `bolus`, 
 
 ## Converting to other formats
 
-Two helper functions convert the standardized data into formats expected by other tools.
+Three helper functions convert the standardized data into the formats expected by other tools.
 
 `get_iglu_format()` reshapes the `cgm` data frame into the `id`/`time`/`gl` layout expected by the [iglu](https://irinagain.github.io/iglu/) package, so that CGM metrics and visualizations from iglu can be used directly:
 ```{r, comment="", fig.width=12, fig.height=7, out.width="100%", warning=FALSE}
@@ -198,6 +224,21 @@ iglu_1 <- get_iglu_format(data_clean)
 head(iglu_1)
 iglu::plot_agp(iglu_1)
 ```
+
+`get_cgmquantify_format()` builds the data frame that the metric functions of the [cgmquantify](https://CRAN.R-project.org/package=cgmquantify) package expect, with columns `Time`, `glucose`, `Date`, `time_of_day`, and `type_of_event`. This is the same layout that `cgmquantify::readfile()` produces from a Dexcom export, so the result can be handed to any cgmquantify function directly and no intermediate file has to be written:
+```{r, comment="", eval = requireNamespace("cgmquantify", quietly = TRUE)}
+cgmq_1 <- get_cgmquantify_format(data_clean)
+head(cgmq_1)
+cgmquantify::interdaycv(cgmq_1)
+cgmquantify::J_index(cgmq_1)
+```
+
+Note that cgmquantify has no concept of a subject identifier: every one of its functions summarizes a single individual. `get_cgmquantify_format()` therefore returns the data of exactly one subject, and requires the `id` argument as soon as `data` holds more than one:
+```{r, comment=""}
+cgmq_2 <- get_cgmquantify_format(combined, id = "2")
+nrow(cgmq_2)
+```
+The cgmquantify metrics assume mg/dL (e.g. `eA1c()`, `GMI()`, and the 70/180 mg/dL thresholds behind `type_of_event`); `aidR` converts all CGM data to mg/dL, so this holds for cleaned data. Readings with a missing glucose value are dropped with a warning, since the cgmquantify metrics use `mean()` and `sd()` without `na.rm` and a single `NA` would propagate into every metric.
 
 `write_DIAX_format()` writes CGM, basal, bolus, carbs, and SMBG data to one JSON file per subject, following the [DIAX](https://github.com/Center-for-Diabetes-Technology/DIAX) specification. It accepts either the output of `parse_data()` for a single subject or the output of `merge_all()` for several, and writes one file per id to `paste0(prefix, id, ".json")`:
 ```{r}
@@ -235,6 +276,8 @@ for (id in ids) {
   check_insulin_totals(id, all_data[[id]])
 }
 combined <- merge_all(all_data)
+# Inspect a single day of a single subject
+plot_day(combined, id = "2", days = "2026-06-22")
 # write DIAX files
 write_DIAX_format(combined, prefix = file.path(diax_dir, "diax_id_"))
 # Plot using iglu

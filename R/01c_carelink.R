@@ -18,13 +18,13 @@
 #'
 #' @keywords internal
 read_carelink <- function(id, filename){
-  # Read raw: 3 data frames with (1) many different informations, (2) daily aggregated insulin and (3) CGM measurement data.
+  # Read raw: 3 data frames with (1) many different informations, (2) daily aggregated auto (closed-loop) insulin and (3) CGM measurement data.
   raw <- .read_carelink_raw.aidR(id, filename)
   dfs_new <- raw$dfs
     
   # First df: contains all sorts of info -> split
   SMBG <- .get_carelink_SMBG.aidR(dfs_new[[1]])
-  basal_rates <- .get_carelink_basal_rates.aidR(dfs_new[[1]], raw$pump_name)
+  scheduled_basal_rates <- .get_carelink_scheduled_basal_rates.aidR(dfs_new[[1]], raw$pump_name)
   temp_basal <- .get_carelink_temp_basal.aidR(dfs_new[[1]], raw$pump_name)
   bolus <- .get_carelink_bolus.aidR(dfs_new[[1]], raw$pump_name)
   prime <- .get_carelink_prime.aidR(dfs_new[[1]])
@@ -38,7 +38,7 @@ read_carelink <- function(id, filename){
   # Match bolus and BWZ
   bolus <- .match_carelink_BWZ_bolus.aidR(bolus, bwz)
   
-  data <- list(SMBG = SMBG, basal_rates = basal_rates, temp_basal = temp_basal, 
+  data <- list(SMBG = SMBG, scheduled_basal_rates = scheduled_basal_rates, temp_basal = temp_basal, 
                bolus = bolus, prime = prime, alerts = alerts, corr_bolus_info = corr_bolus_info,
                bwz = bwz, sensor_calibration = sensor_calibration, insulin_action_curve = insulin_action_curve,
                device_changes = device_changes)
@@ -46,10 +46,10 @@ read_carelink <- function(id, filename){
   # Check if we missed any data while splitting
   .check_if_missing_columns_with_data.aidR(dfs_new[[1]], subset = bind_rows(data))
   
-  # Second df: contains aggregated insulin (per day)
-  aggr_daily_insulin <- .get_carelink_aggr_auto_insulin.aidR(dfs_new[[2]])
-  .check_if_missing_columns_with_data.aidR(dfs_new[[2]], subset = aggr_daily_insulin)
-  data$aggr_daily_insulin <- aggr_daily_insulin
+  # Second df: contains aggregated auto (closed-loop) insulin (per day)
+  aggr_auto_insulin <- .get_carelink_aggr_auto_insulin.aidR(dfs_new[[2]])
+  .check_if_missing_columns_with_data.aidR(dfs_new[[2]], subset = aggr_auto_insulin)
+  data$aggr_auto_insulin <- aggr_auto_insulin
   
   # Third df: contains sensor (CGM) data
   data$cgm <- .get_carelink_CGM.aidR(dfs_new[[3]], raw$sensor_name)
@@ -67,7 +67,7 @@ read_carelink <- function(id, filename){
 #' @param ... Additional arguments passed to methods.
 #'
 #' @return A named list with the cleaned data, with entries \code{cgm},
-#'   \code{basal}, \code{bolus}, \code{carbs} (extracted from the bolus wizard
+#'   \code{bolus}, \code{carbs} (extracted from the bolus wizard
 #'   entries) and \code{SMBG}.
 #' @export
 clean.carelink <- function(data, id, ...){
@@ -77,16 +77,17 @@ clean.carelink <- function(data, id, ...){
   # Remove class attribute for ease
   data <- unclass(data)
   
-  # Format cgm, basal, bolus and carbs to unit format
+  # Format cgm, bolus and carbs to unit format
   data_new <- list()
   data_new$cgm <- .clean_carelink_CGM.aidR(id, data$cgm)
-  data_new$basal <- .clean_carelink_basal.aidR(id, data$basal_rates)
   data_new$bolus <- .clean_carelink_bolus.aidR(id, data$bolus)
   data_new$carbs <- .clean_carelink_carbs.aidR(id, data$bwz)
   data_new$SMBG <- .clean_carelink_SMBG.aidR(id, data$SMBG)
   
-  # Daily insulin totals: not reported by CareLink -> sum the standardized data
-  data_new$total_basal <- .total_basal_per_day.aidR(data_new$basal)
+  # Daily bolus total: not reported by CareLink -> sum the standardized data.
+  # Note: the only daily aggregate CareLink reports is the auto (closed-loop)
+  # insulin of the "Aggregated Auto Insulin Data" section, which is not used here
+  # (see data$aggr_auto_insulin of the uncleaned data).
   data_new$total_bolus <- .total_bolus_per_day.aidR(data_new$bolus)
   
   return(data_new)
@@ -103,8 +104,9 @@ clean.carelink <- function(data, id, ...){
 #'
 #' @return A list with entries \code{dfs}, \code{sensor_name} and \code{pump_name}.
 #'   \code{dfs} is a list of three data frames containing (1) pump and sensor
-#'   events of many different types, (2) daily aggregated insulin and (3) CGM
-#'   measurement data. \code{sensor_name} and \code{pump_name} are the device
+#'   events of many different types, (2) daily aggregated auto (closed-loop)
+#'   insulin and (3) CGM measurement data. \code{sensor_name} and
+#'   \code{pump_name} are the device
 #'   names read from the file header, \code{NA} if the header is absent.
 #'
 #' @keywords internal
@@ -415,7 +417,7 @@ clean.carelink <- function(data, id, ...){
   return(SMBG)
 }
 
-#' Parse all entries corresponding to basal rates in a CareLink export
+#' Parse all entries corresponding to the scheduled basal rates in a CareLink export
 #'
 #' @param df A data frame obtained from reading a CareLink file.
 #' @param pump_name A character string with the name of the pump, \code{NA} if unknown.
@@ -423,13 +425,13 @@ clean.carelink <- function(data, id, ...){
 #' @return A data frame with the corresponding entries.
 #'
 #' @keywords internal
-.get_carelink_basal_rates.aidR <- function(df, pump_name){
-  basal_rates <- df %>% 
+.get_carelink_scheduled_basal_rates.aidR <- function(df, pump_name){
+  scheduled_basal_rates <- df %>% 
     select("Index", "timestamp", "Basal Rate (U/h)", "Suspend", "Rewind") %>% 
     filter(if_any(-c(1:2), ~ !is.na(.) & . != ""))
   
   # Calculate duration to next entry
-  basal_rates <- basal_rates %>%
+  scheduled_basal_rates <- scheduled_basal_rates %>%
     arrange(desc(.data$timestamp)) %>%            
     mutate(
       next_time = lag(.data$timestamp),
@@ -437,12 +439,12 @@ clean.carelink <- function(data, id, ...){
     ) %>% 
     select(-"next_time")
   
-  .check_if_missing_columns_with_data.aidR(df, basal_rates)
+  .check_if_missing_columns_with_data.aidR(df, scheduled_basal_rates)
   
   # Add pump name column
-  basal_rates$pump_name <- pump_name
+  scheduled_basal_rates$pump_name <- pump_name
   
-  return(basal_rates)
+  return(scheduled_basal_rates)
 }
 
 #' Parse all entries corresponding to temporary basal rates in a CareLink export
@@ -655,7 +657,7 @@ clean.carelink <- function(data, id, ...){
   return(changes)
 }
 
-#' Parse all entries corresponding to daily aggregated insulin in a CareLink export
+#' Parse all entries corresponding to the daily aggregated auto (closed-loop) insulin in a CareLink export
 #'
 #' @param df A data frame obtained from reading a CareLink file.
 #'
@@ -737,29 +739,6 @@ clean.carelink <- function(data, id, ...){
     mutate(unit = "mg/dL", .before = "sensor_name")
   
   return(cgm)
-}
-
-#' Format and clean basal data from a CareLink export
-#'
-#' @param id Character or numeric participant identifier.
-#' @param basal A data frame containing the basal data from a CareLink file.
-#'
-#' @return A data frame containing the formatted and cleaned basal data.
-#'
-#' @keywords internal
-.clean_carelink_basal.aidR <- function(id, basal){
-  basal <- basal %>% 
-    mutate(id = id, 
-           format = "carelink",
-           timezone_offset = NA,
-           unit = "U/h") %>%
-    select("id", "format", "timestamp", "timezone_offset", "duration_h", 
-           "Basal Rate (U/h)", "unit", "pump_name") %>%
-    rename(duration = "duration_h",
-           rate = "Basal Rate (U/h)") %>% 
-    filter(.data$duration > 0)
-  
-  return(basal)
 }
 
 #' Format and clean bolus data from a CareLink export
