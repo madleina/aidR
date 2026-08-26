@@ -421,16 +421,21 @@ clean.glooko <- function(data, id, ...) {
   # Add units of total bolus, as well as units of normal and extended bolus
   data <- data |> 
     mutate(
-      extended = ifelse(.data$type != "normal",
-                        .data$`Extended Delivery (U)`,
-                        NA
+      # normal and extended are never NA: where the export records no amount,
+      # the portion is zero
+      extended = coalesce(
+        ifelse(.data$type != "normal", .data$`Extended Delivery (U)`, 0),
+        0
       ),
-      normal = case_when(
-        type == "normal" ~ .data$`Insulin Delivered (U)`,
-        type == "dual_wave" ~ .data$`Initial Delivery (U)`,
-        type == "square_wave" ~ 0
+      normal = coalesce(
+        case_when(
+          type == "normal" ~ .data$`Insulin Delivered (U)`,
+          type == "dual_wave" ~ .data$`Initial Delivery (U)`,
+          type == "square_wave" ~ 0
+        ),
+        0
       ),
-      total = coalesce(.data$extended, 0) + coalesce(.data$normal, 0),
+      total = .data$extended + .data$normal,
     )
   
   # Select relevant columns

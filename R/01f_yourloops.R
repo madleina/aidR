@@ -268,9 +268,11 @@ clean.yourloops <- function(data, id, ...) {
       id = id,
       format = "yourloops",
       timezone_offset = .data$timezoneOffSet / 60,
-      normal = .data$delivered,
+      # normal and extended are never NA: where the export records no amount,
+      # the portion is zero
+      normal = coalesce(.data$delivered, 0),
       total = .data$normal,
-      extended = NA,
+      extended = 0,
       unit = "U",
       duration_extended = NA,
       pump_name = NA

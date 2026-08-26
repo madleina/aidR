@@ -144,7 +144,7 @@ clean.mylife <- function(data, id, ...){
            type = "normal",
            total = as.numeric(gsub(pattern = ",", replacement = ".", .data$amount)),
            normal = .data$total,
-           extended = NA,
+           extended = 0,
            unit = "U",
            duration_extended = NA,
            pump_name = NA,

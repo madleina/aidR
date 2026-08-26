@@ -18,7 +18,7 @@ library(dplyr)
 ```
 ## Overview
 
-Data exported from automated insulin delivery (AID) systems are highly heterogeneous: each platform uses its own file format, variable names, data types, and units. The **aidR** package provides (i) functions to read exports of the most prevalent AID platforms and (ii) functions to standardize them into tidy, platform-independent formats for continuous glucose monitoring (CGM), basal insulin, bolus insulin, carbohydrate data, and self-monitored blood glucose (SMBG). As a result, a downstream analysis can be written once and applied consistently across data from different AID systems.
+Data exported from automated insulin delivery (AID) systems are highly heterogeneous: each platform uses its own file format, variable names, data types, and units. The **aidR** package provides (i) functions to read exports of the most prevalent AID platforms, (ii) functions to standardize them into tidy, platform-independent formats for continuous glucose monitoring (CGM), basal insulin, bolus insulin, carbohydrate data, and self-monitored blood glucose (SMBG), and (iii) functions for visualization and conversion to other standardized formats. As a result, a downstream analysis can be written once and applied consistently across data from different AID systems.
 
 The package supports the following steps:
 
@@ -26,7 +26,7 @@ The package supports the following steps:
 - **Clean** the most important data types (CGM, basal, bolus, carbohydrate, and SMBG) into an interchangeable format (`parse_data(clean = TRUE)`).
 - **Filter** the merged data, e.g. to remove artefactual or duplicated CGM readings (`filter_CGM()`).
 - **Check completeness** of the merged data, e.g. to flag missing data types or missing days (`check_completeness()`, `check_completeness_range()`), and verify that the insulin recorded in the individual data points matches the daily totals reported by the export (`check_insulin_totals()`).
-- **Plot** a day of one subject, with CGM, basal, bolus, carbohydrate, and SMBG data in one figure (`plot_day()`).
+- **Plot** daily data of one subject, with CGM, basal, bolus, carbohydrate, and SMBG data in one figure (`plot_day()`).
 - **Merge across subjects** into one long-format data set for the whole study population (`merge_all()`).
 - **Convert** the standardized data into other formats (e.g. [DIAX](https://github.com/Center-for-Diabetes-Technology/DIAX)) and into the layout expected by other R packages (e.g. [iglu](https://irinagain.github.io/iglu/) and [cgmquantify](https://CRAN.R-project.org/package=cgmquantify)).
 
@@ -72,7 +72,7 @@ data <- parse_data(id = "1", paths = c("./exports/my_export_file_id_1_month_1.cs
 ```
 A path may point to a single file (e.g. a Tidepool or CareLink export), a folder (e.g. a Glooko or YourLoops export), or a zip archive. aidR detects this automatically, reads every file it finds within the path, and merges them into a single named list for that subject, with one entry per data type.
 
-In the following example, we set `clean = FALSE`. This reads all of the files present in the export and applies minimal standardization (e.g. formatting timestamps), but performs no further cleaning or tidying. This is useful when you want to (a) inspect non-standard data types (e.g. alarms or pump settings rather than CGM), or (b) simply read the data of a single subject, where merging across platforms does not matter.
+In the following example, we set `clean = FALSE`. This reads all of the files present in the export and applies minimal standardization (e.g. formatting timestamps), but performs no further cleaning or tidying. This is useful when you want to (i) inspect non-standard data types (e.g. alarms or pump settings rather than CGM), or (ii) simply read the data of a single subject, where merging across platforms does not matter.
 ```{r}
 path <- system.file("extdata", "tidepool_example.xlsx", package = "aidR")
 data_raw <- parse_data(id = "1", paths = path, clean = FALSE)
@@ -80,26 +80,56 @@ str(data_raw, max.level = 1)
 ```
 Here, `path` happens to be a single Tidepool export, so `data_raw` contains the standard `cgm`, `basal`, `bolus`, and `SMBG` data frames alongside Tidepool-specific extras (`device_event`, `bolus_calculator`, `basal_schedules`, ...).
 
-If a subject's data spans several files (e.g. repeated exports over time), `parse_data()` merges all of them together by data type and sorts each resulting data frame by `timestamp`. Exact duplicate rows within a data type are removed.
+If a subject's data spans several files (i.e. `paths` is a vector of length > 1), `parse_data()` merges all of them together by data type and sorts each resulting data frame by `timestamp`. Exact duplicate rows within a data type are removed.
 
 ### With cleaning
 
-Let us re-run the example above, but now with `clean = TRUE`. This is in fact the default, so it can be omitted - we pass it explicitly here only to contrast with the previous example.
+Let us re-run the example above, but now with `clean = TRUE`. This is in fact the default, so it can be omitted.
 ```{r}
 path <- system.file("extdata", "tidepool_example.xlsx", package = "aidR")
 data_clean <- parse_data(id = "1", paths = path, clean = TRUE)
 str(data_clean, max.level = 1)
 ```
-The additional platform-specific data types from before (e.g. `device_event`, `bolus_calculator`) have disappeared. Instead, the major data types (CGM, basal, bolus, carbohydrates, and SMBG) are standardized to a common column layout:
+The additional platform-specific data types from before (e.g. `device_event`, `bolus_calculator`) have disappeared. Instead, the major data types (CGM, basal, bolus, carbohydrates, and SMBG) are standardized to a common column layout.
 
-- **`cgm`**: `id`, `format`, `timestamp`, `timezone_offset`, `value`, `unit`, and `sensor_name`
-- **`basal`**: `id`, `format`, `timestamp`, `timezone_offset`, `duration`, `rate`, `unit`, and `pump_name`
-- **`bolus`**: `id`, `format`, `timestamp`, `timezone_offset`, `type`, `total`, `normal`, `extended`, `unit`, `duration_extended`, and `pump_name`
-- **`carbs`**: `id`, `format`, `timestamp`, `timezone_offset`, `value`, `unit`, `label`, `estimated_absorption_duration`, and `is_hypo_treatment`
-- **`SMBG`**: `id`, `format`, `timestamp`, `timezone_offset`, `value`, `unit`, and `sensor_name`
+All five start with the same four columns:
 
-This layout is the same for all platforms and can therefore be merged across subjects.
-Note: `timestamp` is always given in local (wall-clock) time. When exports denoted a timezone offset (only available for Tidepool and YourLoops exports), this value is stored in `timezone_offset`. To get the UTC time,calculate: `UTC = timestamp - timezone_offset`
+- `id`: the subject's id, as passed to `parse_data()`.
+- `format`: the export format this row was parsed from, one of `glooko`, `carelink`, `mylife`, `tidepool`, `yourloops` or `tandem_source`.
+- `timestamp`: the time of the data point (`POSIXct`), in local (wall-clock) time.
+- `timezone_offset`: the offset of that local time from UTC, in hours (`NA` if the export does not report it). UTC time is therefore `timestamp - lubridate::hours(timezone_offset)`.
+
+Rows are sorted by `timestamp`, and the columns that follow are specific to the data type:
+
+- **`cgm`**: CGM values, one row per sensor reading
+    - `value`: the measured CGM value, always in mg/dL (readings exported in mmol/L are converted).
+    - `unit`: the unit of `value` (always `mg/dL`).
+    - `sensor_name`: the name of the CGM sensor, `NA` if not available.
+- **`basal`**: delivered basal rates, one row per interval over which the rate was constant
+    - `duration`: the duration of the basal rate, in hours, starting at `timestamp`.
+    - `rate`: the delivered basal rate, in U/h. The insulin delivered over the interval is `rate * duration`.
+    - `unit`: the unit of `rate` (always `U/h`).
+    - `pump_name`: the name of the pump, `NA` if not available.
+- **`bolus`**: bolus information, one row per bolus
+    - `type`: the type of the bolus. Either `normal` (delivered in one go), `square_wave` (delivered gradually and evenly over a longer period), `dual_wave` (part delivered immediately, the rest gradually over a longer period), `biphasic` (YourLoops only, a bolus split into two boluses, separated by a period of time; each part is its own row), or `pen` (YourLoops only).
+    - `total`: the total amount of insulin in the bolus (`normal` + `extended`), in U.
+    - `normal`: the portion delivered immediately, in U (for `normal`, `dual_wave` and `biphasic`; `0` for `square_wave`).
+    - `extended`: the portion delivered gradually over a longer period, in U (for `dual_wave` and `square_wave`, `0` otherwise).
+    - `unit`: the unit of `total`, `normal` and `extended` (always `U`).
+    - `duration_extended`: the duration of the extended portion, in hours (for `dual_wave` and `square_wave`, `NA` otherwise, and also `NA` where the platform does not report it).
+    - `pump_name`: the name of the pump, `NA` if not available.
+- **`carbs`**: user-reported carbohydrate consumption, one row per entry
+    - `value`: the carbohydrate value (in g).
+    - `unit`: the unit of `value` (always `g`).
+    - `label`: an optional label for the entry, `NA` if not available. Its content is platform-specific: it may be a meal name entered by the user, or summarize additional information on the entry (e.g. that it was a fatty meal).
+    - `estimated_absorption_duration`: the absorption duration in hours, as estimated by the user, `NA` if not available.
+    - `is_hypo_treatment`: a logical flagging entries labeled as hypoglycemia treatment, `NA` if not available.
+- **`SMBG`**: self-monitored blood glucose, one row per measurement
+    - `value`: the measured SMBG value, always in mg/dL (readings exported in mmol/L are converted).
+    - `unit`: the unit of `value` (always `mg/dL`).
+    - `sensor_name`: the name of the SMBG device, `NA` if not available.
+
+This layout is the same for all platforms and can therefore be merged across subjects. Note that a column being present does not mean every platform fills it: for example, `timezone_offset`, `sensor_name` and `pump_name` in particular are only populated where the export reports them.
 
 In addition, two data types hold the daily insulin totals, with one row per day rather than one row per data point:
 
@@ -117,13 +147,13 @@ In addition, two data types hold the daily insulin totals, with one row per day 
 | YourLoops     | summed     | summed     |
 | mylife        | -          | summed     |
 
-The distinction matters, because a summed total is only ever as complete as the underlying record. Omnipod users on Glooko are the clearest case: their basal rates cover manual mode only, so summing them would badly understate the insulin actually delivered, while the reported aggregate covers automated mode as well. Note also that the first and last day of an export are usually partial, so a summed total is short on those days.
+This distinction matters because a summed total can never be more complete than the underlying records. For Omnipod users on Glooko, for example, the basal field contains only the basal rates delivered in manual mode, because rates delivered in automated mode are not exported. Summing this field would therefore substantially understate the insulin actually delivered. The reported daily aggregate, however, does cover automated mode. This aggregate can therefore be used later as a check on the completeness of the export.
 
-There is no `total_basal` for mylife, since a mylife export contains no basal data at all, and none for CareLink, since a CareLink export reports only the *scheduled* basal rates rather than the basal insulin effectively delivered. For the same reason, neither platform yields a cleaned `basal` data type.
+Note that there is no `total_basal` for mylife, since a mylife export contains no basal data at all, and none for CareLink, since a CareLink export reports only the *scheduled* basal rates rather than the basal insulin effectively delivered. For the same reason, neither platform yields a cleaned `basal` data type.
 
 ## Filtering
 
-AID data is often noisy and may require additional filtering. While we encourage users to inspect the parsed data for platform-specific issues, aidR implements a few filters that we have found particularly useful. CGM data in particular is frequently affected in two ways: individual values may be physiologically implausible (below or above the range a sensor can measure), and the same period may be covered by two overlapping data streams whose timestamps are shifted by a few seconds or minutes but that otherwise carry the same signal (for example when two sensors, or two exports of the same sensor, are merged for one subject).
+AID data is often noisy and may require additional filtering. While we encourage users to inspect the parsed data for platform-specific issues, aidR implements a few filters that we have found particularly useful. CGM data in particular is frequently affected in two ways: individual values may be physiologically implausible (below or above the range a sensor can measure), and the same period may be covered by two overlapping data streams whose timestamps are shifted by a few seconds or minutes but that otherwise carry the same signal (often the case for DIY open-source systems).
 
 `filter_CGM()` addresses both. It first truncates values to a plausible range, clamping anything below `truncate_min_cgm` (40 mg/dL by default) up to that value and anything above `truncate_max_cgm` (400 mg/dL by default) down to it. It then downsamples the CGM series to a regular time grid (5-minute bins by default): each reading is assigned to a time bin, and within each bin only the reading closest to the bin's start is kept. Two streams that differ only by a shift of a few seconds or minutes therefore fall into the same bins and collapse to a single value, so a duplicated stream is removed rather than doubling the number of readings for that period.
 ```{r}
@@ -153,9 +183,9 @@ Both functions accept a `necessary_types` argument to restrict (or extend) which
 
 ## Checking the daily insulin totals
 
-`check_completeness()` asks whether data is *present*. `check_insulin_totals()` asks whether it *adds up*: it compares the insulin summed over the individual `basal` and `bolus` entries against the daily totals in `total_basal` and `total_bolus`, and warns for every day where the two disagree.
+`check_insulin_totals()` asks whether the reported insulin adds up: it compares the insulin summed over the individual `basal` and `bolus` entries against the daily totals in `total_basal` and `total_bolus`, and warns for every day where the two disagree.
 
-This is only informative where the daily total was reported by the export itself, i.e. where `source == "reported"`. Where `aidR` summed the total itself (`source == "summed"`), the two agree by construction and are skipped. In practice, this means the check has content for Glooko (basal and bolus) and for Tandem Source (basal only).
+This is only informative where the daily total was reported by the export itself, i.e. where `source == "reported"`. Where `aidR` summed the total itself (`source == "summed"`), the two agree by construction and are skipped. In practice, this means the check is useful for Glooko (basal and bolus) and for Tandem Source (basal only).
 
 A mismatch means the individual data points do not cover the whole day. The Glooko example export shows the typical picture for an Omnipod user:
 ```{r}
@@ -168,39 +198,22 @@ The warning names the days that disagree. To see *how far* they disagree, use th
 totals <- suppressWarnings(check_insulin_totals("1", data_glooko))
 totals
 ```
-The bolus totals agree exactly, while the summed basal is a small fraction of the reported one. This is the signature of an Omnipod user: the export records the basal rates delivered in manual mode only, so almost all of the basal insulin - everything delivered in automated mode - is missing from `basal`, but is still included in `total_basal`. For such subjects, an analysis based on `basal` would badly understate the insulin actually delivered, whereas `total_basal` remains correct.
-
-A day is flagged when the absolute difference exceeds both `abs_tol` (1 U by default) and `rel_tol` times the reported total (10% by default), so small rounding differences do not trigger a warning. The function also warns if a day is reported more than once with conflicting values, which happens when two overlapping exports were parsed for the same subject, and if there is no `basal` or `bolus` data at all although a daily total was reported.
+The bolus totals agree exactly, while the summed basal is a small fraction of the reported one. This is the signature of an Omnipod user: the export records the basal rates delivered in manual mode only, so almost all of the basal insulin - everything delivered in automated mode - is missing from `basal`, but is still included in `total_basal`. For such subjects, an analysis based on `basal` would largely understate the insulin actually delivered, whereas `total_basal` remains correct.
 
 ## Plotting single days
 
-`plot_day()` draws one day of a subject's data as two stacked panels: the CGM trace over the shaded target range with the SMBG measurements as diamonds, and the therapy below it - the basal rate as a filled step area, the boluses as labelled circles, and the carbohydrates as labelled boxes, headed by the insulin delivered over the whole day. Both panels share a 0-24 h axis of the local (wall-clock) time, with a legend underneath.
-```{r, fig.width=9, fig.height=6.5, out.width="100%"}
-plot_day(data_clean, id = "1", days = "2019-01-11")
-```
-
-A data type that is absent is simply left out, so the function also works for exports that carry no basal data at all, such as CareLink. CGM data is the one exception: it anchors the plot and determines which days are available, so a mylife export - which holds no CGM data - cannot be plotted.
-
-Boluses and carbohydrate entries often come in quick succession - a meal bolus followed by a correction, or a meal split across two entries - and their markers would then overlap and become unreadable. `plot_day()` moves such markers apart just far enough to be legible and draws a small leader line from the marker to the time it actually occurred, so that no marker silently claims the wrong time.
-
-An extended bolus (a square or a dual wave) is drawn as a line spanning its duration, labelled with the extended amount, in its own lane above the circles. The circle shows only the part that was delivered immediately, so a square wave - which delivers nothing at once - has a line but no circle. The day below has both: two carbohydrate entries and two boluses 11 minutes apart, and a dual wave delivering 1.75 U immediately and 5.25 U over the following half hour.
+`plot_day()` plots one day of a subject's data as two stacked panels: the CGM trace over the shaded target range with the SMBG measurements as diamonds, and the insulin and carbohydrate information below it - the basal rate as a filled step area, the boluses as labelled circles, and the carbohydrates as labelled boxes, with the insulin delivered over the whole day given on top:
 ```{r, fig.width=9, fig.height=6.5, out.width="100%"}
 plot_day(data_clean, id = "1", days = "2019-04-01")
 ```
+The argument `days` may take several days at once. Per default, every day that has CGM data is plotted (one plot per day).
 
-The total daily dose in the header is split into its basal and its bolus part. Both are taken from `total_basal` and `total_bolus`, i.e. from the daily aggregate the platform reports where it reports one, and are summed over the day otherwise. The header therefore covers insulin that the drawn data does not: for an Omnipod user on Glooko the basal panel is nearly empty, because only the manual-mode rates are recorded, while the header still reports the full basal dose. A total that is not recorded at all - `total_basal` for a CareLink export, say - is shown as `-`, and the TDD along with it.
-
-Small correction boluses can crowd the panel without adding much. `min_bolus` leaves them out. It is compared against the *total* of a bolus, so that a small immediate part followed by a large extended one is kept, and it changes only what is drawn - the totals in the header still cover the whole day:
-```{r, fig.width=9, fig.height=6.5, out.width="100%"}
-plot_day(data_clean, id = "1", days = "2019-01-10", min_bolus = 1)
-```
-
-`days` takes several days at once and defaults to every day that has CGM data, i.e. one plot per day - for a long export it is usually worth naming the days explicitly. `id` may be omitted while `data` holds a single subject, and is required as soon as it holds more, as after `merge_all()`. The target range (`target`), the limits of the glucose axis (`ylim_cgm`), and the title (`main`) can all be adjusted.
+A data type (except CGM) that is absent is simply left out, so the function also works for exports that carry no basal data at all, such as CareLink. If many small boluses were delivered, this can be hard to read - in this case, the argument `min_bolus` can be used to de-clutter the plot.
 
 ## Merging data across subjects
 
 Once every subject's data has been parsed and cleaned, `merge_all()` combines them into one long-format data set per data type:
-```{r, comment=""}
+```{r"}
 path_2 <- system.file("extdata", "glooko_example.zip", package = "aidR")
 data_2  <- parse_data(id = "2", paths = path_2) # Note: clean = TRUE by default
 
@@ -233,12 +246,7 @@ cgmquantify::interdaycv(cgmq_1)
 cgmquantify::J_index(cgmq_1)
 ```
 
-Note that cgmquantify has no concept of a subject identifier: every one of its functions summarizes a single individual. `get_cgmquantify_format()` therefore returns the data of exactly one subject, and requires the `id` argument as soon as `data` holds more than one:
-```{r, comment=""}
-cgmq_2 <- get_cgmquantify_format(combined, id = "2")
-nrow(cgmq_2)
-```
-The cgmquantify metrics assume mg/dL (e.g. `eA1c()`, `GMI()`, and the 70/180 mg/dL thresholds behind `type_of_event`); `aidR` converts all CGM data to mg/dL, so this holds for cleaned data. Readings with a missing glucose value are dropped with a warning, since the cgmquantify metrics use `mean()` and `sd()` without `na.rm` and a single `NA` would propagate into every metric.
+Note that cgmquantify applies to a single individual only, and `get_cgmquantify_format()` requires the `id` argument as soon as `data` holds more than one `id`.
 
 `write_DIAX_format()` writes CGM, basal, bolus, carbs, and SMBG data to one JSON file per subject, following the [DIAX](https://github.com/Center-for-Diabetes-Technology/DIAX) specification. It accepts either the output of `parse_data()` for a single subject or the output of `merge_all()` for several, and writes one file per id to `paste0(prefix, id, ".json")`:
 ```{r}

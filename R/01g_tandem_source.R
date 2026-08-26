@@ -292,9 +292,11 @@ clean.tandem_source <- function(data, id, ...) {
   # Add units of total bolus, as well as units of normal and extended bolus
   bolus <- bolus |> 
     mutate(
-      total = .data$`Insulin Delivered`,
-      extended = .data$`Bolex Insulin Delivered`,
-      normal   = .data$total - coalesce(.data$extended, 0)
+      # normal and extended are never NA: where the export records no amount,
+      # the portion is zero
+      extended = coalesce(.data$`Bolex Insulin Delivered`, 0),
+      total    = coalesce(.data$`Insulin Delivered`, .data$extended),
+      normal   = .data$total - .data$extended
     )
   
   # Select relevant columns

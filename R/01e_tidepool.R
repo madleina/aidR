@@ -274,8 +274,8 @@ clean.tidepool <- function(data, id, ...){
   
   # Add units of total bolus, as well as units of normal and extended bolus
   bolus <- bolus %>%
-    mutate(normal = .data$Normal,
-           extended = .data$Extended,
+    mutate(normal = ifelse(is.na(.data$Normal), 0, .data$Normal),
+           extended = ifelse(is.na(.data$Extended), 0, .data$Extended),
            total = coalesce(.data$extended, 0) + coalesce(.data$normal, 0)
     )
   
