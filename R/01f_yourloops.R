@@ -199,7 +199,7 @@ clean.yourloops <- function(data, id, ...) {
   cgm <- .format_timestamp_yourloops.aidR(cgm)
   
   # Convert to mg/dL, if necessary
-  cgm[cgm$units != "mg/dL"] <- cgm[cgm$units != "mg/dL"] * 18.018
+  cgm$value[cgm$units != "mg/dL"] <- cgm$value[cgm$units != "mg/dL"] * 18.018
 
   cgm <- data.frame(
     id = id,

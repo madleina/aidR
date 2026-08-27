@@ -570,9 +570,13 @@ clean.carelink <- function(data, id, ...){
 #'
 #' @keywords internal
 .get_carelink_BWZ.aidR <- function(df){
+  # The names of the carbohydrate columns depend on the carbohydrate unit set on
+  # the pump (grams or exchanges) -> select whichever variant is present
+  carb_cols <- unlist(lapply(.carelink_carb_variants.aidR(), function(v) c(v$ratio, v$input)))
+  
   bwz <- df %>% 
     select("Index", "timestamp", "BWZ Estimate (U)", "BWZ Target High BG (mg/dL)", "BWZ Target Low BG (mg/dL)",
-           "BWZ Carb Ratio (g/U)", "BWZ Insulin Sensitivity (mg/dL/U)", "BWZ Carb Input (grams)", 
+           any_of(carb_cols), "BWZ Insulin Sensitivity (mg/dL/U)", 
            "BWZ BG/SG Input (mg/dL)", "BWZ Correction Estimate (U)", "BWZ Food Estimate (U)", 
            "BWZ Active Insulin (U)", "BWZ Status", "BWZ Unabsorbed Insulin Total (U)", 
            "Final Bolus Estimate", "Scroll Step Size") %>%
@@ -580,6 +584,50 @@ clean.carelink <- function(data, id, ...){
   
   .check_if_missing_columns_with_data.aidR(df, bwz)
   return(bwz)
+}
+
+#' The carbohydrate column names used in a CareLink export
+#'
+#' CareLink names the bolus wizard carbohydrate columns after the carbohydrate
+#' unit configured on the pump: grams ("BWZ Carb Input (grams)" and
+#' "BWZ Carb Ratio (g/U)") or exchanges ("BWZ Carb Input (exchanges)" and
+#' "BWZ Carb Ratio (U/Ex)").
+#'
+#' @return A list with one entry per carbohydrate unit, each a list with the
+#'   column names of the carbohydrate input (\code{input}) and the carbohydrate
+#'   ratio (\code{ratio}), as well as the corresponding unit (\code{unit}).
+#'
+#' @keywords internal
+.carelink_carb_variants.aidR <- function(){
+  list(
+    list(input = "BWZ Carb Input (grams)", ratio = "BWZ Carb Ratio (g/U)", unit = "g"),
+    list(input = "BWZ Carb Input (exchanges)", ratio = "BWZ Carb Ratio (U/Ex)", unit = "exchanges")
+  )
+}
+
+#' Find the carbohydrate columns present in a CareLink export
+#'
+#' @param df A data frame containing the bolus wizard entries from a CareLink file.
+#'
+#' @return A list with the column names of the carbohydrate input (\code{input})
+#'   and the carbohydrate ratio (\code{ratio}), as well as the corresponding
+#'   unit (\code{unit}).
+#'
+#' @keywords internal
+.get_carelink_carb_variant.aidR <- function(df){
+  variants <- .carelink_carb_variants.aidR()
+  found <- Filter(function(v) v$input %in% names(df), variants)
+  
+  if (length(found) == 0){
+    stop("Found no carbohydrate column in the bolus wizard entries! Expected one of: ",
+         paste(sapply(variants, function(v) v$input), collapse = ", "))
+  }
+  if (length(found) > 1){
+    stop("Found more than one carbohydrate column in the bolus wizard entries: ",
+         paste(sapply(found, function(v) v$input), collapse = ", "))
+  }
+  
+  return(found[[1]])
 }
 
 #' Match bolus wizard entries to bolus entries from a CareLink export
@@ -799,13 +847,22 @@ clean.carelink <- function(data, id, ...){
 #' @keywords internal
 .clean_carelink_carbs.aidR <- function(id, bwz){
   
-  # Extract carb info from bolus wizard
+  # Extract carb info from bolus wizard: reported either in grams or in exchanges,
+  # depending on the carbohydrate unit set on the pump
+  variant <- .get_carelink_carb_variant.aidR(bwz)
+  if (variant$unit != "g"){
+    warning("Id ", id, ": Carbohydrates are reported in ", variant$unit,
+            " and not in grams - the exchange size is not part of the export, ",
+            "so they are kept as is. 
+            Please make sure to convert to grams using the correct exchange size.")
+  }
+  
   carbs <- bwz %>% 
     mutate(id = id,
            format = "carelink", 
            timezone_offset = NA,
-           value = as.numeric(.data$`BWZ Carb Input (grams)`),
-           unit = "g",
+           value = as.numeric(.data[[variant$input]]),
+           unit = variant$unit,
            label = NA, 
            estimated_absorption_duration = NA,
            is_hypo_treatment = NA

@@ -183,7 +183,7 @@ Both functions accept a `necessary_types` argument to restrict (or extend) which
 
 ## Checking the daily insulin totals
 
-`check_insulin_totals()` asks whether the reported insulin adds up: it compares the insulin summed over the individual `basal` and `bolus` entries against the daily totals in `total_basal` and `total_bolus`, and warns for every day where the two disagree.
+`check_insulin_totals()` asks whether the reported insulin adds up: it compares the insulin summed over the individual `basal` entries against the daily totals in `total_basal`, and warns for every day where the two disagree. Per default, only the basal insulin is checked - the argument `types` extends the check to the bolus insulin (`types = c("basal", "bolus")`, comparing `bolus` against `total_bolus`).
 
 This is only informative where the daily total was reported by the export itself, i.e. where `source == "reported"`. Where `aidR` summed the total itself (`source == "summed"`), the two agree by construction and are skipped. In practice, this means the check is useful for Glooko (basal and bolus) and for Tandem Source (basal only).
 
@@ -193,9 +193,11 @@ glooko_path <- system.file("extdata", "glooko_example.zip", package = "aidR")
 data_glooko <- parse_data(id = "1", paths = glooko_path)
 check_insulin_totals("1", data_glooko)
 ```
-The warning names the days that disagree. To see *how far* they disagree, use the comparison that the function returns invisibly:
+The warning names the days that disagree. To see *how far* they disagree, use the comparison that the function returns invisibly - here for both insulin types:
 ```{r}
-totals <- suppressWarnings(check_insulin_totals("1", data_glooko))
+totals <- suppressWarnings(
+  check_insulin_totals("1", data_glooko, types = c("basal", "bolus"))
+)
 totals
 ```
 The bolus totals agree exactly, while the summed basal is a small fraction of the reported one. This is the signature of an Omnipod user: the export records the basal rates delivered in manual mode only, so almost all of the basal insulin - everything delivered in automated mode - is missing from `basal`, but is still included in `total_basal`. For such subjects, an analysis based on `basal` would largely understate the insulin actually delivered, whereas `total_basal` remains correct.

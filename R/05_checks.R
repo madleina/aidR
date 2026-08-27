@@ -94,6 +94,10 @@ check_completeness_range <- function(id, data_id, first_date, last_date,
 #' (\code{source == "summed"}), the two agree by construction. In practice this
 #' means Glooko (basal and bolus) and Tandem Source (basal only).
 #'
+#' By default, only the basal insulin is checked, which is where the mismatches
+#' described below arise. Pass \code{types = c("basal", "bolus")} to check the
+#' bolus insulin as well.
+#'
 #' A large mismatch means that the individual data points do not cover the whole
 #' day. The most common cause are AID systems that record basal rates for manual
 #' mode only (e.g. Omnipod on Glooko): the basal insulin delivered in automated
@@ -104,17 +108,22 @@ check_completeness_range <- function(id, data_id, first_date, last_date,
 #'
 #' @param id Character or numeric participant identifier.
 #' @param data_id A list with all data found for one individual.
+#' @param types Character vector with the types of insulin that are checked, any
+#'   of \code{"basal"} and \code{"bolus"}.
 #' @param rel_tol Numeric, the relative tolerance of the comparison.
 #' @param abs_tol Numeric, the absolute tolerance of the comparison, in units of
 #'   insulin. A day is flagged when the absolute difference exceeds both
 #'   \code{abs_tol} and \code{rel_tol} times the reported total.
 #'
-#' @return Invisibly, a data frame with one row per checked day, holding the
-#'   summed and the reported total and whether the two agree. Called for its
-#'   side effects: a warning is issued for every day where they do not.
+#' @return Invisibly, a data frame with one row per checked day and type,
+#'   holding the summed and the reported total and whether the two agree. Called
+#'   for its side effects: a warning is issued for every day where they do not.
 #' @export
-check_insulin_totals <- function(id, data_id, rel_tol = 0.1, abs_tol = 1){
-  res <- lapply(c("basal", "bolus"), function(type){
+check_insulin_totals <- function(id, data_id, types = "basal", rel_tol = 0.1, abs_tol = 1){
+  if ((any(!(types %in% c("basal", "bolus"))))){
+    stop("Invalid types '", paste0(types, collapse = ", "), "'. Must be 'basal' or 'bolus' or both.")
+  }
+  res <- lapply(types, function(type){
     .check_insulin_total.aidR(id, data_id, type, rel_tol, abs_tol)
   })
   
@@ -156,17 +165,11 @@ check_insulin_totals <- function(id, data_id, rel_tol = 0.1, abs_tol = 1){
     return(NULL)
   }
 
-  # Warn about days reported more than once with differing values,
-  # which happens when two overlapping exports were parsed for the same id
-  conflicting <- .conflicting_dates.aidR(reported$date, reported[[total_type]])
-  if (length(conflicting) > 0){
-    warning("Id ", id, ": Conflicting values of '", total_type, "' reported for ",
-            ifelse(length(conflicting) == 1, "day", "days"), " ",
-            .format_date_ranges.aidR(conflicting), "!")
-    reported <- reported[!reported$date %in% conflicting, , drop = FALSE]
-  }
+  # A day can be reported more than once, with differing values, when two
+  # overlapping exports were parsed for the same id -> keep the largest value,
+  # which is the one of the export that covers the full day
+  reported <- reported[order(reported$date, -reported[[total_type]]), , drop = FALSE]
   reported <- reported[!duplicated(reported$date), , drop = FALSE]
-  if (nrow(reported) == 0){ return(NULL) }
   
   # Sum over the individual data points
   summed <- if (type == "basal"){
@@ -197,21 +200,6 @@ check_insulin_totals <- function(id, data_id, rel_tol = 0.1, abs_tol = 1){
   }
   
   return(cmp)
-}
-
-#' Find dates that appear more than once with differing values
-#'
-#' @param dates A vector of dates.
-#' @param values A numeric vector of the same length as \code{dates}.
-#'
-#' @return A vector with the dates that carry more than one distinct value.
-#'
-#' @keywords internal
-.conflicting_dates.aidR <- function(dates, values){
-  n_distinct <- tapply(round(values, 6), as.character(dates), function(x) length(unique(x)))
-  conflicting <- names(n_distinct)[n_distinct > 1]
-  
-  return(sort(as.Date(conflicting)))
 }
 
 #' Format date ranges

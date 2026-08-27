@@ -125,6 +125,12 @@ clean.tandem_source <- function(data, id, ...) {
       return(NULL)
     }
   )
+  if (is.null(file)) {
+    return(NULL)
+  }
+  if (ncol(file) == 0) {
+    return(NULL)
+  }
 
   lookup <- .get_tandem_source_file_lookup.aidR()
 

@@ -4,12 +4,15 @@
 \alias{check_insulin_totals}
 \title{Check that the summed insulin matches the daily totals reported by an export}
 \usage{
-check_insulin_totals(id, data_id, rel_tol = 0.1, abs_tol = 1)
+check_insulin_totals(id, data_id, types = "basal", rel_tol = 0.1, abs_tol = 1)
 }
 \arguments{
 \item{id}{Character or numeric participant identifier.}
 
 \item{data_id}{A list with all data found for one individual.}
+
+\item{types}{Character vector with the types of insulin that are checked, any
+of \code{"basal"} and \code{"bolus"}.}
 
 \item{rel_tol}{Numeric, the relative tolerance of the comparison.}
 
@@ -18,9 +21,9 @@ insulin. A day is flagged when the absolute difference exceeds both
 \code{abs_tol} and \code{rel_tol} times the reported total.}
 }
 \value{
-Invisibly, a data frame with one row per checked day, holding the
-summed and the reported total and whether the two agree. Called for its
-side effects: a warning is issued for every day where they do not.
+Invisibly, a data frame with one row per checked day and type,
+holding the summed and the reported total and whether the two agree. Called
+for its side effects: a warning is issued for every day where they do not.
 }
 \description{
 Compares the insulin summed over the individual data points with the daily
@@ -30,6 +33,10 @@ total reported by the export itself. Only daily totals with
 means Glooko (basal and bolus) and Tandem Source (basal only).
 }
 \details{
+By default, only the basal insulin is checked, which is where the mismatches
+described below arise. Pass \code{types = c("basal", "bolus")} to check the
+bolus insulin as well.
+
 A large mismatch means that the individual data points do not cover the whole
 day. The most common cause are AID systems that record basal rates for manual
 mode only (e.g. Omnipod on Glooko): the basal insulin delivered in automated

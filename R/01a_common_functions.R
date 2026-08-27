@@ -124,7 +124,7 @@ clean <- function(data, id, ...) UseMethod("clean")
 #'
 #' @keywords internal
 .filter_relevant_files.aidR <- function(filenames) {
-  ignored_extensions <- c("png", "pdf", "bib", "jpg", "jpeg", "txt", "json")
+  ignored_extensions <- c("png", "pdf", "bib", "jpg", "jpeg", "txt", "json", "numbers")
   pattern <- paste0("\\.(", paste(ignored_extensions, collapse = "|"), ")$")
   exclude <- grepl(pattern, filenames, ignore.case = TRUE)
   return(filenames[!exclude])

@@ -23,8 +23,8 @@ read_tidepool <- function(id, filename){
   # Note: guess_max is set to a higher value to ensure proper parsing of sparse columns
   # Note: name_repair is set to minimal to silence messages about columns without names
   cgm <- read_excel(filename, sheet = "CGM", guess_max = 100000, .name_repair = "minimal")
-  basal <- read_excel(filename, sheet = "Basal", .name_repair = "minimal")
-  bolus <- read_excel(filename, sheet = "Bolus", .name_repair = "minimal")
+  basal <- read_excel(filename, sheet = "Basal", guess_max = 100000, .name_repair = "minimal")
+  bolus <- read_excel(filename, sheet = "Bolus", guess_max = 100000, .name_repair = "minimal")
   
   # Read optional sheets
   device_event <- .read_tidepool_sheet.aidR(filename, sheet = "Device Event")
@@ -121,7 +121,7 @@ clean.tidepool <- function(data, id, ...){
 #' @keywords internal
 .read_tidepool_sheet.aidR <- function(filename, sheet){
   if (sheet %in% excel_sheets(filename)){
-    return(read_excel(filename, sheet = sheet, .name_repair = "minimal"))
+    return(read_excel(filename, sheet = sheet, guess_max = 100000, .name_repair = "minimal"))
   } else {
     return(NULL)
   }
@@ -151,6 +151,7 @@ clean.tidepool <- function(data, id, ...){
   sensor_name <- rep(NA, nrow(cgm))
   if ("Payload" %in% names(cgm)){
     for (i in 1:nrow(cgm)){
+      if (is.na(cgm$Payload[i])){ next }
       y <- fromJSON(cgm$Payload[i])
       if ("g7" %in% names(y)){
         if (y$g7){ sensor_name[i] <- "Dexcom G7" }
