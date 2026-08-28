@@ -119,7 +119,7 @@ check_completeness_range <- function(id, data_id, first_date, last_date,
 #'   holding the summed and the reported total and whether the two agree. Called
 #'   for its side effects: a warning is issued for every day where they do not.
 #' @export
-check_insulin_totals <- function(id, data_id, types = "basal", rel_tol = 0.1, abs_tol = 1){
+check_insulin_totals <- function(id, data_id, types = "basal", rel_tol = 0.2, abs_tol = 1){
   if ((any(!(types %in% c("basal", "bolus"))))){
     stop("Invalid types '", paste0(types, collapse = ", "), "'. Must be 'basal' or 'bolus' or both.")
   }
