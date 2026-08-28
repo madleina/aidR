@@ -3,10 +3,10 @@ Type: Package
 Title: Parsing and standardizing file formats for AID data
 Version: 0.0.0
 Authors@R: c(person("Madleina", "Caduff", 
-                     role = c("aut"),
+                     role = c("aut", "cre"),
                      email = "madleina.caduff@dcberne.com"),
              person("Aritz", "Lizoain",
-                     role = c("aut", "cre"),
+                     role = c("aut"),
                      email = "aritz.lizoain@dcberne.com")
              )
 Maintainer: Madleina Caduff <madleina.caduff@dcberne.com>

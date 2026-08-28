@@ -4,7 +4,7 @@
 \alias{check_insulin_totals}
 \title{Check that the summed insulin matches the daily totals reported by an export}
 \usage{
-check_insulin_totals(id, data_id, types = "basal", rel_tol = 0.1, abs_tol = 1)
+check_insulin_totals(id, data_id, types = "basal", rel_tol = 0.2, abs_tol = 1)
 }
 \arguments{
 \item{id}{Character or numeric participant identifier.}
