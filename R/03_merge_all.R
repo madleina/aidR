@@ -18,23 +18,28 @@
 #' @return A named list with one data frame per data type, holding the data of
 #'   all individuals. Individuals without data of a given type contribute no rows.
 #' @export
-merge_all <- function(data, types = c("cgm", "basal", "bolus", "carbs", "SMBG",
-                                      "total_basal", "total_bolus")){
+merge_all <- function(data, types = c(
+                        "cgm", "basal", "bolus", "carbs", "SMBG",
+                        "total_basal", "total_bolus"
+                      )) {
   # Merge: CGM, basal, bolus, carbs and SMBG (standardized formats)
-  
+
   result <- list()
-  for (type in types){
+  for (type in types) {
     type_list <- list()
-    
-    for (id in names(data)){
+
+    for (id in names(data)) {
       df <- data[[id]][[type]]
-      if (is.null(df)) next  # type doesn't exist for this id
-      type_list[[id]] <- df %>% 
-        mutate(across(where(is.character), \(x) type.convert(x, as.is = TRUE))) # to avoid type-mismatches
+      if (is.null(df)) next # type doesn't exist for this id
+      type_list[[id]] <- df %>%
+        mutate(
+          across(where(is.character), \(x) type.convert(x, as.is = TRUE)), # to avoid type-mismatches
+          id = as.character(id) # to ensure consistent ID type across subjects
+        )
     }
-    
+
     result[[type]] <- bind_rows(type_list)
   }
-  
+
   return(result)
 }

@@ -52,70 +52,70 @@ The list below describes the different sections and the information we can get f
 
   - scheduled basal rates. Note: these are the *programmed* rates of the active basal pattern, i.e. what the pump would deliver in manual mode. They are not the basal insulin effectively delivered: in automated mode the pump adjusts delivery on its own, and in manual mode suspends and temporary basal rates override the schedule.
 
-```{r, comment=""}
-head(data$scheduled_basal_rates)
-```
+  ```{r, comment=""}
+  head(data$scheduled_basal_rates)
+  ```
 
   - boluses. Records whether a bolus was normal, square-wave, or dual-wave, along with the delivered volume and, for extended boluses, the duration.
 
-```{r, comment=""}
-head(data$bolus)
-```
+  ```{r, comment=""}
+  head(data$bolus)
+  ```
 
   - bolus wizard (BWZ) entries, i.e. the carbohydrates communicated to the bolus calculator together with the resulting recommendation. `aidR` matches these against the bolus events so that a
     carbohydrate entry can be linked to the bolus it triggered.
 
-```{r, comment=""}
-head(data$bwz)
-```
+  ```{r, comment=""}
+  head(data$bwz)
+  ```
 
   - self-monitored blood glucose (SMBG) entries.
 
-```{r, comment=""}
-head(data$SMBG)
-```
+  ```{r, comment=""}
+  head(data$SMBG)
+  ```
 
   - alerts and alarms raised by the pump.
 
-```{r, comment=""}
-head(data$alerts)
-```
+  ```{r, comment=""}
+  head(data$alerts)
+  ```
 
   - prime events (tubing/cannula fills).
 
-```{r, comment=""}
-head(data$prime)
-```
+  ```{r, comment=""}
+  head(data$prime)
+  ```
 
   - temp basal events.
 
-```{r, comment=""}
-head(data$temp_basal)
-```
+  ```{r, comment=""}
+  head(data$temp_basal)
+  ```
 
   - correction-bolus information (not present in this example).
 
-```{r, comment=""}
-head(data$corr_bolus_info)
-```
+  ```{r, comment=""}
+  head(data$corr_bolus_info)
+  ```
 
   - sensor calibrations.
 
-```{r, comment=""}
-head(data$sensor_calibration)
-```
+  ```{r, comment=""}
+  head(data$sensor_calibration)
+  ```
 
   - insulin action curve changes.
 
-```{r, comment=""}
-head(data$insulin_action_curve)
-```
+  ```{r, comment=""}
+  head(data$insulin_action_curve)
+  ```
 
   - device change events.
 
-```{r, comment=""}
-head(data$device_changes)
-```
+  ```{r, comment=""}
+  head(data$device_changes)
+  ```
 
 - **Aggregated Auto Insulin Data section**: daily aggregated insulin delivered in automated mode. Interestingly, this number does not match any of the total aggregates from the PDF export, so it is unclear what this actually refers to.
 

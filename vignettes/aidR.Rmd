@@ -210,6 +210,8 @@ plot_day(data_clean, id = "1", days = "2019-04-01")
 ```
 The argument `days` may take several days at once. Per default, every day that has CGM data is plotted (one plot per day).
 
+Glucose units can be specified with the argument `units` as `"mg/dl"` (default) or `"mmol/l"`.
+
 A data type (except CGM) that is absent is simply left out, so the function also works for exports that carry no basal data at all, such as CareLink. If many small boluses were delivered, this can be hard to read - in this case, the argument `min_bolus` can be used to de-clutter the plot.
 
 ## Merging data across subjects
