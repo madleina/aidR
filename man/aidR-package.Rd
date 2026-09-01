@@ -9,12 +9,12 @@
 Parses data from automated insulin delivery (AID) systems from various platforms and allows to merge and standardize CGM, basal, bolus and carbohydrate data.
 }
 \author{
-\strong{Maintainer}: Aritz Lizoain \email{aritz.lizoain@dcberne.com}
+\strong{Maintainer}: Madleina Caduff \email{madleina.caduff@dcberne.com}
 
 Authors:
 \itemize{
-  \item Aritz Lizoain \email{aritz.lizoain@dcberne.com}
   \item Madleina Caduff \email{madleina.caduff@dcberne.com}
+  \item Aritz Lizoain \email{aritz.lizoain@dcberne.com}
 }
 
 }

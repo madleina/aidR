@@ -22,6 +22,8 @@
 #' therefore cover insulin that the drawn data may not, such as the basal
 #' delivered in automated mode by an Omnipod, and they are unaffected by
 #' \code{min_bolus}. A total that is not recorded at all is shown as \code{"-"}.
+#' Where \code{min_bolus} leaves boluses out of the labelled circles, a note next
+#' to the totals says so.
 #'
 #' @param data A list with all data found for one individual (the output of
 #'   \code{\link{parse_data}}) or for multiple individuals (the output of
@@ -38,11 +40,12 @@
 #'   drawn as a shaded band.
 #' @param ylim_cgm Numeric vector of length two with the limits of the glucose
 #'   axis.
-#' @param min_bolus Numeric, the smallest bolus that is drawn, in units. Small
-#'   correction boluses crowd the panel without adding much, and
-#'   \code{min_bolus = 1} leaves out everything below 1 U. Compared against the
-#'   total of a bolus, so that a small immediate part followed by a large
-#'   extended one is kept. Defaults to \code{0}, i.e. every bolus is drawn.
+#' @param min_bolus Numeric, the smallest bolus that is drawn in full, in units.
+#'   Small correction boluses crowd the panel without adding much, and
+#'   \code{min_bolus = 1} draws everything below 1 U as a bare tick at its time,
+#'   without a circle and without its value. Compared against the total of a
+#'   bolus, so that a small immediate part followed by a large extended one is
+#'   drawn in full. Defaults to \code{0}, i.e. every bolus is drawn in full.
 #' @param units Character string, the units of the glucose data, either
 #'   \code{"mg/dl"} or \code{"mmol/l"}.
 #' @param main Character string with the plot title. Defaults to the id and the
@@ -140,7 +143,7 @@ plot_day <- function(data, id = NULL, days = NULL, target = NULL, ylim_cgm = NUL
   }
 
   # Hour of the day, taken from the local (wall-clock) time
-  df$hour_of_day <- as.numeric(hms(format(df$timestamp, "%H:%M:%S"))) / 3600
+  df$hour_of_day <- as.numeric(lubridate::hms(format(df$timestamp, "%H:%M:%S"))) / 3600
 
   return(df[order(df$hour_of_day), , drop = FALSE])
 }
@@ -153,7 +156,8 @@ plot_day <- function(data, id = NULL, days = NULL, target = NULL, ylim_cgm = NUL
 #' @param day The day to draw, as a \code{Date}.
 #' @param target Numeric vector of length two with the glucose target range.
 #' @param ylim_cgm Numeric vector of length two with the limits of the glucose axis.
-#' @param min_bolus Numeric, the smallest bolus that is drawn, in units.
+#' @param min_bolus Numeric, the smallest bolus that is drawn in full, in units.
+#'   Smaller ones are drawn as bare ticks.
 #' @param units Character string, the units of the glucose data, either
 #'   \code{"mg/dl"} or \code{"mmol/l"}.
 #' @param main Character string with the plot title, \code{NULL} for the default.
@@ -172,10 +176,18 @@ plot_day <- function(data, id = NULL, days = NULL, target = NULL, ylim_cgm = NUL
   # leaves any bolus out
   totals <- .daily_insulin_totals.aidR(data, id, day, basal, bolus)
 
-  # Leave out the boluses that are too small to be worth a marker. A bolus whose
-  # total is not recorded is kept, since there is nothing to judge it by
+  # Set aside the boluses that are too small to be worth a labelled circle: they
+  # are drawn as bare ticks instead, so that they are still visible without
+  # crowding the panel. A bolus whose total is not recorded is drawn in full,
+  # since there is nothing to judge it by
+  bolus_small <- NULL
   if (!is.null(bolus) && min_bolus > 0) {
-    bolus <- bolus[is.na(bolus$total) | bolus$total >= min_bolus, , drop = FALSE]
+    is_small <- !is.na(bolus$total) & bolus$total < min_bolus
+    bolus_small <- bolus[is_small, , drop = FALSE]
+    bolus <- bolus[!is_small, , drop = FALSE]
+    if (nrow(bolus_small) == 0) {
+      bolus_small <- NULL
+    }
     if (nrow(bolus) == 0) {
       bolus <- NULL
     }
@@ -289,8 +301,18 @@ plot_day <- function(data, id = NULL, days = NULL, target = NULL, ylim_cgm = NUL
 
   # Boluses in the upper part of the panel: the part delivered immediately as a
   # labelled circle, the extended part as a line spanning its duration
+  y_bolus <- ylim_panel * 0.66
+
+  # The boluses left out by 'min_bolus' are only marked by a tick at their true
+  # time, drawn first so that a full bolus next to them stays on top
+  if (!is.null(bolus_small)) {
+    segments(bolus_small$hour_of_day, y_bolus - ylim_panel * 0.05,
+      bolus_small$hour_of_day, y_bolus + ylim_panel * 0.05,
+      col = COL_BOLUS_BORDER, lwd = 2
+    )
+  }
+
   if (!is.null(bolus)) {
-    y_bolus <- ylim_panel * 0.66
     is_extended <- !is.na(bolus$duration_extended) & bolus$duration_extended > 0
 
     # The circle shows the immediate part: the whole bolus for a normal one, the
@@ -355,6 +377,17 @@ plot_day <- function(data, id = NULL, days = NULL, target = NULL, ylim_cgm = NUL
       "          Total daily bolus ", .format_units.aidR(totals["bolus"])
     )
   )
+
+  # Boluses drawn as a bare tick are easily mistaken for missing data
+  if (!is.null(bolus_small)) {
+    text(xlim[1] + 0.2, ylim_panel * 0.85,
+      adj = c(0, 0.5), cex = 0.7, font = 3, col = "grey30",
+      labels = paste0(
+        "Only boluses of at least ", formatC(min_bolus, format = "fg"),
+        " U are shown in full, smaller ones are marked by a tick"
+      )
+    )
+  }
 
   axis(1, at = xticks, labels = sprintf("%02d", xticks), cex.axis = 0.8)
   axis(2, at = pretty(c(0, max_rate)), las = 1, cex.axis = 0.8)

@@ -12,7 +12,7 @@ per parsed file.}
 }
 \value{
 A list with all data found for one individual, merged for each data
-type and sorted in time. Identical entries are removed.
+type and sorted in time. Identical entries and entries where all measurement columns are NA are removed.
 }
 \description{
 Merge all data available for one individual, separately per data type

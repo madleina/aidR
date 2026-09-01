@@ -200,7 +200,7 @@ totals <- suppressWarnings(
 )
 totals
 ```
-The bolus totals agree exactly, while the summed basal is a small fraction of the reported one. This is the signature of an Omnipod user: the export records the basal rates delivered in manual mode only, so almost all of the basal insulin - everything delivered in automated mode - is missing from `basal`, but is still included in `total_basal`. For such subjects, an analysis based on `basal` would largely understate the insulin actually delivered, whereas `total_basal` remains correct.
+The bolus totals agree exactly, while the summed basal is a small fraction of the reported one (see column `within_tolerance` which types and dates fail the comparison). This is the signature of an Omnipod user: the export records the basal rates delivered in manual mode only, so almost all of the basal insulin - everything delivered in automated mode - is missing from `basal`, but is still included in `total_basal`. For such subjects, an analysis based on `basal` would largely understate the insulin actually delivered, whereas `total_basal` remains correct.
 
 ## Plotting single days
 
@@ -212,7 +212,7 @@ The argument `days` may take several days at once. Per default, every day that h
 
 Glucose units can be specified with the argument `units` as `"mg/dl"` (default) or `"mmol/l"`.
 
-A data type (except CGM) that is absent is simply left out, so the function also works for exports that carry no basal data at all, such as CareLink. If many small boluses were delivered, this can be hard to read - in this case, the argument `min_bolus` can be used to de-clutter the plot.
+A data type (except CGM) that is absent is simply left out, so the function also works for exports that carry no basal data at all, such as CareLink. If many small boluses were delivered, this can be hard to read - in this case, the argument `min_bolus` can be used to de-clutter the plot: boluses below `min_bolus` are then only marked by a small tick at their time, without a circle and without their value, and a note next to the daily totals says so.
 
 ## Merging data across subjects
 
@@ -294,6 +294,7 @@ combined <- merge_all(all_data)
 # Inspect a single day of a single subject
 plot_day(combined, id = "2", days = "2026-06-22")
 # write DIAX files
+diax_dir <- "./diax"
 write_DIAX_format(combined, prefix = file.path(diax_dir, "diax_id_"))
 # Plot using iglu
 iglu_combined <- get_iglu_format(combined)

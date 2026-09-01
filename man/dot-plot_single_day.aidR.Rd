@@ -4,7 +4,7 @@
 \alias{.plot_single_day.aidR}
 \title{Draw a single day of diabetes data for one individual}
 \usage{
-.plot_single_day.aidR(data, id, day, target, ylim_cgm, min_bolus, main)
+.plot_single_day.aidR(data, id, day, target, ylim_cgm, min_bolus, units, main)
 }
 \arguments{
 \item{data}{A list with the standardized aidR data frames, named by aidR type
@@ -14,11 +14,15 @@
 
 \item{day}{The day to draw, as a \code{Date}.}
 
-\item{target}{Numeric vector of length two with the glucose target range in mg/dL.}
+\item{target}{Numeric vector of length two with the glucose target range.}
 
 \item{ylim_cgm}{Numeric vector of length two with the limits of the glucose axis.}
 
-\item{min_bolus}{Numeric, the smallest bolus that is drawn, in units.}
+\item{min_bolus}{Numeric, the smallest bolus that is drawn in full, in units.
+Smaller ones are drawn as bare ticks.}
+
+\item{units}{Character string, the units of the glucose data, either
+\code{"mg/dl"} or \code{"mmol/l"}.}
 
 \item{main}{Character string with the plot title, \code{NULL} for the default.}
 }

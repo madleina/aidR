@@ -820,7 +820,11 @@ clean.carelink <- function(data, id, ...){
       total    = as.numeric(.data$`Bolus Volume Delivered (U)`),
       extended = if_else(.data$type == "normal", 0, .data$total),
       normal   = if_else(.data$type == "normal", .data$total, 0),
-      duration_extended = time_length(hms(.data$`Bolus Duration (h:mm:ss)`), unit = "hour"),
+      duration_extended = if (all(is.na(.data$`Bolus Duration (h:mm:ss)`))) {
+        NA
+      } else {
+        time_length(hms(as.character(.data$`Bolus Duration (h:mm:ss)`)), unit = "hour")
+      },
       unit = "U",
       timezone_offset = NA,
       pump_name = NA

@@ -8,9 +8,10 @@ plot_day(
   data,
   id = NULL,
   days = NULL,
-  target = c(70, 180),
-  ylim_cgm = c(40, 400),
+  target = NULL,
+  ylim_cgm = NULL,
   min_bolus = 0,
+  units = "mg/dl",
   main = NULL
 )
 }
@@ -29,17 +30,21 @@ individual.}
 \item{days}{The day(s) to plot, as a \code{Date} or as a \code{"YYYY-MM-DD"}
 string. Defaults to every day with CGM data, i.e. one plot per day.}
 
-\item{target}{Numeric vector of length two with the glucose target range in
-mg/dL, drawn as a shaded band.}
+\item{target}{Numeric vector of length two with the glucose target range,
+drawn as a shaded band.}
 
 \item{ylim_cgm}{Numeric vector of length two with the limits of the glucose
-axis, in mg/dL.}
+axis.}
 
-\item{min_bolus}{Numeric, the smallest bolus that is drawn, in units. Small
-correction boluses crowd the panel without adding much, and
-\code{min_bolus = 1} leaves out everything below 1 U. Compared against the
-total of a bolus, so that a small immediate part followed by a large
-extended one is kept. Defaults to \code{0}, i.e. every bolus is drawn.}
+\item{min_bolus}{Numeric, the smallest bolus that is drawn in full, in units.
+Small correction boluses crowd the panel without adding much, and
+\code{min_bolus = 1} draws everything below 1 U as a bare tick at its time,
+without a circle and without its value. Compared against the total of a
+bolus, so that a small immediate part followed by a large extended one is
+drawn in full. Defaults to \code{0}, i.e. every bolus is drawn in full.}
+
+\item{units}{Character string, the units of the glucose data, either
+\code{"mg/dl"} or \code{"mmol/l"}.}
 
 \item{main}{Character string with the plot title. Defaults to the id and the
 day. Note that the same title is used for every day if several are plotted.}
@@ -61,4 +66,6 @@ where the export provides them, and are summed over the day otherwise. They
 therefore cover insulin that the drawn data may not, such as the basal
 delivered in automated mode by an Omnipod, and they are unaffected by
 \code{min_bolus}. A total that is not recorded at all is shown as \code{"-"}.
+Where \code{min_bolus} leaves boluses out of the labelled circles, a note next
+to the totals says so.
 }

@@ -103,7 +103,7 @@
 #'   per parsed file.
 #'
 #' @return A list with all data found for one individual, merged for each data
-#'   type and sorted in time. Identical entries are removed.
+#'   type and sorted in time. Identical entries and entries where all measurement columns are NA are removed.
 #' @keywords internal
 .merge_per_id.aidR <- function(data_id){
   if (is.null(data_id)){ return(data_id) }
@@ -117,6 +117,10 @@
   # Remove entries that are exactly the same (per data type)
   for (i in 1:length(data_id)){
     data_id[[i]] <- data_id[[i]] %>% distinct()
+    
+    # Remove entries where all relevant columns are NA
+    data_id[[i]] <- data_id[[i]] %>%
+      filter(!dplyr::if_all(!any_of(c("id", "format", "timestamp", "timezone_offset", "unit")), is.na))
   }
   
   return(data_id)
