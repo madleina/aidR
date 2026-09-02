@@ -7,7 +7,7 @@
 .check_insulin_total.aidR(id, data_id, type, rel_tol, abs_tol)
 }
 \arguments{
-\item{id}{Character or numeric participant identifier.}
+\item{id}{Character participant identifier, or \code{NA} if it is unknown.}
 
 \item{data_id}{A list with all data found for one individual.}
 

@@ -4,12 +4,12 @@
 \alias{check_insulin_totals}
 \title{Check that the summed insulin matches the daily totals reported by an export}
 \usage{
-check_insulin_totals(id, data_id, types = "basal", rel_tol = 0.2, abs_tol = 1)
+check_insulin_totals(data, types = "basal", rel_tol = 0.2, abs_tol = 1)
 }
 \arguments{
-\item{id}{Character or numeric participant identifier.}
-
-\item{data_id}{A list with all data found for one individual.}
+\item{data}{A list with all data found for one individual (the output of
+\code{\link{parse_data}}) or for multiple individuals (the output of
+\code{\link{merge_all}}). Requires cleaned and standardized data.}
 
 \item{types}{Character vector with the types of insulin that are checked, any
 of \code{"basal"} and \code{"bolus"}.}
@@ -21,9 +21,10 @@ insulin. A day is flagged when the absolute difference exceeds both
 \code{abs_tol} and \code{rel_tol} times the reported total.}
 }
 \value{
-Invisibly, a data frame with one row per checked day and type,
-holding the summed and the reported total and whether the two agree. Called
-for its side effects: a warning is issued for every day where they do not.
+Invisibly, a data frame with one row per checked individual, day and
+type, holding the summed and the reported total and whether the two agree.
+Called for its side effects: a warning is issued for every day where they
+do not.
 }
 \description{
 Compares the insulin summed over the individual data points with the daily
@@ -33,6 +34,10 @@ total reported by the export itself. Only daily totals with
 means Glooko (basal and bolus) and Tandem Source (basal only).
 }
 \details{
+Accepts either the output of \code{\link{parse_data}} for a single individual
+or the output of \code{\link{merge_all}} for multiple individuals. Every
+individual found in the data is checked separately.
+
 By default, only the basal insulin is checked, which is where the mismatches
 described below arise. Pass \code{types = c("basal", "bolus")} to check the
 bolus insulin as well.

@@ -5,17 +5,16 @@
 \title{Check if data for different types are available for a range of dates}
 \usage{
 check_completeness_range(
-  id,
-  data_id,
+  data,
   first_date,
   last_date,
   necessary_types = c("cgm", "basal", "bolus", "carbs")
 )
 }
 \arguments{
-\item{id}{Character or numeric participant identifier.}
-
-\item{data_id}{A list with all data found for one individual.}
+\item{data}{A list with all data found for one individual (the output of
+\code{\link{parse_data}}) or for multiple individuals (the output of
+\code{\link{merge_all}}). Requires cleaned and standardized data.}
 
 \item{first_date}{A character string representing the first date for which data should be available.}
 
@@ -25,8 +24,10 @@ check_completeness_range(
 }
 \value{
 No return value, called for side effects. Issues a warning for every
-data type with missing days.
+individual and data type with missing days.
 }
 \description{
-Check if data for different types are available for a range of dates
+Accepts either the output of \code{\link{parse_data}} for a single individual
+or the output of \code{\link{merge_all}} for multiple individuals. Every
+individual found in the data is checked separately.
 }

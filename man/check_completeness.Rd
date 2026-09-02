@@ -4,23 +4,21 @@
 \alias{check_completeness}
 \title{Check if data for different types are available for at least one day}
 \usage{
-check_completeness(
-  id,
-  data_id,
-  necessary_types = c("cgm", "basal", "bolus", "carbs")
-)
+check_completeness(data, necessary_types = c("cgm", "basal", "bolus", "carbs"))
 }
 \arguments{
-\item{id}{Character or numeric participant identifier.}
-
-\item{data_id}{A list with all data found for one individual.}
+\item{data}{A list with all data found for one individual (the output of
+\code{\link{parse_data}}) or for multiple individuals (the output of
+\code{\link{merge_all}}). Requires cleaned and standardized data.}
 
 \item{necessary_types}{A character vector with type names for which data should be available.}
 }
 \value{
 No return value, called for side effects. Issues a warning for every
-data type with missing data.
+individual and data type with missing data.
 }
 \description{
-Check if data for different types are available for at least one day
+Accepts either the output of \code{\link{parse_data}} for a single individual
+or the output of \code{\link{merge_all}} for multiple individuals. Every
+individual found in the data is checked separately.
 }
