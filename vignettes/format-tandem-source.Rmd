@@ -62,7 +62,7 @@ head(data$bolus)
 ```{r, comment=""}
 head(data$SMBG)
 ```
-- **`*-Hourly-basal-delivery.csv`**: basal insulin aggregated per hour, with one column per hour of the day. This aggregated file is not used to build the cleaned `basal`, which is derived from `*-Basal-doses.csv` instead; it is used for `total_basal`.
+- **`*-Hourly-basal-delivery.csv`**: basal insulin aggregated per hour, with one column per hour of the day (the hours are named either `12 AM` ... `11 PM` or `00` ... `23`, depending on the export). This aggregated file is not used to build the cleaned `basal`, which is derived from `*-Basal-doses.csv` instead; it is used for `total_basal`.
 ```{r, comment=""}
 head(data$hourly_basal)
 ```

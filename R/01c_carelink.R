@@ -665,6 +665,10 @@ clean.carelink <- function(data, id, ...){
 #'
 #' @keywords internal
 .get_carelink_sensor_calibration.aidR <- function(df){
+  if (!("Sensor Calibration BG (mg/dL)") %in% names(df)){
+    return(NULL)
+  }
+  
   sensor <- df %>% 
     select("Index", "timestamp", "Sensor Calibration BG (mg/dL)", "Sensor Calibration Rejected Reason") %>% 
     filter(if_any(-c(1:2), ~ !is.na(.) & . != ""))

@@ -88,17 +88,25 @@ clean.tandem_source <- function(data, id, ...) {
 
 #' A lookup with Tandem Source file characteristics
 #'
-#' @return A list with data types and their expected headers.
+#' @return A named list with data types and their expected headers. Each element
+#'   is a list of one or more alternative headers, as Tandem Source uses
+#'   different column names in different exports (e.g. \code{12 AM ... 11 PM}
+#'   versus \code{00 ... 23} for the hourly basal file).
 #'
 #' @keywords internal
 .get_tandem_source_file_lookup.aidR <- function() {
   tandem_source_files <- list()
 
-  tandem_source_files$basal <- c("Device Type", "Serial Number",	"Event Date Time", "Commanded Basal Dose (units of insulin)")
-  tandem_source_files$bolus <- c("Type", "Bolus Type", "Bolus Delivery Method", "BG", "Serial Number", "Completion Date Time", "Insulin Delivered", "Food Delivered", "Correction Delivered", "Completion Status Desc", "Bolex Start Date Time", "Bolex Completion Date Time", "Bolex Insulin Delivered", "Bolex Completion Status Desc", "Standard Percent", "Duration (mins)", "Carb Size", "Target BG", "Correction Factor",	"Carb Ratio")
-  tandem_source_files$cgm <- c("Device Type", "Serial Number", "Description", "Event Date Time", "Readings")
-  tandem_source_files$bg <- c("Device Type", "Serial Number", "Description", "Event Date Time", "BG", "Note")
-  tandem_source_files$hourly_basal <- c("Serial Number", "Event Date", "12 AM", "1 AM", "2 AM", "3 AM", "4 AM", "5 AM", "6 AM", "7 AM", "8 AM", "9 AM", "10 AM", "11 AM", "12 PM", "1 PM", "2 PM", "3 PM", "4 PM", "5 PM", "6 PM", "7 PM", "8 PM", "9 PM", "10 PM", "11 PM")
+  tandem_source_files$basal <- list(c("Device Type", "Serial Number",	"Event Date Time", "Commanded Basal Dose (units of insulin)"))
+  tandem_source_files$bolus <- list(c("Type", "Bolus Type", "Bolus Delivery Method", "BG", "Serial Number", "Completion Date Time", "Insulin Delivered", "Food Delivered", "Correction Delivered", "Completion Status Desc", "Bolex Start Date Time", "Bolex Completion Date Time", "Bolex Insulin Delivered", "Bolex Completion Status Desc", "Standard Percent", "Duration (mins)", "Carb Size", "Target BG", "Correction Factor",	"Carb Ratio"))
+  tandem_source_files$cgm <- list(c("Device Type", "Serial Number", "Description", "Event Date Time", "Readings"))
+  tandem_source_files$bg <- list(c("Device Type", "Serial Number", "Description", "Event Date Time", "BG", "Note"))
+  # The hourly basal file comes in two flavours: hours can either be named
+  # "12 AM" ... "11 PM" or "00" ... "23"
+  tandem_source_files$hourly_basal <- list(
+    c("Serial Number", "Event Date", "12 AM", "1 AM", "2 AM", "3 AM", "4 AM", "5 AM", "6 AM", "7 AM", "8 AM", "9 AM", "10 AM", "11 AM", "12 PM", "1 PM", "2 PM", "3 PM", "4 PM", "5 PM", "6 PM", "7 PM", "8 PM", "9 PM", "10 PM", "11 PM"),
+    c("Serial Number", "Event Date", "00", "01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20", "21", "22", "23")
+  )
   
   return(tandem_source_files)
 }
@@ -134,10 +142,13 @@ clean.tandem_source <- function(data, id, ...) {
 
   lookup <- .get_tandem_source_file_lookup.aidR()
 
-  # Try to find appropriate file
-  match <- which(sapply(lookup, function(x) {
-    if (length(x) != ncol(file)) return(FALSE)
-    all(mapply(function(pat, nm) startsWith(nm, pat), x, names(file)))
+  # Try to find appropriate file: a data type matches if any of its alternative
+  # headers matches
+  match <- which(sapply(lookup, function(headers) {
+    any(sapply(headers, function(x) {
+      if (length(x) != ncol(file)) return(FALSE)
+      all(mapply(function(pat, nm) startsWith(nm, pat), x, names(file)))
+    }))
   }))
 
   if (length(match) == 0) {

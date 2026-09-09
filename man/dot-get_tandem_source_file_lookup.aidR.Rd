@@ -7,7 +7,10 @@
 .get_tandem_source_file_lookup.aidR()
 }
 \value{
-A list with data types and their expected headers.
+A named list with data types and their expected headers. Each element
+is a list of one or more alternative headers, as Tandem Source uses
+different column names in different exports (e.g. \code{12 AM ... 11 PM}
+versus \code{00 ... 23} for the hourly basal file).
 }
 \description{
 A lookup with Tandem Source file characteristics
