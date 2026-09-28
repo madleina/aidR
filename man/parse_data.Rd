@@ -26,5 +26,5 @@ A list with all data found for one individual, merged per data type.
 Iterates over one or more paths, discovers all contained files (including
 inside ZIP archives), and dispatches each file to the appropriate
 format-specific reader. Supported formats are Glooko, CareLink, mylife,
-Tidepool, YourLoops and Tandem Source.
+Tidepool, YourLoops, Tandem Source and Dexcom Clarity.
 }

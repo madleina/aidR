@@ -12,3 +12,5 @@ Source data sets:
 
 - carelink_example.csv: randomized values and timestamps, anonymized serial numbers.
 
+- dexcom_clarity_example.csv: randomized values and timestamps, anonymized serial numbers.
+

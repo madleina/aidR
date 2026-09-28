@@ -35,7 +35,7 @@ AID platforms differ in their file formats, variable names, units, timestamp con
 
 `aidR` provides a common workflow for AID data:
 
-- **Read** native exports from six major AID platforms
+- **Read** native exports from seven major diabetes management platforms
 - **Standardize** CGM, basal, bolus, carbohydrate, and SMBG data
 - **Filter** CGM data and duplicated streams
 - **Check** data completeness and insulin totals
@@ -54,7 +54,7 @@ AID platforms differ in their file formats, variable names, units, timestamp con
 
 ## Supported export formats
 
-`aidR` currently supports six export formats:
+`aidR` currently supports seven export formats:
 
 | Platform | Export format | Example AID systems |
 |---|---|---|
@@ -64,6 +64,7 @@ AID platforms differ in their file formats, variable names, units, timestamp con
 | **Tidepool** | Multi-sheet `.xlsx` workbook | Tandem Control-IQ, Loop, AAPS |
 | **YourLoops (Diabeloop)** | Folder with one CSV per data type | DBLG1, DBLG2 |
 | **Tandem Source** | Folder with one CSV per data type | Tandem Control-IQ |
+| **Dexcom Clarity** | Single delimited CSV (CGM only) | Any AID system using a Dexcom sensor |
 
 ## Installation
 

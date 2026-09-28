@@ -4,3 +4,4 @@
 4	inst/extdata/tandem_source_example.zip
 5	inst/extdata/tidepool_example.xlsx
 6	inst/extdata/yourloops_example.zip
+7	inst/extdata/dexcom_clarity_example.csv

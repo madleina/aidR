@@ -10,7 +10,7 @@
 #' Iterates over one or more paths, discovers all contained files (including
 #' inside ZIP archives), and dispatches each file to the appropriate
 #' format-specific reader. Supported formats are Glooko, CareLink, mylife,
-#' Tidepool, YourLoops and Tandem Source.
+#' Tidepool, YourLoops, Tandem Source and Dexcom Clarity.
 #'
 #' @param id Character or numeric participant identifier. Used for logging and
 #'   stored in the \code{id} column of the cleaned data.
@@ -54,7 +54,7 @@ parse_data <- function(id, paths, clean = TRUE) {
 #'
 #' @param data The data to clean, an instance of one of the format-specific
 #'   classes (\code{glooko}, \code{carelink}, \code{mylife}, \code{tidepool},
-#'   \code{yourloops} or \code{tandem_source}).
+#'   \code{yourloops}, \code{tandem_source} or \code{dexcom_clarity}).
 #' @param id Character or numeric participant identifier.
 #' @param ... Additional arguments passed to methods.
 #'
@@ -101,6 +101,8 @@ clean <- function(data, id, ...) UseMethod("clean")
     data <- read_yourloops(id = id, filename = filename)
   } else if (.is_tandem_source_format.aidR(filename = filename)) {
     data <- read_tandem_source(id = id, filename = filename)
+  } else if (.is_dexcom_clarity_format.aidR(filename = filename)) {
+    data <- read_dexcom_clarity(id = id, filename = filename)
   } else {
     cat(paste0("Id ", id, ": Failed to parse file '", filename, "'.\n"))
     data <- NULL

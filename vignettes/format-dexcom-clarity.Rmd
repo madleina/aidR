@@ -1,0 +1,71 @@
+---
+title: "aidR: Dexcom Clarity export format"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{aidR: Dexcom Clarity export format}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+```{r setup, message = FALSE}
+library(aidR)
+```
+```{r, include=FALSE}
+path <- system.file("extdata", "dexcom_clarity_example.csv", package = "aidR")
+```
+## Overview
+
+A Dexcom Clarity export is a *single* delimited `.csv` file with 14 columns. It begins with a short metadata block, which includes the name and date of birth of the user and then, for every device that uploaded data, its device name, its sensor, and its alert settings. The metadata block is followed by one row per recorded event:
+```{r, comment = "", echo = FALSE}
+writeLines(readLines(path, n = 80))
+```
+The column headers and the metadata labels are language-specific (the example above is German) and vary with the language of the user's account. The separator varies with it as well, as exports use either a comma `,` or a semicolon `;`.
+
+Unlike the other supported platforms, Dexcom Clarity is a CGM platform rather than an AID platform, so an export contains **CGM data only** and no basal, bolus, carbohydrate, or SMBG data.
+
+## How aidR detects this format
+
+Because the headers are language-specific, `aidR` cannot identify a Dexcom Clarity file from its header names. It relies instead on the *structure* of the file, trying both `,` and `;` as the separator and accepting the one under which all three of the following hold:
+
+- the file splits into exactly 14 columns,
+- the device information in the metadata block (row 4, column 6) mentions `Dexcom`,
+- at least one row carries the event type `EGV` (*estimated glucose value*) in column 3.
+
+`aidR` then retrieves the relevant columns by index rather than by name: the timestamp (column 2), the event type (column 3), the source device (column 7), the glucose value (column 8), and the transmitter id (column 14).
+
+## Entries and the data types they produce
+
+To inspect the raw entries, we parse the export with `clean = FALSE`, which returns the full information provided by Dexcom Clarity:
+```{r}
+data <- parse_data(id = "1", paths = path, clean = FALSE)
+```
+Only the `EGV` rows are retained.
+
+- **`EGV` entries**: CGM readings.
+```{r, comment=""}
+head(data$cgm)
+```
+
+## Cleaning files
+
+When `parse_data` is run with `clean = TRUE`, the cleaned data types are built from the following raw files and attributes:
+
+| Cleaned data type | Used files                   | Used attributes                                              |
+|-------------------|------------------------------|--------------------------------------------------------------|
+| `cgm`             | `dexcom_clarity_example.csv` | All rows whose event type is `EGV`, i.e. the sensor readings. |
+
+```{r}
+data_clean <- parse_data(id = "1", paths = path)
+head(data_clean$cgm)
+```
+
+## Notes
+
+- CGM values are reported in mg/dL or mmol/L depending on the account settings; `aidR` converts them to mg/dL automatically (if the unit is not provided in the first line, it is assumed it is mg/dL).
+- `timezone_offset` is always `NA`, since Dexcom Clarity exports report only local (wall-clock) time.
+- Readings outside the range the sensor can measure are not reported as numbers but as a label (below 40 mg/dL and above 400 mg/dL). Like the headers, these labels are language-specific (e.g. `Low` and `High` in an English export, `Niedrig` and `Hoch` in a German one). They become `NA` in `value`.

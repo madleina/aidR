@@ -22,7 +22,7 @@ file <- read_excel(path, sheet = "CGM", guess_max = 100000)
 ```
 ## Overview
 
-A Tidepool export is a *single* multi-sheet `.xlsx` workbook with one sheet per data type. The sheets `CGM`, `Basal`, and `Bolus` are always expected to be present; the remaining sheets (`Device Event`, `Food`, `Bolus Calculator`, `Basal Schedules`, `BG Targets`, `Carb Ratios`, `Insulin Sensitivities`, `SMBG`, `Upload`) are optional and are read only if the workbook contains them.
+A Tidepool export is a *single* multi-sheet `.xlsx` workbook with one sheet per data type. The sheets `Basal` and `Bolus` are always expected to be present; the remaining sheets (`CGM`, `Device Event`, `Food`, `Bolus Calculator`, `Basal Schedules`, `BG Targets`, `Carb Ratios`, `Insulin Sensitivities`, `SMBG`, `Upload`) are optional and are read only if the workbook contains them.
 
 Because Tidepool aggregates data uploaded from many different pumps, meters, and CGM devices, the exact set of sheets and the columns within them vary between exports. Sheet names and headers, however, are always in English. This example shows a CGM sheet:
 
@@ -32,7 +32,7 @@ print(file, n = 10)
 
 ## How aidR detects this format
 
-`aidR` checks that the file is a readable Excel workbook containing a sheet named `CGM`. Because Tidepool's sheet names are language-independent, each sheet is then looked up by name; any optional sheet that is absent simply yields no data.
+`aidR` checks that the file is a readable Excel workbook containing a sheet named `Basal` and a sheet named `Bolus`. Because Tidepool's sheet names are language-independent, each sheet is then looked up by name; any optional sheet that is absent simply yields no data.
 
 ## Sheets and the data types they produce
 

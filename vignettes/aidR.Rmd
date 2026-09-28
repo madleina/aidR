@@ -43,7 +43,7 @@ install.packages("aidR")
 
 aidR uses the *content* of each file to determine which platform it came from; it does not use the file name. You can therefore drop files or folders from several subjects and several platforms into one folder, and aidR will dispatch every file to the right reader automatically. Files with irrelevant extensions (e.g. `.png`, `.pdf`, `.jpg`, `.jpeg`, `.txt`, `.json`) are silently ignored.
 
-aidR currently supports six export formats, each described in more detail on its own page in this documentation:
+aidR currently supports seven export formats, each described in more detail on its own page in this documentation:
 
 | Platform                                           | Typical export                       | Supported AID systems (not exhaustive)                       |
 |----------------------------------------------------|--------------------------------------|--------------------------------------------------------------|
@@ -53,6 +53,7 @@ aidR currently supports six export formats, each described in more detail on its
 | [Tidepool](format-tidepool.html)                   | single multi-sheet `.xlsx` workbook  | Tandem Control-IQ, open-source DIY (e.g. Loop, AAPS), ...    |
 | [YourLoops (Diabeloop)](format-yourloops.html)     | folder with one CSV per data type    | DBLG1, DBLG2                                                 |
 | [Tandem Source](format-tandem-source.html)         | folder with one CSV per data type    | Tandem Control-IQ                                            |
+| [Dexcom Clarity](format-dexcom-clarity.html)       | single delimited CSV (CGM only)      | Dexcom G6, G7, ... (any AID system using a Dexcom sensor)    |
 
 ## Reading and cleaning data for one subject
 
@@ -95,7 +96,7 @@ The additional platform-specific data types from before (e.g. `device_event`, `b
 All five start with the same four columns:
 
 - `id`: the subject's id, as passed to `parse_data()`.
-- `format`: the export format this row was parsed from, one of `glooko`, `carelink`, `mylife`, `tidepool`, `yourloops` or `tandem_source`.
+- `format`: the export format this row was parsed from, one of `glooko`, `carelink`, `mylife`, `tidepool`, `yourloops`, `tandem_source` or `dexcom_clarity`.
 - `timestamp`: the time of the data point (`POSIXct`), in local (wall-clock) time.
 - `timezone_offset`: the offset of that local time from UTC, in hours (`NA` if the export does not report it). UTC time is therefore `timestamp - lubridate::hours(timezone_offset)`.
 
@@ -146,10 +147,11 @@ In addition, two data types hold the daily insulin totals, with one row per day 
 | Tidepool      | summed     | summed     |
 | YourLoops     | summed     | summed     |
 | mylife        | -          | summed     |
+| Dexcom Clarity | -         | -          |
 
 This distinction matters because a summed total can never be more complete than the underlying records. For Omnipod users on Glooko, for example, the basal field contains only the basal rates delivered in manual mode, because rates delivered in automated mode are not exported. Summing this field would therefore substantially understate the insulin actually delivered. The reported daily aggregate, however, does cover automated mode. This aggregate can therefore be used later as a check on the completeness of the export.
 
-Note that there is no `total_basal` for mylife, since a mylife export contains no basal data at all, and none for CareLink, since a CareLink export reports only the *scheduled* basal rates rather than the basal insulin effectively delivered. For the same reason, neither platform yields a cleaned `basal` data type.
+Note that there is no `total_basal` for mylife, since a mylife export contains no basal data at all, and none for CareLink, since a CareLink export reports only the *scheduled* basal rates rather than the basal insulin effectively delivered. For the same reason, neither platform yields a cleaned `basal` data type. A Dexcom Clarity export carries neither, since it is a CGM export and contains no insulin data at all.
 
 ## Filtering
 

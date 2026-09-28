@@ -9,7 +9,7 @@ clean(data, id, ...)
 \arguments{
 \item{data}{The data to clean, an instance of one of the format-specific
 classes (\code{glooko}, \code{carelink}, \code{mylife}, \code{tidepool},
-\code{yourloops} or \code{tandem_source}).}
+\code{yourloops}, \code{tandem_source} or \code{dexcom_clarity}).}
 
 \item{id}{Character or numeric participant identifier.}
 

@@ -19,14 +19,14 @@
 #'
 #' @keywords internal
 read_tidepool <- function(id, filename){
-  # CGM, basal, and bolus should always exist
+  # basal and bolus should always exist
   # Note: guess_max is set to a higher value to ensure proper parsing of sparse columns
   # Note: name_repair is set to minimal to silence messages about columns without names
-  cgm <- read_excel(filename, sheet = "CGM", guess_max = 100000, .name_repair = "minimal")
   basal <- read_excel(filename, sheet = "Basal", guess_max = 100000, .name_repair = "minimal")
   bolus <- read_excel(filename, sheet = "Bolus", guess_max = 100000, .name_repair = "minimal")
   
   # Read optional sheets
+  cgm <- .read_tidepool_sheet.aidR(filename, sheet = "CGM") # can sometimes be missing
   device_event <- .read_tidepool_sheet.aidR(filename, sheet = "Device Event")
   food <- .read_tidepool_sheet.aidR(filename, sheet = "Food")
   bolus_calculator <- .read_tidepool_sheet.aidR(filename, sheet = "Bolus Calculator")
@@ -106,8 +106,8 @@ clean.tidepool <- function(data, id, ...){
     return(FALSE)
   }
   tryCatch({
-    read_excel(filename, n_max = 0, sheet = "CGM", .name_repair = "minimal")
-    TRUE
+    sheets <- excel_sheets(filename)
+    all(c("Basal", "Bolus") %in% sheets)
   }, error = function(e) FALSE)
 }
 
@@ -139,6 +139,8 @@ clean.tidepool <- function(data, id, ...){
 #' @return A data frame containing the formatted and cleaned CGM data.
 #' @keywords internal
 .format_cgm_tidepool.aidR <- function(id, cgm){
+  if (is.null(cgm)){ return(NULL) }
+  
   # Make sure CGM is in mg/dl
   cgm$Value[cgm$Units == "mmol/L"] <- cgm$Value[cgm$Units == "mmol/L"] * 18.018
 
@@ -230,13 +232,6 @@ clean.tidepool <- function(data, id, ...){
     ) %>%
     ungroup() |> 
   select(-"delivery_type")
-  
-  # Check if basal rates are contiguous (one ends when the next one starts)
-  # end <- basal$timestamp + seconds(basal$duration * 3600)
-  # max_diff <- max(abs(difftime(basal$timestamp, lead(end))), na.rm = T)
-  # if (max_diff > 1){
-  #   stop(paste0("Basal rates are not contiguous (", round(max_diff, 2), " seconds difference)"))
-  # }
   
   return(basal)
 }
