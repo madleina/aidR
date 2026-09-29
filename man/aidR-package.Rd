@@ -8,6 +8,14 @@
 \description{
 Parses the native exports of several automated insulin delivery (AID) platforms into a common, platform-independent format for continuous glucose monitoring (CGM), basal, bolus, carbohydrate, and self-monitored blood glucose (SMBG) data. Additional functions check completeness, produce visualizations, and convert the data to other formats.
 }
+\seealso{
+Useful links:
+\itemize{
+  \item \url{https://github.com/madleina/aidR}
+  \item Report bugs at \url{https://github.com/madleina/aidR/issues}
+}
+
+}
 \author{
 \strong{Maintainer}: Madleina Caduff \email{madleina.caduff@dcberne.com} (\href{https://orcid.org/0000-0001-8941-4274}{ORCID})
 
@@ -19,7 +27,7 @@ Authors:
 
 Other contributors:
 \itemize{
-  \item Diabetes Center Berne, DCB [copyright holder, funder]
+  \item Diabetes Center Berne (DCB) [copyright holder, funder]
 }
 
 }
