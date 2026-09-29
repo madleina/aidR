@@ -16,6 +16,11 @@
 #'
 #' @return A data frame with columns \code{id}, \code{time} and \code{gl},
 #'   compatible with the R-package iglu.
+#' @examples
+#' path <- system.file("extdata", "dexcom_clarity_example.csv", package = "aidR")
+#' data <- parse_data(id = "1", paths = path)
+#' iglu_df <- get_iglu_format(data)
+#' iglu::plot_glu(iglu_df)
 #' @export
 get_iglu_format <- function(data){
   if (!inherits(data, "list") || 
@@ -51,6 +56,11 @@ get_iglu_format <- function(data){
 #'   (mg/dL), \code{Date}, \code{time_of_day} and \code{type_of_event}
 #'   (\code{1} above 180 mg/dL, \code{-1} below 70 mg/dL and \code{0} in
 #'   between), sorted by time and compatible with the R-package cgmquantify.
+#' @examplesIf rlang::is_installed("cgmquantify")
+#' path <- system.file("extdata", "dexcom_clarity_example.csv", package = "aidR")
+#' data <- parse_data(id = "1", paths = path)
+#' cgmquantify_df <- get_cgmquantify_format(data)
+#' cgmquantify::summary_glucose(cgmquantify_df)
 #' @export
 get_cgmquantify_format <- function(data, id = NULL){
   if (!inherits(data, "list") || 
@@ -129,6 +139,16 @@ get_cgmquantify_format <- function(data, id = NULL){
 #'   Defaults to all ids found in \code{data}.
 #'
 #' @return No return value, called for side effects: one JSON file is written per id.
+#' @examples
+#' path <- system.file("extdata", "glooko_example.zip", package = "aidR")
+#' data <- parse_data(id = "1", paths = path)
+#'
+#' out_dir <- tempfile("diax_")
+#' dir.create(out_dir)
+#' write_DIAX_format(data, prefix = file.path(out_dir, "id_"))
+#' list.files(out_dir)
+#'
+#' unlink(out_dir, recursive = TRUE)
 #' @export
 write_DIAX_format <- function(data, prefix, ids = NULL){
   if (!inherits(data, "list")){

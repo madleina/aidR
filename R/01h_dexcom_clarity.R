@@ -35,7 +35,8 @@ read_dexcom_clarity <- function(id, filename) {
 #'
 #' @return A named list with one element, \code{cgm}, containing the cleaned
 #'   CGM data.
-#' @export
+#' @keywords internal
+#' @exportS3Method
 clean.dexcom_clarity <- function(data, id, ...) {
   if (is.null(data)) {
     return(NULL)

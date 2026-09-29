@@ -24,3 +24,4 @@ cleaned.
 \description{
 Format and clean the Glooko data to keep relevant columns only
 }
+\keyword{internal}

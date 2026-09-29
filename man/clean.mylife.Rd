@@ -22,3 +22,4 @@ no data of that type.
 The entry types are identified by their unit, since their labels are
 language-specific. Note that a mylife export contains no CGM and no basal data.
 }
+\keyword{internal}

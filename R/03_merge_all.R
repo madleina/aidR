@@ -17,6 +17,18 @@
 #'
 #' @return A named list with one data frame per data type, holding the data of
 #'   all individuals. Individuals without data of a given type contribute no rows.
+#' @examples
+#' all_data <- list(
+#'   "1" = parse_data("1", system.file("extdata", "glooko_example.zip", package = "aidR")),
+#'   "2" = parse_data("2", system.file("extdata", "dexcom_clarity_example.csv", package = "aidR"))
+#' )
+#' combined <- merge_all(all_data)
+#' names(combined)
+#' head(combined$cgm)
+#' table(combined$cgm$id)
+#'
+#' # Merge CGM data only
+#' merge_all(all_data, types = "cgm")
 #' @export
 merge_all <- function(data, types = c(
                         "cgm", "basal", "bolus", "carbs", "SMBG",

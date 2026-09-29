@@ -18,3 +18,9 @@ compatible with the R-package iglu.
 \description{
 Convert CGM data to a format compatible with the R-package iglu
 }
+\examples{
+path <- system.file("extdata", "dexcom_clarity_example.csv", package = "aidR")
+data <- parse_data(id = "1", paths = path)
+iglu_df <- get_iglu_format(data)
+iglu::plot_glu(iglu_df)
+}

@@ -50,3 +50,12 @@ mode is missing from the basal rates, but is included in the reported total.
 Note that the first and the last day of an export are usually only partially
 covered, so a mismatch on those days is expected.
 }
+\examples{
+path <- system.file("extdata", "glooko_example.zip", package = "aidR")
+data <- parse_data(id = "1", paths = path)
+check_insulin_totals(data)
+
+# Check bolus insulin as well, and keep the comparison
+res <- check_insulin_totals(data, types = c("basal", "bolus"))
+res
+}

@@ -23,3 +23,4 @@ of \code{data}: \code{cgm}, \code{basal}, \code{bolus}, \code{carbs} and
 \description{
 Format and clean the Tandem Source data to keep relevant columns only
 }
+\keyword{internal}

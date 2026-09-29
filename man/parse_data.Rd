@@ -28,3 +28,16 @@ inside ZIP archives), and dispatches each file to the appropriate
 format-specific reader. Supported formats are Glooko, CareLink, mylife,
 Tidepool, YourLoops, Tandem Source and Dexcom Clarity.
 }
+\examples{
+path <- system.file("extdata", "glooko_example.zip", package = "aidR")
+
+# Raw data, as found in the export
+data_raw <- parse_data(id = "1", paths = path, clean = FALSE)
+names(data_raw)
+head(data_raw$cgm)
+
+# Cleaned and standardized data
+data <- parse_data(id = "1", paths = path)
+names(data)
+head(data$cgm)
+}

@@ -22,3 +22,4 @@ which are not cleaned. Note that a YourLoops export contains no SMBG data.
 \description{
 Format and clean the YourLoops data to keep relevant columns only
 }
+\keyword{internal}

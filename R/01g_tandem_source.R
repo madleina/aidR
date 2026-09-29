@@ -41,7 +41,8 @@ read_tandem_source <- function(id, filename) {
 #'   \code{total_bolus} (the latter three are extracted from the bolus file),
 #'   \code{total_basal} (extracted from the hourly basal file) or \code{SMBG}.
 #'   \code{NULL} for all other data types, which are not cleaned.
-#' @export
+#' @keywords internal
+#' @exportS3Method
 clean.tandem_source <- function(data, id, ...) {
   if (is.null(data)) {
     return(NULL)

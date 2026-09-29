@@ -4,17 +4,22 @@
 \name{aidR-package}
 \alias{aidR}
 \alias{aidR-package}
-\title{aidR: Parsing and standardizing file formats for AID data}
+\title{aidR: Reading and Standardizing Automated Insulin Delivery Data}
 \description{
-Parses data from automated insulin delivery (AID) systems from various platforms and allows to merge and standardize CGM, basal, bolus and carbohydrate data.
+Parses the native exports of several automated insulin delivery (AID) platforms into a common, platform-independent format for continuous glucose monitoring (CGM), basal, bolus, carbohydrate, and self-monitored blood glucose (SMBG) data. Additional functions check completeness, produce visualizations, and convert the data to other formats.
 }
 \author{
-\strong{Maintainer}: Madleina Caduff \email{madleina.caduff@dcberne.com}
+\strong{Maintainer}: Madleina Caduff \email{madleina.caduff@dcberne.com} (\href{https://orcid.org/0000-0001-8941-4274}{ORCID})
 
 Authors:
 \itemize{
-  \item Madleina Caduff \email{madleina.caduff@dcberne.com}
-  \item Aritz Lizoain \email{aritz.lizoain@dcberne.com}
+  \item Madleina Caduff \email{madleina.caduff@dcberne.com} (\href{https://orcid.org/0000-0001-8941-4274}{ORCID})
+  \item Aritz Lizoain \email{aritz.lizoain@dcberne.com} (\href{https://orcid.org/0009-0004-5516-2573}{ORCID})
+}
+
+Other contributors:
+\itemize{
+  \item Diabetes Center Berne, DCB [copyright holder, funder]
 }
 
 }

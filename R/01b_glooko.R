@@ -41,7 +41,8 @@ read_glooko <- function(id, filename) {
 #'   \code{total_bolus} (both are extracted from the daily aggregated insulin
 #'   file) or \code{SMBG}. \code{NULL} for all other data types, which are not
 #'   cleaned.
-#' @export
+#' @keywords internal
+#' @exportS3Method
 clean.glooko <- function(data, id, ...) {
   if (is.null(data)) {
     return(NULL)

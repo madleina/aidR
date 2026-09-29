@@ -69,3 +69,11 @@ delivered in automated mode by an Omnipod, and they are unaffected by
 Where \code{min_bolus} leaves boluses out of the labelled circles, a note next
 to the totals says so.
 }
+\examples{
+path <- system.file("extdata", "glooko_example.zip", package = "aidR")
+data <- parse_data(id = "1", paths = path)
+plot_day(data, days = "2026-06-22")
+
+# Custom target range, with boluses below 1 U drawn as ticks only
+plot_day(data, days = "2026-06-22", target = c(70, 140), min_bolus = 1)
+}

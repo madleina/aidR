@@ -69,7 +69,8 @@ read_carelink <- function(id, filename){
 #' @return A named list with the cleaned data, with entries \code{cgm},
 #'   \code{bolus}, \code{carbs} (extracted from the bolus wizard
 #'   entries) and \code{SMBG}.
-#' @export
+#' @keywords internal
+#' @exportS3Method
 clean.carelink <- function(data, id, ...){
   if (is.null(data)){ return(NULL) }
   if (!("carelink" %in% class(data))){ stop("Expected CareLink format.") }

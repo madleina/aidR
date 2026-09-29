@@ -31,3 +31,9 @@ produces from a Dexcom export.
 \details{
 Note that cgmquantify always related to a single subject.
 }
+\examples{
+path <- system.file("extdata", "dexcom_clarity_example.csv", package = "aidR")
+data <- parse_data(id = "1", paths = path)
+cgmquantify_df <- get_cgmquantify_format(data)
+cgmquantify::summary_glucose(cgmquantify_df)
+}

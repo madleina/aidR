@@ -22,3 +22,12 @@ Accepts either the output of \code{\link{parse_data}} for a single individual
 or the output of \code{\link{merge_all}} for multiple individuals. Every
 individual found in the data is checked separately.
 }
+\examples{
+# A mylife export contains no CGM and no basal data
+path <- system.file("extdata", "mylife_example.csv", package = "aidR")
+data <- parse_data(id = "1", paths = path)
+check_completeness(data)
+
+# Only require bolus and carbohydrate data
+check_completeness(data, necessary_types = c("bolus", "carbs"))
+}

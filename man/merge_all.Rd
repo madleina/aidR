@@ -23,3 +23,16 @@ all individuals. Individuals without data of a given type contribute no rows.
 \description{
 Merge data available for all individuals, separately per data type
 }
+\examples{
+all_data <- list(
+  "1" = parse_data("1", system.file("extdata", "glooko_example.zip", package = "aidR")),
+  "2" = parse_data("2", system.file("extdata", "dexcom_clarity_example.csv", package = "aidR"))
+)
+combined <- merge_all(all_data)
+names(combined)
+head(combined$cgm)
+table(combined$cgm$id)
+
+# Merge CGM data only
+merge_all(all_data, types = "cgm")
+}

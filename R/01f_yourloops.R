@@ -40,7 +40,8 @@ read_yourloops <- function(id, filename) {
 #'   of \code{data}: \code{cgm}, \code{basal}, \code{bolus} or \code{carbs} (from
 #'   meals or from rescue carbohydrates). \code{NULL} for all other data types,
 #'   which are not cleaned. Note that a YourLoops export contains no SMBG data.
-#' @export
+#' @keywords internal
+#' @exportS3Method
 clean.yourloops <- function(data, id, ...) {
   if (is.null(data)) {
     return(NULL)

@@ -52,6 +52,13 @@
 #'   day. Note that the same title is used for every day if several are plotted.
 #'
 #' @return No return value, called for side effects: one plot is drawn per day.
+#' @examples
+#' path <- system.file("extdata", "glooko_example.zip", package = "aidR")
+#' data <- parse_data(id = "1", paths = path)
+#' plot_day(data, days = "2026-06-22")
+#'
+#' # Custom target range, with boluses below 1 U drawn as ticks only
+#' plot_day(data, days = "2026-06-22", target = c(70, 140), min_bolus = 1)
 #' @export
 plot_day <- function(data, id = NULL, days = NULL, target = NULL, ylim_cgm = NULL,
                      min_bolus = 0, units = "mg/dl", main = NULL) {

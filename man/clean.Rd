@@ -22,3 +22,4 @@ A named list with the cleaned data, see the format-specific methods
 \description{
 Generic function for cleaning data
 }
+\keyword{internal}

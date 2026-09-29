@@ -1,16 +1,26 @@
 Package: aidR
 Type: Package
-Title: Parsing and standardizing file formats for AID data
-Version: 0.0.0
+Title: Reading and Standardizing Automated Insulin Delivery Data
+Version: 0.1.0
 Authors@R: c(person("Madleina", "Caduff", 
                      role = c("aut", "cre"),
-                     email = "madleina.caduff@dcberne.com"),
+                     email = "madleina.caduff@dcberne.com",
+                     comment = c(ORCID = "0000-0001-8941-4274")
+                     ),
              person("Aritz", "Lizoain",
                      role = c("aut"),
-                     email = "aritz.lizoain@dcberne.com")
+                     email = "aritz.lizoain@dcberne.com",
+                     comment = c(ORCID = "0009-0004-5516-2573")
+                     ),
+             person("Diabetes Center Berne (DCB)",
+                    role = c("cph", "fnd")
+                   )
              )
-Maintainer: Madleina Caduff <madleina.caduff@dcberne.com>
-Description: Parses data from automated insulin delivery (AID) systems from various platforms and allows to merge and standardize CGM, basal, bolus and carbohydrate data.
+Description: Parses the native exports of several automated insulin delivery 
+    (AID) platforms into a common, platform-independent format for continuous 
+    glucose monitoring (CGM), basal, bolus, carbohydrate, and self-monitored 
+    blood glucose (SMBG) data. Additional functions check completeness, 
+    produce visualizations, and convert the data to other formats.
 License: GPL-3
 Encoding: UTF-8
 Depends: R (>= 4.1.0)
@@ -39,3 +49,5 @@ Suggests:
     withr
 Config/testthat/edition: 3
 VignetteBuilder: knitr
+URL: https://github.com/madleina/aidR
+BugReports: https://github.com/madleina/aidR/issues

@@ -27,3 +27,14 @@ multiple individuals. One JSON file following the
 \href{https://github.com/Center-for-Diabetes-Technology/DIAX}{DIAX}
 specification is written per individual.
 }
+\examples{
+path <- system.file("extdata", "glooko_example.zip", package = "aidR")
+data <- parse_data(id = "1", paths = path)
+
+out_dir <- tempfile("diax_")
+dir.create(out_dir)
+write_DIAX_format(data, prefix = file.path(out_dir, "id_"))
+list.files(out_dir)
+
+unlink(out_dir, recursive = TRUE)
+}

@@ -21,6 +21,14 @@
 #'
 #' @return No return value, called for side effects. Issues a warning for every
 #'   individual and data type with missing data.
+#' @examples
+#' # A mylife export contains no CGM and no basal data
+#' path <- system.file("extdata", "mylife_example.csv", package = "aidR")
+#' data <- parse_data(id = "1", paths = path)
+#' check_completeness(data)
+#'
+#' # Only require bolus and carbohydrate data
+#' check_completeness(data, necessary_types = c("bolus", "carbs"))
 #' @export
 check_completeness <- function(data,
                                necessary_types = c("cgm", "basal", "bolus", "carbs")){
@@ -48,6 +56,11 @@ check_completeness <- function(data,
 #'
 #' @return No return value, called for side effects. Issues a warning for every
 #'   individual and data type with missing days.
+#' @examples
+#' # The example export covers 2026-06-22 only
+#' path <- system.file("extdata", "glooko_example.zip", package = "aidR")
+#' data <- parse_data(id = "1", paths = path)
+#' check_completeness_range(data, first_date = "2026-06-21", last_date = "2026-06-23")
 #' @export
 check_completeness_range <- function(data, first_date, last_date, 
                                      necessary_types = c("cgm", "basal", "bolus", "carbs")){
@@ -100,6 +113,14 @@ check_completeness_range <- function(data, first_date, last_date,
 #'   type, holding the summed and the reported total and whether the two agree.
 #'   Called for its side effects: a warning is issued for every day where they
 #'   do not.
+#' @examples
+#' path <- system.file("extdata", "glooko_example.zip", package = "aidR")
+#' data <- parse_data(id = "1", paths = path)
+#' check_insulin_totals(data)
+#'
+#' # Check bolus insulin as well, and keep the comparison
+#' res <- check_insulin_totals(data, types = c("basal", "bolus"))
+#' res
 #' @export
 check_insulin_totals <- function(data, types = "basal", rel_tol = 0.2, abs_tol = 1){
   if ((any(!(types %in% c("basal", "bolus"))))){

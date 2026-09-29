@@ -24,6 +24,18 @@
 #' @return A list with all data found for one individual, merged per data type.
 #'   \code{NULL} if no valid data files were found.
 #'
+#' @examples
+#' path <- system.file("extdata", "glooko_example.zip", package = "aidR")
+#'
+#' # Raw data, as found in the export
+#' data_raw <- parse_data(id = "1", paths = path, clean = FALSE)
+#' names(data_raw)
+#' head(data_raw$cgm)
+#'
+#' # Cleaned and standardized data
+#' data <- parse_data(id = "1", paths = path)
+#' names(data)
+#' head(data$cgm)
 #' @export
 parse_data <- function(id, paths, clean = TRUE) {
   cat(paste0("Parsing data for id ", id, "...\n"))
@@ -61,7 +73,7 @@ parse_data <- function(id, paths, clean = TRUE) {
 #' @return A named list with the cleaned data, see the format-specific methods
 #'   (e.g. \code{\link{clean.glooko}}).
 #'
-#' @export
+#' @keywords internal
 clean <- function(data, id, ...) UseMethod("clean")
 
 #-------------------------------

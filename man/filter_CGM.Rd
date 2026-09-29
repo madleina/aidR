@@ -27,3 +27,20 @@ A list with all data found for one individual, filtered, if necessary.
 \description{
 Filter CGM values
 }
+\examples{
+path <- system.file("extdata", "tidepool_example.xlsx", package = "aidR")
+# Read data
+data <- parse_data(id = "1", paths = path)
+range(data$cgm$value)
+length(data$cgm$value)
+
+# Truncate to 40-400 mg/dL and downsample to 5-minute intervals
+data_filtered <- filter_CGM(data)
+range(data_filtered$cgm$value)
+length(data_filtered$cgm$value)
+
+# Truncate only, without downsampling
+data_truncated <- filter_CGM(data, min_minutes_difference_cgm = NULL)
+range(data_truncated$cgm$value)
+length(data_truncated$cgm$value)
+}

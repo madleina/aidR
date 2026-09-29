@@ -21,3 +21,4 @@ entries) and \code{SMBG}.
 \description{
 Format and clean the CareLink data to keep relevant columns only
 }
+\keyword{internal}

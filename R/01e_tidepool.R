@@ -57,7 +57,8 @@ read_tidepool <- function(id, filename){
 #'   \code{basal}, \code{bolus}, \code{SMBG} and \code{carbs}. Carbohydrates are
 #'   taken from the Food sheet or, if that sheet is absent, from the Bolus
 #'   Calculator sheet.
-#' @export
+#' @keywords internal
+#' @exportS3Method
 clean.tidepool <- function(data, id, ...){
   if (is.null(data)){ return(NULL) }
   if (!("tidepool" %in% class(data))){ stop("Expected Tidepool format.") }

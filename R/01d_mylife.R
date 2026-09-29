@@ -70,7 +70,8 @@ read_mylife <- function(id, filename){
 #' @return A named list with the cleaned data, with entries \code{bolus},
 #'   \code{carbs} and \code{SMBG}. Entries are \code{NULL} if the export holds
 #'   no data of that type.
-#' @export
+#' @keywords internal
+#' @exportS3Method
 clean.mylife <- function(data, id, ...){
   if (is.null(data)){ return(NULL) }
   if (!("mylife" %in% class(data))){ stop("Expected mylife format.") }
