@@ -1,7 +1,7 @@
 Package: aidR
 Type: Package
 Title: Reading and Standardizing Automated Insulin Delivery Data
-Version: 0.2.0
+Version: 0.2.1
 Authors@R: c(person("Madleina", "Caduff", 
                      role = c("aut", "cre"),
                      email = "madleina.caduff@dcberne.com",
