@@ -18,7 +18,7 @@
 #'
 #' @return A list with all data found for one individual, filtered, if necessary.
 #' @examples
-#' path <- system.file("extdata", "tidepool_example.xlsx", package = "aidR")
+#' path <- system.file("extdata", "glooko_example.zip", package = "aidR")
 #' # Read data
 #' data <- parse_data(id = "1", paths = path)
 #' range(data$cgm$value)
