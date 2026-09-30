@@ -37,9 +37,8 @@ Imports:
     graphics,
     iglu,
     hms
-Config/roxygen2/version: 8.0.0
+Config/roxygen2/version: 8.1.0
 Roxygen: list(markdown = TRUE)
-RoxygenNote: 8.0.0
 Suggests: 
     knitr,
     rmarkdown,

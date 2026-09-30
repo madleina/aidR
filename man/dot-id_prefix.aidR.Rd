@@ -2,7 +2,7 @@
 % Please edit documentation in R/05_checks.R
 \name{.id_prefix.aidR}
 \alias{.id_prefix.aidR}
-\title{Prefix identifying an individual in a warning message}
+\title{Prefix identifying an individual in a message}
 \usage{
 .id_prefix.aidR(id)
 }
@@ -13,6 +13,6 @@
 A string, empty if \code{id} is \code{NA}.
 }
 \description{
-Prefix identifying an individual in a warning message
+Prefix identifying an individual in a message
 }
 \keyword{internal}

@@ -19,7 +19,7 @@
 #'   \code{\link{merge_all}}). Requires cleaned and standardized data.
 #' @param necessary_types A character vector with type names for which data should be available.
 #'
-#' @return No return value, called for side effects. Issues a warning for every
+#' @return No return value, called for side effects. Issues a message for every
 #'   individual and data type with missing data.
 #' @examples
 #' # A mylife export contains no CGM and no basal data
@@ -54,7 +54,7 @@ check_completeness <- function(data,
 #' @param last_date A character string representing the last date (included) for which data should be available.
 #' @param necessary_types A character vector with type names for which data should be available.
 #'
-#' @return No return value, called for side effects. Issues a warning for every
+#' @return No return value, called for side effects. Issues a message for every
 #'   individual and data type with missing days.
 #' @examples
 #' # The example export covers 2026-06-22 only
@@ -111,7 +111,7 @@ check_completeness_range <- function(data, first_date, last_date,
 #'
 #' @return Invisibly, a data frame with one row per checked individual, day and
 #'   type, holding the summed and the reported total and whether the two agree.
-#'   Called for its side effects: a warning is issued for every day where they
+#'   Called for its side effects: a message is issued for every day where they
 #'   do not.
 #' @examples
 #' path <- system.file("extdata", "glooko_example.zip", package = "aidR")
@@ -160,7 +160,7 @@ check_insulin_totals <- function(data, types = "basal", rel_tol = 0.2, abs_tol =
 .ids_in_data.aidR <- function(data){
   if (!inherits(data, "list")){
     stop("Require a list with the data of one or several individuals, e.g. the output of 
-         parse_data() or merge_all().", call. = FALSE)
+         parse_data() or merge_all().")
   }
   
   ids <- unlist(lapply(data, function(df){
@@ -193,7 +193,7 @@ check_insulin_totals <- function(data, types = "basal", rel_tol = 0.2, abs_tol =
   })
 }
 
-#' Prefix identifying an individual in a warning message
+#' Prefix identifying an individual in a message
 #'
 #' @param id Character participant identifier, or \code{NA} if it is unknown.
 #'
@@ -221,13 +221,13 @@ check_insulin_totals <- function(data, types = "basal", rel_tol = 0.2, abs_tol =
     
     # Is the type present?
     if (is.null(df)){
-      warning(.id_prefix.aidR(id), "No data of type '", type, "' found!", call. = FALSE)
+      message(.id_prefix.aidR(id), "No data of type '", type, "' found!")
       next # No need to check further
     }
     
     # Now check that at least one day of data is available
     if (nrow(df) == 0){
-      warning(.id_prefix.aidR(id), "No data of type '", type, "' found for any day!", call. = FALSE)
+      message(.id_prefix.aidR(id), "No data of type '", type, "' found for any day!")
     }
   }
 }
@@ -248,7 +248,7 @@ check_insulin_totals <- function(data, types = "basal", rel_tol = 0.2, abs_tol =
     
     # Is the type present?
     if (is.null(df)){
-      warning(.id_prefix.aidR(id), "No data of type '", type, "' found!", call. = FALSE)
+      message(.id_prefix.aidR(id), "No data of type '", type, "' found!")
       next # No need to check further
     }
     
@@ -262,8 +262,8 @@ check_insulin_totals <- function(data, types = "basal", rel_tol = 0.2, abs_tol =
     
     if (length(missing) > 0){
       str <- ifelse(length(missing) == 1, "day", "days")
-      warning(.id_prefix.aidR(id), "No data of type '", type, "' found for ", str, " ", 
-              .format_date_ranges.aidR(missing), "!", call. = FALSE)
+      message(.id_prefix.aidR(id), "No data of type '", type, "' found for ", str, " ", 
+              .format_date_ranges.aidR(missing), "!")
     }
   }
 }
@@ -291,11 +291,11 @@ check_insulin_totals <- function(data, types = "basal", rel_tol = 0.2, abs_tol =
   reported <- reported[reported$source == "reported" & !is.na(reported[[total_type]]), , drop = FALSE]
   if (nrow(reported) == 0){ return(NULL) }
   
-  # No entries in basal, whereas there is data in total_basal -> warn!
+  # No entries in basal, whereas there is data in total_basal -> message!
   if (is.null(data_id[[type]]) || nrow(data_id[[type]]) == 0){
-    warning(.id_prefix.aidR(id), "No data for ", type, " insulin found - this does not match the reported '",
+    message(.id_prefix.aidR(id), "No data for ", type, " insulin found - this does not match the reported '",
             total_type, "' (",
-            .format_date_ranges.aidR(reported$date), ")!", call. = FALSE)
+            .format_date_ranges.aidR(reported$date), ")!")
     return(NULL)
   }
 
@@ -328,9 +328,9 @@ check_insulin_totals <- function(data, types = "basal", rel_tol = 0.2, abs_tol =
   
   bad <- cmp$date[!cmp$within_tolerance]
   if (length(bad) > 0){
-    warning(.id_prefix.aidR(id), "The summed ", type, " insulin does not match the reported '",
+    message(.id_prefix.aidR(id), "The summed ", type, " insulin does not match the reported '",
             total_type, "' for ", ifelse(length(bad) == 1, "day", "days"), " ",
-            .format_date_ranges.aidR(bad), "!", call. = FALSE)
+            .format_date_ranges.aidR(bad), "!")
   }
   
   return(cmp)

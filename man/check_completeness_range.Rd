@@ -23,7 +23,7 @@ check_completeness_range(
 \item{necessary_types}{A character vector with type names for which data should be available.}
 }
 \value{
-No return value, called for side effects. Issues a warning for every
+No return value, called for side effects. Issues a message for every
 individual and data type with missing days.
 }
 \description{

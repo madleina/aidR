@@ -294,7 +294,7 @@ for (id in ids) {
 }
 combined <- merge_all(all_data)
 # Inspect a single day of a single subject
-plot_day(combined, id = "2", days = "2026-06-22")
+plot_day(combined, id = "1", days = "2026-06-22")
 # write DIAX files
 diax_dir <- "./diax"
 write_DIAX_format(combined, prefix = file.path(diax_dir, "diax_id_"))

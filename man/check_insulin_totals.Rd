@@ -23,7 +23,7 @@ insulin. A day is flagged when the absolute difference exceeds both
 \value{
 Invisibly, a data frame with one row per checked individual, day and
 type, holding the summed and the reported total and whether the two agree.
-Called for its side effects: a warning is issued for every day where they
+Called for its side effects: a message is issued for every day where they
 do not.
 }
 \description{
