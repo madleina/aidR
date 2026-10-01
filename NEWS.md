@@ -1,3 +1,7 @@
+# aidR 0.2.3
+
+* Addressing CRAN comments.
+
 # aidR 0.2.2
 
 * Addressing CRAN comments.

@@ -28,7 +28,7 @@ A list with all data found for one individual, filtered, if necessary.
 Filter CGM values
 }
 \examples{
-path <- system.file("extdata", "tidepool_example.xlsx", package = "aidR")
+path <- system.file("extdata", "tandem_source_example.zip", package = "aidR")
 # Read data
 data <- parse_data(id = "1", paths = path)
 range(data$cgm$value)

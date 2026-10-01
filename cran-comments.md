@@ -1,6 +1,11 @@
 ## Resubmission
 This is a resubmission. In this version I have:
 
+* Updated the man pages to effectively make use of the smaller example data set introduced previously
+
+## Resubmission
+This is a resubmission. In this version I have:
+
 * Used an even smaller example data set for the function filter_CGM() to run in <5s
 
 ## Resubmission
