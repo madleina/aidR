@@ -6,7 +6,7 @@ Source data sets:
 
 - glooko_example.zip: randomized values and timestamps, anonymized serial numbers.
 
-- tandem_source_example.zip: randomized values and timestamps, anonymized serial numbers.
+- tandem_source_example.zip: randomized values and timestamps, anonymized serial numbers. Removed parts of CGM trace to get small example to run faster.
 
 - mylife_example.csv: randomized values and timestamps.
 
