@@ -116,7 +116,8 @@ clean <- function(data, id, ...) UseMethod("clean")
   } else if (.is_dexcom_clarity_format.aidR(filename = filename)) {
     data <- read_dexcom_clarity(id = id, filename = filename)
   } else {
-    cat(paste0("Id ", id, ": Failed to parse file '", filename, "'.\n"))
+    message("Id ", id, ": could not recognize the format of file '", filename,
+            "'. It does not match any supported platform and is skipped.")
     data <- NULL
   }
   if (clean && !is.null(data)) {
@@ -138,7 +139,7 @@ clean <- function(data, id, ...) UseMethod("clean")
 #'
 #' @keywords internal
 .filter_relevant_files.aidR <- function(filenames) {
-  ignored_extensions <- c("png", "pdf", "bib", "jpg", "jpeg", "txt", "json", "numbers")
+  ignored_extensions <- c("png", "pdf", "bib", "jpg", "jpeg", "txt", "json", "numbers", "html")
   pattern <- paste0("\\.(", paste(ignored_extensions, collapse = "|"), ")$")
   exclude <- grepl(pattern, filenames, ignore.case = TRUE)
   return(filenames[!exclude])

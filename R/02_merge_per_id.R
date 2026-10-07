@@ -104,6 +104,7 @@
 #'
 #' @return A list with all data found for one individual, merged for each data
 #'   type and sorted in time. Identical entries and entries where all measurement columns are NA are removed.
+#'   For \code{total_basal} and \code{total_bolus}, only the largest value is kept for days that occur more than once.
 #' @keywords internal
 .merge_per_id.aidR <- function(data_id){
   if (is.null(data_id)){ return(data_id) }
@@ -122,7 +123,16 @@
     data_id[[i]] <- data_id[[i]] %>%
       filter(!dplyr::if_all(!any_of(c("id", "format", "timestamp", "timezone_offset", "unit")), is.na))
   }
-  
+
+  # A day can be reported more than once, with differing values, when two
+  # overlapping exports were parsed for the same id -> keep the largest value,
+  # which is the one of the export that covers the full day
+  for (total_type in intersect(c("total_basal", "total_bolus"), names(data_id))){
+    df <- data_id[[total_type]]
+    df <- df[order(df$date, -df[[total_type]]), , drop = FALSE]
+    data_id[[total_type]] <- df[!duplicated(df$date), , drop = FALSE]
+  }
+
   return(data_id)
 }
 

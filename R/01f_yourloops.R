@@ -24,7 +24,7 @@ read_yourloops <- function(id, filename) {
   # Read file
   data <- list()
   data[[file_type]] <- .read_yourloops_files.aidR(filename)
-
+  
   class(data) <- "yourloops"
 
   return(data)
@@ -48,6 +48,10 @@ clean.yourloops <- function(data, id, ...) {
   }
   if (!("yourloops" %in% class(data))) {
     stop("Expected YourLoops format.")
+  }
+  
+  if (nrow(data) == 0){ 
+    return(NULL)
   }
 
   # Format if CGM, basal, bolus and carb data (no SMBG given)

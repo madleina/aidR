@@ -299,12 +299,6 @@ check_insulin_totals <- function(data, types = "basal", rel_tol = 0.2, abs_tol =
     return(NULL)
   }
 
-  # A day can be reported more than once, with differing values, when two
-  # overlapping exports were parsed for the same id -> keep the largest value,
-  # which is the one of the export that covers the full day
-  reported <- reported[order(reported$date, -reported[[total_type]]), , drop = FALSE]
-  reported <- reported[!duplicated(reported$date), , drop = FALSE]
-  
   # Sum over the individual data points
   summed <- if (type == "basal"){
     .total_basal_per_day.aidR(data_id$basal)
