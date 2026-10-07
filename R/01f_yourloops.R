@@ -49,10 +49,6 @@ clean.yourloops <- function(data, id, ...) {
   if (!("yourloops" %in% class(data))) {
     stop("Expected YourLoops format.")
   }
-  
-  if (nrow(data) == 0){ 
-    return(NULL)
-  }
 
   # Format if CGM, basal, bolus and carb data (no SMBG given)
   if (names(data) == "cgm") {
@@ -200,6 +196,8 @@ clean.yourloops <- function(data, id, ...) {
 #' @return A data frame containing the formatted and cleaned CGM data.
 #' @keywords internal
 .format_cgm_yourloops.aidR <- function(id, cgm) {
+  if (nrow(cgm) == 0){ return(NULL) }
+  
   # Format timestamp
   cgm <- .format_timestamp_yourloops.aidR(cgm)
   
@@ -231,6 +229,8 @@ clean.yourloops <- function(data, id, ...) {
 #' @return A data frame containing the formatted and cleaned basal data.
 #' @keywords internal
 .format_basal_yourloops.aidR <- function(id, basal) {
+  if (nrow(basal) == 0){ return(NULL) }
+  
   # Format timestamp
   basal <- .format_timestamp_yourloops.aidR(basal)
   
@@ -263,6 +263,8 @@ clean.yourloops <- function(data, id, ...) {
 #' @return A data frame containing the formatted and cleaned bolus data.
 #' @keywords internal
 .format_bolus_yourloops.aidR <- function(id, bolus) {
+  if (nrow(bolus) == 0){ return(NULL) }
+  
   # Format timestamp
   bolus <- .format_timestamp_yourloops.aidR(bolus)
   
@@ -300,6 +302,8 @@ clean.yourloops <- function(data, id, ...) {
 #' @return A data frame containing the formatted and cleaned carbohydrate data.
 #' @keywords internal
 .format_carbs_yourloops.aidR <- function(id, carbs) {
+  if (nrow(carbs) == 0){ return(NULL) }
+  
   # Format timestamp
   carbs <- .format_timestamp_yourloops.aidR(carbs)
   
@@ -333,6 +337,8 @@ clean.yourloops <- function(data, id, ...) {
 #'   flagged as hypoglycemia treatment.
 #' @keywords internal
 .format_rescuecarbs_yourloops.aidR <- function(id, carbs) {
+  if (nrow(carbs) == 0){ return(NULL) }
+  
   # Format timestamp
   carbs <- .format_timestamp_yourloops.aidR(carbs)
   
