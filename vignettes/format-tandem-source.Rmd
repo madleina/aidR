@@ -87,3 +87,4 @@ Cleaned data type | Used files                      | Used attributes from `clea
 - The device type is stored as `pump_name` for insulin data and `sensor_name` for glucose data.
 - The hourly basal file reports the basal insulin delivered in each hour of the day, one row per day and one column per hour. `aidR` sums the 24 hourly columns into `total_basal`, which therefore carries `source = "reported"`. `total_bolus`, in contrast, is summed from the cleaned `bolus` data and carries `source = "summed"`.
 - Because basal durations are inferred from consecutive timestamps, the final basal entry of an export has no successor and its duration is therefore unknown.
+- Each row of the bolus file holds a bolus together with the carbohydrates entered for it, so `bolus` and `carbs` are linked by `link_id`. Boluses without carbohydrates have `link_id = NA`.

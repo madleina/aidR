@@ -12,7 +12,9 @@ per parsed file.}
 }
 \value{
 A list with all data found for one individual, merged for each data
-type and sorted in time. Identical entries and entries where all measurement columns are NA are removed.
+type and sorted in time. Identical entries are removed, ignoring the \code{format}
+and \code{link_id} columns (e.g. the same data downloaded from two platforms is kept once, with the
+\code{format} and \code{link_id} of its first occurrence). Entries where all measurement columns are NA are removed.
 For \code{total_basal} and \code{total_bolus}, only the largest value is kept for days that occur more than once.
 }
 \description{

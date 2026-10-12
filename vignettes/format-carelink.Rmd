@@ -62,8 +62,7 @@ The list below describes the different sections and the information we can get f
   head(data$bolus)
   ```
 
-  - bolus wizard (BWZ) entries, i.e. the carbohydrates communicated to the bolus calculator together with the resulting recommendation. `aidR` matches these against the bolus events so that a
-    carbohydrate entry can be linked to the bolus it triggered.
+  - bolus wizard (BWZ) entries, i.e. the carbohydrates communicated to the bolus calculator together with the resulting recommendation.
 
   ```{r, comment=""}
   head(data$bwz)
@@ -149,3 +148,4 @@ Note that a CareLink export contains **no usable basal data** - `cgm`, `bolus`, 
 - `timezone_offset` is always `NA`, since CareLink exports report only local (wall-clock) time.
 - CareLink does report a daily insulin aggregate, but this number does not match any of the daily aggregates displayed in a PDF export. It is unclear what this number refers to, and `aidR` therefore does not use this number. Therefore, `total_bolus` is summed from the cleaned `bolus` data and carries `source = "summed"`.
 - The basal rates from the Pump section are the *scheduled* basal rates (possibly interrupted by reservoir changes and rewinds), and not the basal insulin effectively delivered. `aidR` therefore does not use them to build a cleaned `basal` data type, and consequently reports no `total_basal` for CareLink. If you need the schedule itself, it is available from `parse_data(clean = FALSE)` as `data$scheduled_basal_rates`.
+- `link_id` is always `NA` for `bolus` and `carbs`: the export does not record which carbohydrate entry triggered which bolus. Matching them by timestamp and amount is not implemented.

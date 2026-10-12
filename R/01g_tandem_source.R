@@ -38,7 +38,7 @@ read_tandem_source <- function(id, filename) {
 #'
 #' @return A named list with the cleaned data, named according to the data type
 #'   of \code{data}: \code{cgm}, \code{basal}, \code{bolus}, \code{carbs} and
-#'   \code{total_bolus} (the latter three are extracted from the bolus file),
+#'   \code{total_bolus} (the latter three are extracted from the bolus file;
 #'   \code{total_basal} (extracted from the hourly basal file) or \code{SMBG}.
 #'   \code{NULL} for all other data types, which are not cleaned.
 #' @keywords internal
@@ -57,9 +57,11 @@ clean.tandem_source <- function(data, id, ...) {
   } else if (names(data) == "basal") {
     return(list(basal = .format_basal_tandem_source.aidR(id, data$basal)))
   } else if (names(data) == "bolus") {
-    bolus <- .format_bolus_tandem_source.aidR(id, data$bolus)
+    # Each row is a bolus and the carbs entered for it: link both
+    link_id <- .link_bolus_carbs_tandem_source.aidR(id, data$bolus)
+    bolus <- .format_bolus_tandem_source.aidR(id, data$bolus, link_id)
     return(list(bolus = bolus,
-                carbs = .format_carbs_tandem_source.aidR(id, data$bolus),
+                carbs = .format_carbs_tandem_source.aidR(id, data$bolus, link_id),
                 total_bolus = .total_bolus_per_day.aidR(bolus)))
   } else if (names(data) == "hourly_basal") {
     return(list(total_basal = .format_total_basal_tandem_source.aidR(id, data$hourly_basal)))
@@ -289,10 +291,13 @@ clean.tandem_source <- function(data, id, ...) {
 #'
 #' @param id Character or numeric participant identifier.
 #' @param bolus A data frame containing the bolus data from a Tandem Source file.
+#' @param link_id A character vector with one key per row of \code{bolus},
+#'   linking the bolus to the carbohydrate entry of the same row.
+#'   Default \code{NA}.
 #'
 #' @return A data frame containing the formatted and cleaned bolus data.
 #' @keywords internal
-.format_bolus_tandem_source.aidR <- function(id, bolus) {
+.format_bolus_tandem_source.aidR <- function(id, bolus, link_id = NA) {
   
   # Decide if a bolus is normal / dual wave / square wave
   bolus <- bolus |> 
@@ -325,10 +330,11 @@ clean.tandem_source <- function(data, id, ...) {
            timezone_offset = NA,
            duration_extended = .data$`Duration (mins)` / 60,
            unit = "U",
-           pump_name = NA
+           pump_name = NA,
+           link_id = link_id
            ) |> 
     select("id", "format", "timestamp", "timezone_offset", "type", "total", "normal", 
-           "extended", "unit", "duration_extended", "pump_name")
+           "extended", "unit", "duration_extended", "pump_name", "link_id")
   
   return(bolus)
 }
@@ -337,16 +343,39 @@ clean.tandem_source <- function(data, id, ...) {
 # Functions for carbs
 #------------------------------
 
+#' Link boluses and carbohydrate entries of a Tandem Source bolus file
+#'
+#' Each row of the bolus file corresponds to a bolus together with the 
+#' carbohydrates entered for it in the bolus calculator. Rows with carbohydrates 
+#' get a \code{link_id}, built from the completion time, the carbohydrates, and 
+#' the insulin delivered.
+#'
+#' @param id Character or numeric participant identifier.
+#' @param bolus A data frame containing the bolus data from a Tandem Source file.
+#'
+#' @return A character vector with one key per row of \code{bolus}, \code{NA}
+#'   for rows without carbohydrates.
+#' @keywords internal
+.link_bolus_carbs_tandem_source.aidR <- function(id, bolus) {
+  .create_link_id.aidR(id, "tandem_source", as_datetime(bolus$`Completion Date Time`), bolus$`Carb Size`,
+                       bolus$`Insulin Delivered`, bolus$`Bolex Insulin Delivered`,
+                       linked = bolus$`Carb Size` > 0)
+}
+
 #' Format and clean carbohydrate data from a Tandem Source export
 #'
 #' @param id Character or numeric participant identifier.
 #' @param carbs A data frame containing the bolus data from a Tandem Source file,
 #'   which holds the carbohydrates entered into the bolus calculator.
+#' @param link_id A character vector with one key per row of \code{carbs},
+#'   linking the carbohydrate entry to the bolus of the same row.
+#'   Default \code{NA}.
 #'
 #' @return A data frame containing the formatted and cleaned carbohydrate data.
 #' @keywords internal
-.format_carbs_tandem_source.aidR <- function(id, carbs) {
+.format_carbs_tandem_source.aidR <- function(id, carbs, link_id = NA) {
   carbs <- carbs |> 
+    mutate(link_id = link_id) |> 
     filter(.data$`Carb Size` > 0) |> 
     mutate(id = id, 
            format = "tandem_source",
@@ -358,7 +387,7 @@ clean.tandem_source <- function(data, id, ...) {
            estimated_absorption_duration = NA,
            is_hypo_treatment = NA) |> 
     select("id", "format", "timestamp", "timezone_offset", "value", "unit", 
-           "label", "estimated_absorption_duration", "is_hypo_treatment")
+           "label", "estimated_absorption_duration", "is_hypo_treatment", "link_id")
   
   return(carbs)
 }

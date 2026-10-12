@@ -103,7 +103,9 @@
 #'   per parsed file.
 #'
 #' @return A list with all data found for one individual, merged for each data
-#'   type and sorted in time. Identical entries and entries where all measurement columns are NA are removed.
+#'   type and sorted in time. Identical entries are removed, ignoring the \code{format}
+#'   and \code{link_id} columns (e.g. the same data downloaded from two platforms is kept once, with the
+#'   \code{format} and \code{link_id} of its first occurrence). Entries where all measurement columns are NA are removed.
 #'   For \code{total_basal} and \code{total_bolus}, only the largest value is kept for days that occur more than once.
 #' @keywords internal
 .merge_per_id.aidR <- function(data_id){
@@ -115,13 +117,19 @@
   # Sort by timestamp
   data_id <- .sort_by_time.aidR(data_id)
   
-  # Remove entries that are exactly the same (per data type)
+  # Remove entries that are exactly the same (per data type, ignoring the 'format' and 'link_id' columns)
   for (i in 1:length(data_id)){
-    data_id[[i]] <- data_id[[i]] %>% distinct()
+    # (e.g. same data downloaded from two platforms) -> keep the first occurrence
+    data_id[[i]] <- data_id[[i]] %>% distinct(across(-any_of(c("format", "link_id"))), .keep_all = TRUE)
+
+    # Keys are character, also if no entry is linked (all NA)
+    if ("link_id" %in% names(data_id[[i]])){
+      data_id[[i]]$link_id <- as.character(data_id[[i]]$link_id)
+    }
     
     # Remove entries where all relevant columns are NA
     data_id[[i]] <- data_id[[i]] %>%
-      filter(!dplyr::if_all(!any_of(c("id", "format", "timestamp", "timezone_offset", "unit")), is.na))
+      filter(!dplyr::if_all(!any_of(c("id", "format", "timestamp", "timezone_offset", "unit", "link_id")), is.na))
   }
 
   # A day can be reported more than once, with differing values, when two

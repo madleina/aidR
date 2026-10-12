@@ -4,13 +4,17 @@
 \alias{.format_carbs_glooko.aidR}
 \title{Format and clean carbohydrate data from a Glooko export}
 \usage{
-.format_carbs_glooko.aidR(id, data)
+.format_carbs_glooko.aidR(id, data, link_id = NA)
 }
 \arguments{
 \item{id}{Character or numeric participant identifier.}
 
 \item{data}{A data frame containing the bolus data from a Glooko file, which
 holds the carbohydrates entered into the bolus calculator.}
+
+\item{link_id}{A character vector with one key per row of \code{data},
+linking the carbohydrate to the bolus entry of the same row. Default
+\code{NA}.}
 }
 \value{
 A data frame containing the formatted and cleaned carbohydrate data.

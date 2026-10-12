@@ -149,9 +149,10 @@ clean.mylife <- function(data, id, ...){
            unit = "U",
            duration_extended = NA,
            pump_name = NA,
+           link_id = NA # cannot be linked to carbs
            ) %>% 
   select("id", "format", "timestamp", "timezone_offset", "type", "total", "normal", 
-         "extended", "unit", "duration_extended", "pump_name")
+         "extended", "unit", "duration_extended", "pump_name", "link_id")
     
   return(bolus)
 }
@@ -176,11 +177,12 @@ clean.mylife <- function(data, id, ...){
            value = as.numeric(gsub(pattern = ",", replacement = ".", .data$amount)),
            estimated_absorption_duration = as.numeric(str_extract(.data$information, "(?<=\\s)[\\d.]+(?=h)")),
            is_hypo_treatment = grepl("HypoTreatment", .data$information),
-           unit = "g"
+           unit = "g",
+           link_id = NA # cannot be linked to boluses
            ) %>% 
     rename(label = "type") %>% 
     select("id", "format", "timestamp", "timezone_offset", "value", "unit", 
-           "label", "estimated_absorption_duration", "is_hypo_treatment")
+           "label", "estimated_absorption_duration", "is_hypo_treatment", "link_id")
   
   return(carbs)
 }

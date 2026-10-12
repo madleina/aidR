@@ -21,7 +21,8 @@
 #'   basal, bolus, carbohydrates and SMBG) are cleaned and standardized. If
 #'   \code{FALSE}, all data is returned as found in the export.
 #'
-#' @return A list with all data found for one individual, merged per data type.
+#' @return A list with all data found for one individual, merged per data type
+#'   and sorted by \code{timestamp}. Duplicate rows are removed. 
 #'   \code{NULL} if no valid data files were found.
 #'
 #' @examples
@@ -354,4 +355,56 @@ clean <- function(data, id, ...) UseMethod("clean")
   if (is.null(bolus) || nrow(bolus) == 0){ return(NULL) }
   
   .aggregate_per_day.aidR(bolus, bolus$total, "total_bolus", "summed")
+}
+
+#-------------------------------
+# Linking bolus and carbohydrates
+#-------------------------------
+
+#' Create a key linking bolus and carbohydrate entries of the same event
+#'
+#' Some exports record which carbohydrate entry triggered which bolus based on 
+#' information from the bolus calculator. To keep this link after splitting the
+#' data when cleaning, a unique identifier is created that is stored in both 
+#' \code{bolus} and \code{carbs} (no link is encoded as \code{NA}).
+#'
+#' The key is built from the content of the event and consists of the 
+#' participant id, the format and the fields passed in \code{...} 
+#' (e.g. timestamp and amounts), separated by \code{"|"}. Events that are
+#' identical in all fields are numbered in the order they appear in the export,
+#' which makes the key unique by construction. Identifiers given by the export
+#' are only used to find out which entries belong together, never as the key
+#' itself.
+#'
+#' @param id Participant identifier.
+#' @param format Character string with the format (e.g. \code{"glooko"}).
+#' @param ... One or more vectors of equal length, with one element per event,
+#'   which together describe the event.
+#' @param linked Logical vector with one element per event (or a single value),
+#'   \code{TRUE} if the event links a bolus to a carbohydrate entry. All other
+#'   events get \code{NA}.
+#'
+#' @return A character vector with one key per event, \code{NA} where
+#'   \code{linked} is not \code{TRUE}.
+#'
+#' @keywords internal
+.create_link_id.aidR <- function(id, format, ..., linked = TRUE){
+  # Format: timestamp as Y-m-d H:M:S and everything else as character
+  fields <- lapply(list(...), function(x){
+    if (inherits(x, "POSIXt")) format(x, "%Y-%m-%d %H:%M:%S") else as.character(x)
+  })
+  n <- unique(lengths(fields))
+  if (length(fields) == 0 || length(n) != 1){
+    stop("All fields describing the event must have the same length.")
+  }
+  if (n == 0){ return(character(0)) }
+
+  # Create key: paste all info together
+  key <- paste(id, format, do.call(paste, c(fields, sep = "|")), sep = "|")
+  # Make sure it is unique: if key from before is duplicated, this will add |1, |2 etc to it
+  key <- paste(key, ave(seq_len(n), key, FUN = seq_along), sep = "|")
+  # Everything else is NA
+  key[!rep_len(linked %in% TRUE, n)] <- NA
+  
+  return(key)
 }

@@ -19,7 +19,13 @@ basal, bolus, carbohydrates and SMBG) are cleaned and standardized. If
 \code{FALSE}, all data is returned as found in the export.}
 }
 \value{
-A list with all data found for one individual, merged per data type.
+A list with all data found for one individual, merged per data type
+and sorted by \code{timestamp}. Duplicate rows are removed, ignoring the
+\code{format} and \code{link_id} columns, so the same data exported from
+two platforms is kept only once. Where the export records which
+carbohydrate entry triggered which bolus (Glooko, Tandem Source, and
+Tidepool with a Bolus Calculator sheet), \code{bolus} and \code{carbs}
+share a key in the column \code{link_id}; it is \code{NA} otherwise.
 \code{NULL} if no valid data files were found.
 }
 \description{

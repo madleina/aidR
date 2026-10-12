@@ -56,7 +56,8 @@ read_tidepool <- function(id, filename){
 #' @return A named list with the cleaned data, with entries \code{cgm},
 #'   \code{basal}, \code{bolus}, \code{SMBG} and \code{carbs}. Carbohydrates are
 #'   taken from the Food sheet or, if that sheet is absent, from the Bolus
-#'   Calculator sheet.
+#'   Calculator sheet. Only in the latter case are \code{bolus} and
+#'   \code{carbs} linked by \code{link_id}; otherwise it is \code{NA}.
 #' @keywords internal
 #' @exportS3Method
 clean.tidepool <- function(data, id, ...){
@@ -70,15 +71,21 @@ clean.tidepool <- function(data, id, ...){
   data_new <- list()
   data_new$cgm <- .format_cgm_tidepool.aidR(id, data$cgm)
   data_new$basal <- .format_basal_tidepool.aidR(id, data$basal)
-  data_new$bolus <- .format_bolus_tidepool.aidR(id, data$bolus)
   data_new$SMBG <- .format_SMBG_tidepool.aidR(id, data$SMBG)
+  
+  # Link boluses and carbs: only possible via the Bolus Calculator sheet
+  link <- NULL
+  if (is.null(data$food) && !is.null(data$bolus_calculator)){
+    link <- .link_bolus_carbs_tidepool.aidR(id, data$bolus, data$bolus_calculator)
+  }
+  data_new$bolus <- .format_bolus_tidepool.aidR(id, data$bolus, link$bolus)
   
   if (!is.null(data$food) & !is.null(data$bolus_calculator)){
     stop(paste0("Found both food and bolus calculator data. Figure out which one to keep."))
   } else if (!is.null(data$food)){
     data_new$carbs <- .format_food_tidepool.aidR(id, data$food)
   } else if (!is.null(data$bolus_calculator)){
-    data_new$carbs <- .format_bolus_calculator_tidepool.aidR(id, data$bolus_calculator)
+    data_new$carbs <- .format_bolus_calculator_tidepool.aidR(id, data$bolus_calculator, link$bolus_calculator)
   } else {
     stop(paste0("No data on carbohydrates available!"))
   }
@@ -245,10 +252,15 @@ clean.tidepool <- function(data, id, ...){
 #'
 #' @param id Character or numeric participant identifier.
 #' @param bolus A data frame containing the bolus data from a Tidepool file.
+#' @param link_id A character vector with one key per row of \code{bolus},
+#'   linking the bolus to its carbohydrate entries. \code{NULL} if unknown, 
+#'   which results in \code{NA}.
 #'
 #' @return A data frame containing the formatted and cleaned bolus data.
 #' @keywords internal
-.format_bolus_tidepool.aidR <- function(id, bolus){
+.format_bolus_tidepool.aidR <- function(id, bolus, link_id = NULL){
+  if (is.null(link_id)){ link_id <- NA }
+  
   # Format time
   bolus <- bolus %>%
     mutate(`Local Time` = as_datetime(.data$`Local Time`),
@@ -282,11 +294,12 @@ clean.tidepool <- function(data, id, ...){
            format = "tidepool",
            unit = "U",
            pump_name = NA,
-           duration_extended = .data$`Duration (mins)` / 60) |> 
+           duration_extended = .data$`Duration (mins)` / 60,
+           link_id = link_id) |> 
     rename(timestamp = "Local Time", 
            timezone_offset = "Timezone Offset") |> 
     select("id", "format", "timestamp", "timezone_offset", "type", "total", 
-           "normal", "extended", "unit", "duration_extended", "pump_name")
+           "normal", "extended", "unit", "duration_extended", "pump_name", "link_id")
   
   return(bolus)
 }
@@ -314,10 +327,11 @@ clean.tidepool <- function(data, id, ...){
            timezone_offset = .data$`Timezone Offset` / 60,
            estimated_absorption_duration = .data$estimated_absorption_duration / 3600, # convert seconds to hours 
            unit = "g",
-           is_hypo_treatment = NA) %>% 
+           is_hypo_treatment = NA,
+           link_id = NA_character_) %>% # cannot be linked to boluses
     rename(label = "Name") |> 
     select("id", "format", "timestamp", "timezone_offset", "value", "unit", 
-           "label", "estimated_absorption_duration", "is_hypo_treatment")
+           "label", "estimated_absorption_duration", "is_hypo_treatment", "link_id")
   
   return(food)
 }
@@ -382,16 +396,60 @@ clean.tidepool <- function(data, id, ...){
 # Format bolus calculator
 #------------------------
 
+#' Link boluses and carbohydrate entries of a Tidepool export
+#'
+#' Use the column \code{Bolus} of the Bolus Calculator sheet and the column 
+#' \code{Id} of the Bolus sheet to match bolus and carbohydrate entries. Create 
+#' a new identifier based on local time, normal and extended amount, and 
+#' duration as for all other formats.
+#'
+#' @param id Character or numeric participant identifier.
+#' @param bolus A data frame containing the bolus data from a Tidepool file.
+#' @param bolus_calculator A data frame containing the bolus calculator data
+#'   from a Tidepool file.
+#'
+#' @return A list with entries \code{bolus} and \code{bolus_calculator},
+#'   holding one key per row of the respective data frame (\code{NA} for rows
+#'   without a link). \code{NULL} if the columns needed are missing.
+#' @keywords internal
+.link_bolus_carbs_tidepool.aidR <- function(id, bolus, bolus_calculator){
+  if (!("Id" %in% names(bolus)) || !all(c("Bolus", "Carb Input") %in% names(bolus_calculator))){
+    return(NULL)
+  }
+  
+  # Only calculator entries with carbs and a bolus that is part of the Bolus sheet
+  has_carbs <- (bolus_calculator$`Carb Input` > 0) %in% TRUE
+  linked_calc <- has_carbs & !is.na(bolus_calculator$Bolus) & bolus_calculator$Bolus %in% bolus$Id
+  
+  # Key built from the content of the bolus (columns that are absent are NA)
+  col <- function(name) if (name %in% names(bolus)) bolus[[name]] else rep(NA, nrow(bolus))
+  key <- .create_link_id.aidR(id, "tidepool", as_datetime(col("Local Time")), col("Normal"), col("Extended"),
+                              col("Duration (mins)"),
+                              linked = bolus$Id %in% bolus_calculator$Bolus[linked_calc])
+  
+  # Calculator entries get the key of their bolus (several entries may share one bolus)
+  list(
+    bolus = key,
+    bolus_calculator = ifelse(linked_calc, key[match(bolus_calculator$Bolus, bolus$Id)], NA)
+  )
+}
+
 #' Format and clean carbohydrate data from the Bolus Calculator sheet of a Tidepool export
 #'
 #' @param id Character or numeric participant identifier.
 #' @param bolus_calculator A data frame containing the bolus calculator data from a Tidepool file.
+#' @param link_id A character vector with one key per row of
+#'   \code{bolus_calculator}, linking the carbohydrate entry to its bolus. 
+#'   \code{NULL} (the default) if unknown, which results in \code{NA}.
 #'
 #' @return A data frame containing the formatted and cleaned carbohydrate data.
 #'   \code{NULL} if no carbohydrates were entered.
 #' @keywords internal
-.format_bolus_calculator_tidepool.aidR <- function(id, bolus_calculator){
+.format_bolus_calculator_tidepool.aidR <- function(id, bolus_calculator, link_id = NULL){
+  if (is.null(link_id)){ link_id <- NA }
+  
   bolus_calculator <- bolus_calculator %>%
+    mutate(link_id = link_id) %>%
     filter(.data$`Carb Input` > 0) %>%
     mutate(id = id,
            format = "tidepool",
@@ -404,7 +462,7 @@ clean.tidepool <- function(data, id, ...){
            ) %>% 
     rename(value = "Carb Input") |> 
     select("id", "format", "timestamp", "timezone_offset", "value", "unit", 
-           "label", "estimated_absorption_duration", "is_hypo_treatment")
+           "label", "estimated_absorption_duration", "is_hypo_treatment", "link_id")
   
   if (nrow(bolus_calculator) == 0){ return(NULL) }
   

@@ -81,7 +81,7 @@ str(data_raw, max.level = 1)
 ```
 Here, `path` happens to be a single Tidepool export, so `data_raw` contains the standard `cgm`, `basal`, `bolus`, and `SMBG` data frames alongside Tidepool-specific extras (`device_event`, `bolus_calculator`, `basal_schedules`, ...).
 
-If a subject's data spans several files (i.e. `paths` is a vector of length > 1), `parse_data()` merges all of them together by data type and sorts each resulting data frame by `timestamp`. Exact duplicate rows within a data type are removed.
+If a subject's data spans several files (i.e. `paths` is a vector of length > 1), `parse_data()` merges all of them together by data type and sorts each resulting data frame by `timestamp`. Duplicate rows within a data type are removed (while ignoring the `format` column to also filter data downloaded from two different platforms).
 
 ### With cleaning
 
@@ -119,12 +119,14 @@ Rows are sorted by `timestamp`, and the columns that follow are specific to the 
     - `unit`: the unit of `total`, `normal` and `extended` (always `U`).
     - `duration_extended`: the duration of the extended portion, in hours (for `dual_wave` and `square_wave`, `NA` otherwise, and also `NA` where the platform does not report it).
     - `pump_name`: the name of the pump, `NA` if not available.
+    - `link_id`: an identifier linking the bolus to the carbohydrate entries that triggered it, `NA` if not available (see [Linking boluses and carbohydrates](#linking-boluses-and-carbohydrates)).
 - **`carbs`**: user-reported carbohydrate consumption, one row per entry
     - `value`: the carbohydrate value (in g).
     - `unit`: the unit of `value` (always `g`).
     - `label`: an optional label for the entry, `NA` if not available. Its content is platform-specific: it may be a meal name entered by the user, or summarize additional information on the entry (e.g. that it was a fatty meal).
     - `estimated_absorption_duration`: the absorption duration in hours, as estimated by the user, `NA` if not available.
     - `is_hypo_treatment`: a logical flagging entries labeled as hypoglycemia treatment, `NA` if not available.
+    - `link_id`: an identifier linking the carbohydrate entry to the bolus it triggered, `NA` if not available (see [Linking boluses and carbohydrates](#linking-boluses-and-carbohydrates)).
 - **`SMBG`**: self-monitored blood glucose, one row per measurement
     - `value`: the measured SMBG value, always in mg/dL (readings exported in mmol/L are converted).
     - `unit`: the unit of `value` (always `mg/dL`).
@@ -153,6 +155,15 @@ This distinction matters because a summed total can never be more complete than 
 
 Note that there is no `total_basal` for mylife, since a mylife export contains no basal data at all, and none for CareLink, since a CareLink export reports only the *scheduled* basal rates rather than the basal insulin effectively delivered. For the same reason, neither platform yields a cleaned `basal` data type. A Dexcom Clarity export carries neither, since it is a CGM export and contains no insulin data at all.
 
+### Linking boluses and carbohydrates
+
+Since the cleaned data is split by data type, a bolus and the carbohydrates entered for it in the bolus calculator end up in two different data frames. For exports that are informative about which carbohydrate entry triggered which bolus, `aidR` keeps this information in the column `link_id` of both `bolus` and `carbs`: rows sharing a `link_id` belong to the same event. Here, the key is built from the content of the event (including participant identifier, format, timestamp and amounts). This is the case for
+
+- **Glooko** and **Tandem Source**, where the bolus files hold the bolus and the entered carbohydrates in the same row, and
+- **Tidepool** exports with a `Bolus Calculator` sheet, where the `Bolus` column refers to the `Id` of the bolus in the `Bolus` sheet.
+
+For all other platforms (CareLink, mylife, YourLoops), and for Tidepool exports with a `Food` sheet, `link_id` is `NA`. The same goes for boluses delivered without entering carbohydrates. While it would be possible to match bolus and carbohydrate entries for these platforms using timestamps, aidR currently does not implement this.
+
 ## Filtering
 
 AID data is often noisy and may require additional filtering. While we encourage users to inspect the parsed data for platform-specific issues, aidR implements a few filters that we have found particularly useful. CGM data in particular is frequently affected in two ways: individual values may be physiologically implausible (below or above the range a sensor can measure), and the same period may be covered by two overlapping data streams whose timestamps are shifted by a few seconds or minutes but that otherwise carry the same signal (often the case for DIY open-source systems).
@@ -163,7 +174,7 @@ nrow(data_clean$cgm)
 data_clean_filter <- filter_CGM(data_clean)
 nrow(data_clean_filter$cgm)
 ```
-The two truncation bounds and the downsampling interval can each be adjusted or disabled: `truncate_min_cgm` (default 40 mg/dL), `truncate_max_cgm` (default 400 mg/dL), and `min_minutes_difference_cgm` (default 5 minutes); set any of them to `NULL` to skip that particular step. At present only CGM is filtered, and only once it has been cleaned (i.e. after `parse_data(clean = TRUE)`); all other data types are returned unchanged.
+The two truncation bounds and the downsampling interval can each be adjusted or disabled: `truncate_min_cgm` (default 40 mg/dL), `truncate_max_cgm` (default 400 mg/dL), and `min_minutes_difference_cgm` (default 5 minutes); set any of them to `NULL` to skip that particular step. Only CGM is filtered, and only once it has been cleaned (i.e. after `parse_data(clean = TRUE)`); all other data types are returned unchanged.
 
 ## Checking data completeness
 

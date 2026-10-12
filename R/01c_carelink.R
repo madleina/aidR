@@ -35,9 +35,6 @@ read_carelink <- function(id, filename) {
   insulin_action_curve <- .get_carelink_insulin_action_curve_over_time.aidR(dfs_new[[1]])
   device_changes <- .get_carelink_device_changes.aidR(dfs_new[[1]])
 
-  # Match bolus and BWZ
-  bolus <- .match_carelink_BWZ_bolus.aidR(bolus, bwz)
-
   data <- list(
     SMBG = SMBG, scheduled_basal_rates = scheduled_basal_rates, temp_basal = temp_basal,
     bolus = bolus, prime = prime, alerts = alerts, corr_bolus_info = corr_bolus_info,
@@ -676,33 +673,6 @@ clean.carelink <- function(data, id, ...) {
   return(found[[1]])
 }
 
-#' Match bolus wizard entries to bolus entries from a CareLink export
-#'
-#' @param bolus A data frame containing bolus entries.
-#' @param bwz A data frame containing bolus wizard entries.
-#'
-#' @return A data frame containing bolus entries, with an extra column indicating the index of a matching bolus wizard entry.
-#'
-#' @keywords internal
-.match_carelink_BWZ_bolus.aidR <- function(bolus, bwz) {
-  bolus$ix_in_bwz <- NA
-  for (i in 1:nrow(bolus)) {
-    amount_match <- bwz$`BWZ Estimate (U)` == bolus$`Bolus Volume Selected (U)`[i]
-    time_match <- abs(difftime(bwz$timestamp, bolus$timestamp[i])) < seconds(30)
-    match <- which(amount_match & time_match)
-
-    if (length(match) == 1) {
-      bolus$ix_in_bwz[i] <- match
-    } else if (length(match) > 1) {
-      # take the closer one
-      match <- match[which.min(abs(difftime(bwz$timestamp[match], bolus$timestamp[i])))]
-      bolus$ix_in_bwz[i] <- match
-    }
-    # Else no match: Is ok
-  }
-  return(bolus)
-}
-
 #' Parse all entries corresponding to sensor calibration in a CareLink export
 #'
 #' @param df A data frame obtained from reading a CareLink file.
@@ -878,11 +848,12 @@ clean.carelink <- function(data, id, ...) {
       },
       unit = "U",
       timezone_offset = NA,
-      pump_name = NA
+      pump_name = NA,
+      link_id = NA # cannot be linked to carbs
     ) %>%
     select(
       "id", "format", "timestamp", "timezone_offset", "type", "total", "normal",
-      "extended", "unit", "duration_extended", "pump_name"
+      "extended", "unit", "duration_extended", "pump_name", "link_id"
     )
 
   # Remove all boluses where nothing was delivered
@@ -924,11 +895,12 @@ clean.carelink <- function(data, id, ...) {
       unit = variant$unit,
       label = NA,
       estimated_absorption_duration = NA,
-      is_hypo_treatment = NA
+      is_hypo_treatment = NA,
+      link_id = NA # cannot be linked to boluses
     ) %>%
     select(
       "id", "format", "timestamp", "timezone_offset", "value", "unit",
-      "label", "estimated_absorption_duration", "is_hypo_treatment"
+      "label", "estimated_absorption_duration", "is_hypo_treatment", "link_id"
     )
 
   return(carbs)

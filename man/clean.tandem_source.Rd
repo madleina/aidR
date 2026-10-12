@@ -16,7 +16,7 @@
 \value{
 A named list with the cleaned data, named according to the data type
 of \code{data}: \code{cgm}, \code{basal}, \code{bolus}, \code{carbs} and
-\code{total_bolus} (the latter three are extracted from the bolus file),
+\code{total_bolus} (the latter three are extracted from the bolus file;
 \code{total_basal} (extracted from the hourly basal file) or \code{SMBG}.
 \code{NULL} for all other data types, which are not cleaned.
 }

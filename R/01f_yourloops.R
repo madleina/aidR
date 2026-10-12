@@ -282,10 +282,11 @@ clean.yourloops <- function(data, id, ...) {
       extended = 0,
       unit = "U",
       duration_extended = NA,
-      pump_name = NA
+      pump_name = NA,
+      link_id = NA # cannot be linked to carbs
     ) %>%
     select("id", "format", "timestamp", "timezone_offset", "type", "total", "normal", 
-           "extended", "unit", "duration_extended", "pump_name")
+           "extended", "unit", "duration_extended", "pump_name", "link_id")
   
   return(bolus)
 }
@@ -316,10 +317,11 @@ clean.yourloops <- function(data, id, ...) {
       unit = "g",
       label = paste0("is_input_meal_fat_", .data$is_input_meal_fat),
       estimated_absorption_duration = NA,
-      is_hypo_treatment = NA
+      is_hypo_treatment = NA,
+      link_id = NA # cannot be linked to boluses
     ) %>%
     select("id", "format", "timestamp", "timezone_offset", "value", "unit", 
-           "label", "estimated_absorption_duration", "is_hypo_treatment")
+           "label", "estimated_absorption_duration", "is_hypo_treatment", "link_id")
   
   return(carbs)
 }
@@ -351,10 +353,11 @@ clean.yourloops <- function(data, id, ...) {
       unit = "g",
       label = "rescuecarbs",
       estimated_absorption_duration = NA,
-      is_hypo_treatment = TRUE
+      is_hypo_treatment = TRUE,
+      link_id = NA # cannot be linked to boluses
     ) %>%
     select("id", "format", "timestamp", "timezone_offset", "value", "unit", 
-           "label", "estimated_absorption_duration", "is_hypo_treatment")
+           "label", "estimated_absorption_duration", "is_hypo_treatment", "link_id")
   
   return(carbs)
 }

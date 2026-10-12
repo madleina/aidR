@@ -58,9 +58,10 @@ clean.glooko <- function(data, id, ...) {
     return(list(basal = .format_basal_glooko.aidR(id, data)))
     return(data)
   } else if (names(data) == "bolus") {
+    link_id <- .link_bolus_carbs_glooko.aidR(id, data)
     return(list(
-      bolus = .format_bolus_glooko.aidR(id, data),
-      carbs = .format_carbs_glooko.aidR(id, data)
+      bolus = .format_bolus_glooko.aidR(id, data, link_id),
+      carbs = .format_carbs_glooko.aidR(id, data, link_id)
     ))
   } else if (names(data) == "total_insulin") {
     return(list(
@@ -391,10 +392,13 @@ clean.glooko <- function(data, id, ...) {
 #'
 #' @param id Character or numeric participant identifier.
 #' @param data A data frame containing the bolus data from a Glooko file.
+#' @param link_id A character vector with one key per row of \code{data},
+#'   linking the bolus to the carbohydrate entry of the same row. Default 
+#'   \code{NA}.
 #'
 #' @return A data frame containing the formatted and cleaned bolus data.
 #' @keywords internal
-.format_bolus_glooko.aidR <- function(id, data) {
+.format_bolus_glooko.aidR <- function(id, data, link_id = NA) {
   data <- data.frame(unclass(data))
 
   # Rename columns (for different languages)
@@ -447,10 +451,11 @@ clean.glooko <- function(data, id, ...) {
       duration_extended = NA, # not given (also not for extended bolus)
       timezone_offset = NA, # not given
       pump_name = NA, # not given
-      unit = "U"
+      unit = "U",
+      link_id = link_id
     ) %>%
     select("id", "format", "timestamp", "timezone_offset", "type", "total", 
-           "normal", "extended", "unit", "duration_extended", "pump_name")
+           "normal", "extended", "unit", "duration_extended", "pump_name", "link_id")
   
   return(data)
 }
@@ -459,15 +464,38 @@ clean.glooko <- function(data, id, ...) {
 # Functions for carbs
 #------------------------------
 
+#' Link boluses and carbohydrate entries of a Glooko bolus file
+#'
+#' Each row of the bolus file corresponds to a bolus together with the 
+#' carbohydrates entered for it in the bolus calculator. Rows with carbohydrates
+#' get a \code{link_id}.
+#'
+#' @param id Character or numeric participant identifier.
+#' @param data A data frame containing the bolus data from a Glooko file.
+#'
+#' @return A character vector with one key per row of \code{data}, \code{NA}
+#'   for rows without carbohydrates.
+#' @keywords internal
+.link_bolus_carbs_glooko.aidR <- function(id, data) {
+  data <- data.frame(unclass(data))
+  
+  # Columns: 1 timestamp, 4 carbs input, 6-8 insulin delivered (total, initial, extended),
+  .create_link_id.aidR(id, "glooko", data[, 1], data[, 4], data[, 6], data[, 7], data[, 8],
+                       linked = data[, 4] > 0)
+}
+
 #' Format and clean carbohydrate data from a Glooko export
 #'
 #' @param id Character or numeric participant identifier.
 #' @param data A data frame containing the bolus data from a Glooko file, which
 #'   holds the carbohydrates entered into the bolus calculator.
+#' @param link_id A character vector with one key per row of \code{data},
+#'   linking the carbohydrate to the bolus entry of the same row. Default 
+#'   \code{NA}.
 #'
 #' @return A data frame containing the formatted and cleaned carbohydrate data.
 #' @keywords internal
-.format_carbs_glooko.aidR <- function(id, data) {
+.format_carbs_glooko.aidR <- function(id, data, link_id = NA) {
   data <- data.frame(unclass(data))
   
   # 4th column in entered carbs. Filter on non-zero carbs
@@ -475,7 +503,8 @@ clean.glooko <- function(data, id, ...) {
                      format = "glooko",
                      timestamp = data[, 1],
                      timezone_offset = NA,
-                     value = data[, 4])
+                     value = data[, 4],
+                     link_id = link_id)
   
   data <- data %>%
     filter(.data$value > 0) %>%
@@ -484,7 +513,9 @@ clean.glooko <- function(data, id, ...) {
       label = NA,
       estimated_absorption_duration = NA,
       is_hypo_treatment = NA
-    )
+    ) %>%
+    select("id", "format", "timestamp", "timezone_offset", "value", "unit", 
+           "label", "estimated_absorption_duration", "is_hypo_treatment", "link_id")
   
   return(data)
 }

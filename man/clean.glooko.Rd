@@ -15,11 +15,10 @@
 }
 \value{
 A named list with the cleaned data, named according to the data type
-of \code{data}: \code{cgm}, \code{basal}, \code{bolus} and \code{carbs}
-(both are extracted from the bolus file), \code{total_basal} and
-\code{total_bolus} (both are extracted from the daily aggregated insulin
-file) or \code{SMBG}. \code{NULL} for all other data types, which are not
-cleaned.
+of \code{data}: \code{cgm}, \code{basal}, \code{bolus} and \code{carbs},
+\code{total_basal} and \code{total_bolus} (both are extracted from the
+daily aggregated insulin file) or \code{SMBG}.
+\code{NULL} for all other data types, which are not cleaned.
 }
 \description{
 Format and clean the Glooko data to keep relevant columns only

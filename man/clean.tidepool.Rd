@@ -17,7 +17,8 @@
 A named list with the cleaned data, with entries \code{cgm},
 \code{basal}, \code{bolus}, \code{SMBG} and \code{carbs}. Carbohydrates are
 taken from the Food sheet or, if that sheet is absent, from the Bolus
-Calculator sheet.
+Calculator sheet. Only in the latter case are \code{bolus} and
+\code{carbs} linked by \code{link_id}; otherwise it is \code{NA}.
 }
 \description{
 Format and clean the Tidepool data to keep relevant columns only

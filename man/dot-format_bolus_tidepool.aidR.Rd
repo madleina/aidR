@@ -4,12 +4,16 @@
 \alias{.format_bolus_tidepool.aidR}
 \title{Format and clean bolus data from a Tidepool export}
 \usage{
-.format_bolus_tidepool.aidR(id, bolus)
+.format_bolus_tidepool.aidR(id, bolus, link_id = NULL)
 }
 \arguments{
 \item{id}{Character or numeric participant identifier.}
 
 \item{bolus}{A data frame containing the bolus data from a Tidepool file.}
+
+\item{link_id}{A character vector with one key per row of \code{bolus},
+linking the bolus to its carbohydrate entries. \code{NULL} if unknown,
+which results in \code{NA}.}
 }
 \value{
 A data frame containing the formatted and cleaned bolus data.

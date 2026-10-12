@@ -97,3 +97,4 @@ When `parse_data` is run with `clean = TRUE`, the cleaned data types are built f
 - When `clean = TRUE`, for consistency with the other formats the `timestamp` column instead holds local (wall-clock) time, while `timezoneOffSet` remains the same offset. UTC time can therefore be recovered by `UTC = timestamp - timezoneOffSet`.
 - YourLoops reports no daily insulin aggregate, so `total_basal` and `total_bolus` are summed from the cleaned `basal` and `bolus` data and carry `source = "summed"`.
 - Biphasic (dual-wave) boluses are exported as two separate rows rather than one combined event. `aidR` keeps them separate but flags them, so they can be recombined if needed.
+- `link_id` is always `NA` for `bolus` and `carbs`: the export does not record which carbohydrate entry triggered which bolus. Matching them by timestamp and amount is not implemented.

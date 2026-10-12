@@ -4,13 +4,17 @@
 \alias{.format_carbs_tandem_source.aidR}
 \title{Format and clean carbohydrate data from a Tandem Source export}
 \usage{
-.format_carbs_tandem_source.aidR(id, carbs)
+.format_carbs_tandem_source.aidR(id, carbs, link_id = NA)
 }
 \arguments{
 \item{id}{Character or numeric participant identifier.}
 
 \item{carbs}{A data frame containing the bolus data from a Tandem Source file,
 which holds the carbohydrates entered into the bolus calculator.}
+
+\item{link_id}{A character vector with one key per row of \code{carbs},
+linking the carbohydrate entry to the bolus of the same row.
+Default \code{NA}.}
 }
 \value{
 A data frame containing the formatted and cleaned carbohydrate data.

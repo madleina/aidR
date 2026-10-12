@@ -94,3 +94,4 @@ When `parse_data` is run with `clean = TRUE`, the cleaned data types are built f
 - CGM and SMBG values are reported in mg/dL or mmol/L depending on the account settings; `aidR` converts them to mg/dL automatically.
 - Timestamps carry a per-row UTC offset, so `timezone_offset` is populated (unlike most other export formats, where only local wall-clock time is available).
 - Tidepool reports no daily insulin aggregate, so `total_basal` and `total_bolus` are summed from the cleaned `basal` and `bolus` data and carry `source = "summed"`.
+- If carbohydrates are taken from the `Bolus Calculator` sheet, its `Bolus` column can be matched to the the `Id` column in the `Bolus` sheet to link bolus and carbohydrate entries. Carbohydrates from the `Food` sheet cannot be matched to boluses, and their `link_id` is `NA`.

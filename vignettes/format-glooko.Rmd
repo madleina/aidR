@@ -116,3 +116,4 @@ When `parse_data` is run with `clean = TRUE`, the cleaned data types are built f
 - Serial numbers are reported for some data types (e.g. basal, bolus) but are not mapped to a device/pump name.
 - Glooko is the only supported platform that reports the daily aggregated insulin itself, so `total_basal` and `total_bolus` both have `source = "reported"`. This matters for Omnipod users, whose basal rates cover manual mode only: their `basal` is sparse, while `total_basal` still holds the full amount delivered.
 - `sensor_name` for CGM is always `NA`, since Glooko exports do not report it.
+- Each row of the bolus file holds a bolus together with the carbohydrates entered for it, so `bolus` and `carbs` are linked by `link_id`. Boluses without carbohydrates have `link_id = NA`.
