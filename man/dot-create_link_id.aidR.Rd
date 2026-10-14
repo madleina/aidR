@@ -4,15 +4,13 @@
 \alias{.create_link_id.aidR}
 \title{Create a key linking bolus and carbohydrate entries of the same event}
 \usage{
-.create_link_id.aidR(id, format, ..., linked = TRUE)
+.create_link_id.aidR(id, ..., linked = TRUE)
 }
 \arguments{
-\item{id}{Character or numeric participant identifier.}
-
-\item{format}{Character string with the format (e.g. \code{"glooko"}).}
+\item{id}{Participant identifier.}
 
 \item{...}{One or more vectors of equal length, with one element per event,
-which together describe the event. Date-times are formatted to the second.}
+which together describe the event.}
 
 \item{linked}{Logical vector with one element per event (or a single value),
 \code{TRUE} if the event links a bolus to a carbohydrate entry. All other
@@ -30,7 +28,7 @@ data when cleaning, a unique identifier is created that is stored in both
 }
 \details{
 The key is built from the content of the event and consists of the
-participant id, the format and the fields passed in \code{...}
+participant id and the fields passed in \code{...}
 (e.g. timestamp and amounts), separated by \code{"|"}. Events that are
 identical in all fields are numbered in the order they appear in the export,
 which makes the key unique by construction. Identifiers given by the export

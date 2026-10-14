@@ -328,7 +328,7 @@ clean.tidepool <- function(data, id, ...){
            estimated_absorption_duration = .data$estimated_absorption_duration / 3600, # convert seconds to hours 
            unit = "g",
            is_hypo_treatment = NA,
-           link_id = NA_character_) %>% # cannot be linked to boluses
+           link_id = NA) %>% # cannot be linked to boluses
     rename(label = "Name") |> 
     select("id", "format", "timestamp", "timezone_offset", "value", "unit", 
            "label", "estimated_absorption_duration", "is_hypo_treatment", "link_id")
@@ -423,7 +423,7 @@ clean.tidepool <- function(data, id, ...){
   
   # Key built from the content of the bolus (columns that are absent are NA)
   col <- function(name) if (name %in% names(bolus)) bolus[[name]] else rep(NA, nrow(bolus))
-  key <- .create_link_id.aidR(id, "tidepool", as_datetime(col("Local Time")), col("Normal"), col("Extended"),
+  key <- .create_link_id.aidR(id, as_datetime(col("Local Time")), col("Normal"), col("Extended"),
                               col("Duration (mins)"),
                               linked = bolus$Id %in% bolus_calculator$Bolus[linked_calc])
   

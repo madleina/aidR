@@ -20,10 +20,15 @@
 #' @param clean Logical, if \code{TRUE} (the default), the main data types (CGM,
 #'   basal, bolus, carbohydrates and SMBG) are cleaned and standardized. If
 #'   \code{FALSE}, all data is returned as found in the export.
+#' @param ... Additional arguments passed on to the format-specific cleaning
+#'   methods, e.g. \code{merge_slow_carbs} for Glooko (see 
+#'   \code{\link{clean.glooko}}). Arguments that do not apply to a format are 
+#'   skipped. Ignored if \code{clean = FALSE}.
 #'
 #' @return A list with all data found for one individual, merged per data type
-#'   and sorted by \code{timestamp}. Duplicate rows are removed. 
-#'   \code{NULL} if no valid data files were found.
+#'   and sorted by \code{timestamp}. Duplicate rows are removed. Rows removed
+#'   during cleaning are stored in the attribute \code{removed}, see
+#'   \code{\link{removed_entries}}. \code{NULL} if no valid data files were found.
 #'
 #' @examples
 #' path <- system.file("extdata", "glooko_example.zip", package = "aidR")
@@ -37,8 +42,9 @@
 #' data <- parse_data(id = "1", paths = path)
 #' names(data)
 #' head(data$cgm)
+#'
 #' @export
-parse_data <- function(id, paths, clean = TRUE) {
+parse_data <- function(id, paths, clean = TRUE, ...) {
   cat(paste0("Parsing data for id ", id, "...\n"))
   data <- list()
   for (path in paths) {
@@ -46,7 +52,7 @@ parse_data <- function(id, paths, clean = TRUE) {
     # Note: this works recursively and deals with zipped files
     filenames <- .get_all_files_in_path.aidR(path)
     for (filename in filenames) {
-      data[[filename]] <- .process_file.aidR(filename, id, clean)
+      data[[filename]] <- .process_file.aidR(filename, id, clean, ...)
     }
   }
   # No valid files
@@ -91,12 +97,13 @@ clean <- function(data, id, ...) UseMethod("clean")
 #' @param filename Character string with the filename to parse.
 #' @param id Character or numeric participant identifier.
 #' @param clean Logical, if \code{TRUE}, the data will be cleaned and standardized.
+#' @param ... Additional arguments passed on to \code{clean()}.
 #'
 #' @return A list with the data found in the file. \code{NULL} if the file was
 #'   ignored or could not be parsed.
 #'
 #' @keywords internal
-.process_file.aidR <- function(filename, id, clean = TRUE) {
+.process_file.aidR <- function(filename, id, clean = TRUE, ...) {
   # Silently ignore non-data files
   filename <- .filter_relevant_files.aidR(filename)
   if (length(filename) == 0) {
@@ -122,7 +129,7 @@ clean <- function(data, id, ...) UseMethod("clean")
     data <- NULL
   }
   if (clean && !is.null(data)) {
-    data <- clean(data, id)
+    data <- clean(data, id, ...)
   }
   return(data)
 }
@@ -369,7 +376,7 @@ clean <- function(data, id, ...) UseMethod("clean")
 #' \code{bolus} and \code{carbs} (no link is encoded as \code{NA}).
 #'
 #' The key is built from the content of the event and consists of the 
-#' participant id, the format and the fields passed in \code{...} 
+#' participant id and the fields passed in \code{...} 
 #' (e.g. timestamp and amounts), separated by \code{"|"}. Events that are
 #' identical in all fields are numbered in the order they appear in the export,
 #' which makes the key unique by construction. Identifiers given by the export
@@ -377,7 +384,6 @@ clean <- function(data, id, ...) UseMethod("clean")
 #' itself.
 #'
 #' @param id Participant identifier.
-#' @param format Character string with the format (e.g. \code{"glooko"}).
 #' @param ... One or more vectors of equal length, with one element per event,
 #'   which together describe the event.
 #' @param linked Logical vector with one element per event (or a single value),
@@ -388,7 +394,7 @@ clean <- function(data, id, ...) UseMethod("clean")
 #'   \code{linked} is not \code{TRUE}.
 #'
 #' @keywords internal
-.create_link_id.aidR <- function(id, format, ..., linked = TRUE){
+.create_link_id.aidR <- function(id, ..., linked = TRUE){
   # Format: timestamp as Y-m-d H:M:S and everything else as character
   fields <- lapply(list(...), function(x){
     if (inherits(x, "POSIXt")) format(x, "%Y-%m-%d %H:%M:%S") else as.character(x)
@@ -400,11 +406,75 @@ clean <- function(data, id, ...) UseMethod("clean")
   if (n == 0){ return(character(0)) }
 
   # Create key: paste all info together
-  key <- paste(id, format, do.call(paste, c(fields, sep = "|")), sep = "|")
+  key <- paste(id, do.call(paste, c(fields, sep = "|")), sep = "|")
   # Make sure it is unique: if key from before is duplicated, this will add |1, |2 etc to it
   key <- paste(key, ave(seq_len(n), key, FUN = seq_along), sep = "|")
   # Everything else is NA
   key[!rep_len(linked %in% TRUE, n)] <- NA
   
   return(key)
+}
+
+#-------------------------------
+# Logging for filters
+#-------------------------------
+
+#' Harmonise column types across a list of data frames
+#'
+#' Prepares a list of data frames for row-binding by resolving column type
+#' mismatches. For every column present in more than one data frame, the
+#' classes are compared: if they all agree the column is left untouched,
+#' otherwise every occurrence of the column is coerced to the most general 
+#' common type.
+#'
+#' @param dfs A list of data frames.
+#'
+#' @return The input list with mismatched columns coerced to a common type.
+#'
+#' @keywords internal
+.harmonise_column_types.aidR <- function(dfs) {
+  all_cols <- unique(unlist(lapply(dfs, names)))
+  
+  for (col in all_cols) {
+    # first class of this column in each df that actually has it
+    classes <- vapply(dfs, function(df) {
+      if (col %in% names(df)) class(df[[col]])[1] else NA_character_
+    }, character(1))
+    present <- classes[!is.na(classes)]
+    
+    # all files agree (or only one file has it) -> leave untouched
+    if (length(unique(present)) <= 1) next
+    
+    target <- .most_general_class.aidR(present)
+    
+    dfs <- lapply(dfs, function(df) {
+      if (col %in% names(df)) df[[col]] <- .coerce_to.aidR(df[[col]], target)
+      df
+    })
+  }
+  
+  dfs
+}
+
+#' Store removed rows with a reason
+#'
+#' @param data_id A list with all data found for one individual.
+#' @param type The data type the rows were removed from (e.g. \code{"carbs"}).
+#' @param rows A data frame with the removed rows.
+#' @param reason Why the rows were removed.
+#'
+#' @return \code{data_id} with \code{rows} added to the attribute
+#'   \code{removed}, with the column \code{removed_reason}.
+#'
+#' @keywords internal
+.log_removed.aidR <- function(data_id, type, rows, reason){
+  if (is.null(rows) || nrow(rows) == 0) return(data_id)
+  rows$removed_reason <- reason
+  removed <- attr(data_id, "removed")
+  if (is.null(removed)) removed <- list()
+  # Types may differ (e.g. rows logged during cleaning vs. after merging) -> harmonise
+  removed[[type]] <- bind_rows(.harmonise_column_types.aidR(c(list(removed[[type]]), list(rows))))
+  
+  attr(data_id, "removed") <- removed
+  data_id
 }

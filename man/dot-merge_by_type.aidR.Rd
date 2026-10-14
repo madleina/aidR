@@ -12,7 +12,8 @@ per parsed file.}
 }
 \value{
 A list with all data found for one individual, with one entry per data
-type.
+type. Rows removed during cleaning (attribute \code{removed} of each file)
+are merged by type as well and stored in the attribute \code{removed}.
 }
 \description{
 Merge all data available for one individual and one data type

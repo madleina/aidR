@@ -11,11 +11,13 @@ export(check_completeness)
 export(check_completeness_range)
 export(check_insulin_totals)
 export(filter_CGM)
+export(filter_carbs)
 export(get_cgmquantify_format)
 export(get_iglu_format)
 export(merge_all)
 export(parse_data)
 export(plot_day)
+export(removed_entries)
 export(write_DIAX_format)
 importFrom(dplyr,
   across,
@@ -80,6 +82,7 @@ importFrom(rjson,
   toJSON
 )
 importFrom(rlang,.data)
+importFrom(stats,ave)
 importFrom(stringr,str_extract)
 importFrom(tidyr,
   "%>%",
@@ -87,6 +90,7 @@ importFrom(tidyr,
 )
 importFrom(tools,file_ext)
 importFrom(utils,
+  combn,
   read.csv,
   timestamp,
   type.convert,

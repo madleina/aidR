@@ -18,7 +18,6 @@ for rows without carbohydrates.
 \description{
 Each row of the bolus file corresponds to a bolus together with the
 carbohydrates entered for it in the bolus calculator. Rows with carbohydrates
-get a \code{link_id}, built from the timestamp, the carbohydrates, the
-insulin delivered and the serial number (see \code{.create_link_id.aidR()}).
+get a \code{link_id}.
 }
 \keyword{internal}

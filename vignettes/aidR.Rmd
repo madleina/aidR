@@ -24,7 +24,7 @@ The package supports the following steps:
 
 - **Read** every export file belonging to one subject (`parse_data(clean = FALSE)`).
 - **Clean** the most important data types (CGM, basal, bolus, carbohydrate, and SMBG) into an interchangeable format (`parse_data(clean = TRUE)`).
-- **Filter** the merged data, e.g. to remove artefactual or duplicated CGM readings (`filter_CGM()`).
+- **Filter** the merged data, e.g. to remove artefactual or duplicated CGM readings (`filter_CGM()`) or overwritten carbohydrate entries (`filter_carbs()`).
 - **Check completeness** of the merged data, e.g. to flag missing data types or missing days (`check_completeness()`, `check_completeness_range()`), and verify that the insulin recorded in the individual data points matches the daily totals reported by the export (`check_insulin_totals()`).
 - **Plot** daily data of one subject, with CGM, basal, bolus, carbohydrate, and SMBG data in one figure (`plot_day()`).
 - **Merge across subjects** into one long-format data set for the whole study population (`merge_all()`).
@@ -164,6 +164,13 @@ Since the cleaned data is split by data type, a bolus and the carbohydrates ente
 
 For all other platforms (CareLink, mylife, YourLoops), and for Tidepool exports with a `Food` sheet, `link_id` is `NA`. The same goes for boluses delivered without entering carbohydrates. While it would be possible to match bolus and carbohydrate entries for these platforms using timestamps, aidR currently does not implement this.
 
+### Slowly absorbed carbohydrates in Glooko
+
+CamAPS lets the user flag carbohydrates as slowly absorbed (over 3 to 4 hours), and Glooko exports such an intake as a series of equal-sized entries, one every 30 minutes (each 30 +/- 5 minutes after the previous one, possibly with unrelated entries in between). When cleaning Glooko data, a series of exactly 6, 7 or 8 such entries is merged into its first entry, with the summed amount and an `estimated_absorption_duration` of 0.5 hours per entry. The other entries and their zero boluses are removed, and can be inspected with `removed_entries()`. This keeps the data consistent with platforms that do not split slowly absorbed carbohydrates. The merging can be switched off via `parse_data()`:
+```{r, eval = FALSE}
+data <- parse_data(id = "1", paths = path, merge_slow_carbs = FALSE)
+```
+
 ## Filtering
 
 AID data is often noisy and may require additional filtering. While we encourage users to inspect the parsed data for platform-specific issues, aidR implements a few filters that we have found particularly useful. CGM data in particular is frequently affected in two ways: individual values may be physiologically implausible (below or above the range a sensor can measure), and the same period may be covered by two overlapping data streams whose timestamps are shifted by a few seconds or minutes but that otherwise carry the same signal (often the case for DIY open-source systems).
@@ -175,6 +182,20 @@ data_clean_filter <- filter_CGM(data_clean)
 nrow(data_clean_filter$cgm)
 ```
 The two truncation bounds and the downsampling interval can each be adjusted or disabled: `truncate_min_cgm` (default 40 mg/dL), `truncate_max_cgm` (default 400 mg/dL), and `min_minutes_difference_cgm` (default 5 minutes); set any of them to `NULL` to skip that particular step. Only CGM is filtered, and only once it has been cleaned (i.e. after `parse_data(clean = TRUE)`); all other data types are returned unchanged.
+
+Carbohydrate entries can be overwritten in the bolus calculator: carbs are entered, the bolus is not delivered (or cancelled), and the carbs are entered again, with a bolus, shortly after or before. Some platforms (mostly Glooko) export all of these entries, so the same meal would be counted more than once. `filter_carbs()` removes a carbohydrate entry if
+
+- its bolus is zero. The bolus is found via `link_id` (see [Linking boluses and carbohydrates](#linking-boluses-and-carbohydrates)), so only entries linked to a bolus can be removed. For platforms without links (CareLink, mylife, YourLoops, Tidepool with a `Food` sheet), nothing is removed;
+- another carbohydrate entry of the same format (and with a different `link_id`) lies at most `max_minutes_overwrite` minutes (2 minutes by default) before or after it. The order of the two entries does not matter, and the bolus of the other entry is not checked;
+- it is not flagged as a hypo treatment.
+
+Slowly absorbed carbohydrates that were merged during cleaning (see [Slowly absorbed carbohydrates in Glooko](#slowly-absorbed-carbohydrates-in-glooko)) are never removed as overwritten.
+
+The zero bolus of a removed entry is removed from the `bolus` data as well. Setting `max_minutes_overwrite = NULL` switches the filter off, and all removed rows can be inspected with `removed_entries()`, together with the reason and, for carbohydrates, the entry that overwrote them (`matched_to_timestamp`, `matched_to_value`):
+```{r}
+data_clean_filter <- filter_carbs(data_clean_filter)
+removed_entries(data_clean_filter)
+```
 
 ## Checking data completeness
 
@@ -300,6 +321,7 @@ options(warn = 1) # warn immediately
 for (id in ids) {
   all_data[[id]]          <- parse_data(id, input$paths[input$id == id])
   all_data[[id]]          <- filter_CGM(all_data[[id]])
+  all_data[[id]]          <- filter_carbs(all_data[[id]])
   check_completeness(all_data[[id]])
   check_insulin_totals(all_data[[id]])
 }

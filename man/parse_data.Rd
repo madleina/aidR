@@ -4,7 +4,7 @@
 \alias{parse_data}
 \title{Parse data files for a given participant ID}
 \usage{
-parse_data(id, paths, clean = TRUE)
+parse_data(id, paths, clean = TRUE, ...)
 }
 \arguments{
 \item{id}{Character or numeric participant identifier. Used for logging and
@@ -17,16 +17,17 @@ extracted automatically.}
 \item{clean}{Logical, if \code{TRUE} (the default), the main data types (CGM,
 basal, bolus, carbohydrates and SMBG) are cleaned and standardized. If
 \code{FALSE}, all data is returned as found in the export.}
+
+\item{...}{Additional arguments passed on to the format-specific cleaning
+methods, e.g. \code{merge_slow_carbs} for Glooko (see
+\code{\link{clean.glooko}}). Arguments that do not apply to a format are
+skipped. Ignored if \code{clean = FALSE}.}
 }
 \value{
 A list with all data found for one individual, merged per data type
-and sorted by \code{timestamp}. Duplicate rows are removed, ignoring the
-\code{format} and \code{link_id} columns, so the same data exported from
-two platforms is kept only once. Where the export records which
-carbohydrate entry triggered which bolus (Glooko, Tandem Source, and
-Tidepool with a Bolus Calculator sheet), \code{bolus} and \code{carbs}
-share a key in the column \code{link_id}; it is \code{NA} otherwise.
-\code{NULL} if no valid data files were found.
+and sorted by \code{timestamp}. Duplicate rows are removed. Rows removed
+during cleaning are stored in the attribute \code{removed}, see
+\code{\link{removed_entries}}. \code{NULL} if no valid data files were found.
 }
 \description{
 Iterates over one or more paths, discovers all contained files (including
@@ -46,4 +47,5 @@ head(data_raw$cgm)
 data <- parse_data(id = "1", paths = path)
 names(data)
 head(data$cgm)
+
 }

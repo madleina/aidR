@@ -4,23 +4,49 @@
 \alias{clean.glooko}
 \title{Format and clean the Glooko data to keep relevant columns only}
 \usage{
-\method{clean}{glooko}(data, id, ...)
+\method{clean}{glooko}(data, id, merge_slow_carbs = TRUE, ...)
 }
 \arguments{
 \item{data}{An instance of class \code{glooko}, wrapping a named list with data of a particular data type.}
 
 \item{id}{Character or numeric participant identifier.}
 
+\item{merge_slow_carbs}{Logical, if \code{TRUE} (the default), slowly
+absorbed carbohydrates are merged (see Details).}
+
 \item{...}{Additional arguments passed to methods.}
 }
 \value{
 A named list with the cleaned data, named according to the data type
-of \code{data}: \code{cgm}, \code{basal}, \code{bolus} and \code{carbs},
-\code{total_basal} and \code{total_bolus} (both are extracted from the
-daily aggregated insulin file) or \code{SMBG}.
-\code{NULL} for all other data types, which are not cleaned.
+of \code{data}: \code{cgm}, \code{basal}, \code{bolus} and \code{carbs}
+(both are extracted from the bolus file), \code{total_basal} and
+\code{total_bolus} (both are extracted from the daily aggregated insulin
+file) or \code{SMBG}. \code{NULL} for all other data types, which are not
+cleaned.
 }
 \description{
-Format and clean the Glooko data to keep relevant columns only
+\strong{Slowly absorbed carbohydrates.} In CamAPS, users can flag
+carbohydrates as slowly absorbed (over 3 to 4 hours). Glooko exports such an
+intake as a series of equal-sized entries, one every 30 minutes. Because
+these entries are not separate intakes, this function merges them back into a single
+entry if \code{merge_slow_carbs = TRUE}. This keeps the data consistent with
+export platforms that do not split slowly absorbed carbohydrates (e.g.
+mylife), so that later filtering and duplicate detection across platforms
+work correctly.
+}
+\details{
+A series is merged if
+\itemize{
+\item all entries have the same amount,
+\item each entry lies 30 +/- 5 minutes after the previous one (unrelated
+entries in between are ignored), and
+\item the series consists of exactly 6, 7, or 8 entries (corresponding to
+2 to 3 hours absorption time, every 30 minutes).
+}
+The merged entry takes the time and \code{link_id} of the first entry. Its
+amount is the sum of all entries, and \code{estimated_absorption_duration}
+is set to 0.5 hours per entry (e.g. 3 hours for 6 entries). The zero-unit
+boluses linked to the other entries are removed. All removed rows are
+stored in the attribute \code{removed}; see \code{\link{removed_entries}}.
 }
 \keyword{internal}

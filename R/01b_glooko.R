@@ -31,8 +31,33 @@ read_glooko <- function(id, filename) {
 
 #' Format and clean the Glooko data to keep relevant columns only
 #' 
+#' \strong{Slowly absorbed carbohydrates.} In CamAPS, users can flag
+#' carbohydrates as slowly absorbed (over 3 to 4 hours). Glooko exports such an
+#' intake as a series of equal-sized entries, one every 30 minutes. Because
+#' these entries are not separate intakes, this function merges them back into a single
+#' entry if \code{merge_slow_carbs = TRUE}. This keeps the data consistent with
+#' export platforms that do not split slowly absorbed carbohydrates (e.g.
+#' mylife), so that later filtering and duplicate detection across platforms
+#' work correctly.
+#'
+#' A series is merged if
+#' \itemize{
+#'   \item all entries have the same amount,
+#'   \item each entry lies 30 +/- 5 minutes after the previous one (unrelated
+#'     entries in between are ignored), and
+#'   \item the series consists of exactly 6, 7, or 8 entries (corresponding to 
+#'   2 to 3 hours absorption time, every 30 minutes).
+#' }
+#' The merged entry takes the time and \code{link_id} of the first entry. Its
+#' amount is the sum of all entries, and \code{estimated_absorption_duration}
+#' is set to 0.5 hours per entry (e.g. 3 hours for 6 entries). The zero-unit
+#' boluses linked to the other entries are removed. All removed rows are
+#' stored in the attribute \code{removed}; see \code{\link{removed_entries}}.
+#'
 #' @param data An instance of class \code{glooko}, wrapping a named list with data of a particular data type.
 #' @param id Character or numeric participant identifier.
+#' @param merge_slow_carbs Logical, if \code{TRUE} (the default), slowly
+#'   absorbed carbohydrates are merged (see Details).
 #' @param ... Additional arguments passed to methods.
 #'
 #' @return A named list with the cleaned data, named according to the data type
@@ -43,7 +68,7 @@ read_glooko <- function(id, filename) {
 #'   cleaned.
 #' @keywords internal
 #' @exportS3Method
-clean.glooko <- function(data, id, ...) {
+clean.glooko <- function(data, id, merge_slow_carbs = TRUE, ...) {
   if (is.null(data)) {
     return(NULL)
   }
@@ -59,10 +84,14 @@ clean.glooko <- function(data, id, ...) {
     return(data)
   } else if (names(data) == "bolus") {
     link_id <- .link_bolus_carbs_glooko.aidR(id, data)
-    return(list(
+    out <- list(
       bolus = .format_bolus_glooko.aidR(id, data, link_id),
       carbs = .format_carbs_glooko.aidR(id, data, link_id)
-    ))
+    )
+    if (merge_slow_carbs) {
+      out <- .merge_slow_carbs.aidR(out)
+    }
+    return(out)
   } else if (names(data) == "total_insulin") {
     return(list(
       total_basal = .format_total_basal_glooko.aidR(id, data),
@@ -480,7 +509,7 @@ clean.glooko <- function(data, id, ...) {
   data <- data.frame(unclass(data))
   
   # Columns: 1 timestamp, 4 carbs input, 6-8 insulin delivered (total, initial, extended),
-  .create_link_id.aidR(id, "glooko", data[, 1], data[, 4], data[, 6], data[, 7], data[, 8],
+  .create_link_id.aidR(id, data[, 1], data[, 4], data[, 6], data[, 7], data[, 8],
                        linked = data[, 4] > 0)
 }
 
@@ -618,3 +647,92 @@ clean.glooko <- function(data, id, ...) {
   return(data)
 }
 
+#--------------------------------------------
+# Functions for merging slowly absorbed carbs
+#--------------------------------------------
+
+#' Merge slowly absorbed carbohydrates that Glooko split into 30-minute chunks
+#'
+#' See \code{clean.glooko()} for the rules. The other chunks and their zero
+#' boluses are removed, and all removed rows are logged.
+#'
+#' @param data_id A named list with the cleaned \code{carbs} and \code{bolus}
+#'   data of one Glooko bolus file.
+#'
+#' @return \code{data_id} with each series merged into its first entry.
+#'
+#' @keywords internal
+.merge_slow_carbs.aidR <- function(data_id){
+  series <- .find_slow_carbs.aidR(data_id$carbs)
+  if (length(series) == 0) { return(data_id) }
+  
+  carbs <- data_id$carbs
+  bolus <- data_id$bolus
+  first <- vapply(series, function(ix) ix[1], integer(1))
+  rest  <- unlist(lapply(series, function(ix) ix[-1]))
+  
+  # Merge into first entry: total amount, 30 minutes per chunk
+  carbs$value[first] <- vapply(series, function(ix) sum(as.numeric(carbs$value[ix])), numeric(1))
+  carbs$estimated_absorption_duration[first] <- lengths(series) * 0.5 # in hours
+  
+  # Store other chunks and their zero boluses that will be removed
+  removed <- carbs[rest, , drop = FALSE]
+  removed$matched_to_timestamp <- rep(carbs$timestamp[first], lengths(series) - 1)
+  removed$matched_to_value     <- rep(carbs$value[first], lengths(series) - 1)
+  rm_b <- which(bolus$link_id %in% carbs$link_id[rest] & as.numeric(bolus$total) %in% 0)
+  data_id <- .log_removed.aidR(data_id, "carbs", removed,
+                               reason = "merged into slowly absorbed carbohydrate entry")
+  data_id <- .log_removed.aidR(data_id, "bolus", bolus[rm_b, , drop = FALSE],
+                               reason = "zero bolus of merged slowly absorbed carbohydrate entry")
+  
+  # Actually remove
+  data_id$carbs <- carbs[-rest, , drop = FALSE]
+  if (length(rm_b) > 0) { data_id$bolus <- bolus[-rm_b, , drop = FALSE] }
+  
+  return(data_id)
+}
+
+#' Find series of slowly absorbed carbohydrates that Glooko split into 30-minute chunks
+#'
+#' @param carbs A data frame containing the cleaned carbohydrate data of one Glooko bolus file.
+#'
+#' @return A list with one element per series, holding the row indices of its
+#'   chunks in time order.
+#'
+#' @keywords internal
+.find_slow_carbs.aidR <- function(carbs){
+  # Find all non-zero carb entries from Glooko
+  ix <- which(carbs$format %in% "glooko" & as.numeric(carbs$value) > 0)
+
+  # Length of series: 6, 7, or 8 (corresponding to 2-3 hours, in 30min intervals)
+  n_chunks <- 6:8 
+  # accept +/- 5 minutes difference (not always exactly every 30 minutes)
+  tol_minutes <- 5
+  
+  used <- rep(FALSE, nrow(carbs))
+  series <- list()
+  
+  for (i in ix){
+    if (used[i]) next
+    # Chain entries: same amount, 30 +/- 5 minutes after the last one (take closest to 30)
+    chain <- i
+    repeat { # endless loop
+      # Calculate time difference between last element of chain and all candidates
+      last <- chain[length(chain)]
+      diff_time <- as.numeric(difftime(carbs$timestamp[ix], carbs$timestamp[last], units = "mins"))
+      # Candidates are within 30 +/- 5 minutes and have the same value as chain
+      ok <- !used[ix] & !(ix %in% chain) & abs(diff_time - 30) <= tol_minutes &
+        abs(as.numeric(carbs$value[ix]) - as.numeric(carbs$value[last])) < 1e-9
+      if (!any(ok)) break
+      # Append to chain
+      chain <- c(chain, ix[ok][which.min(abs(diff_time[ok] - 30))])
+    }
+    # Mark as used even if not merged, otherwise the tail of a too long series would be merged
+    used[chain] <- TRUE
+    if (length(chain) %in% n_chunks) {
+      series <- c(series, list(chain))
+    }
+  }
+  
+  return(series)
+}

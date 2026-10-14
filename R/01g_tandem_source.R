@@ -357,7 +357,7 @@ clean.tandem_source <- function(data, id, ...) {
 #'   for rows without carbohydrates.
 #' @keywords internal
 .link_bolus_carbs_tandem_source.aidR <- function(id, bolus) {
-  .create_link_id.aidR(id, "tandem_source", as_datetime(bolus$`Completion Date Time`), bolus$`Carb Size`,
+  .create_link_id.aidR(id, as_datetime(bolus$`Completion Date Time`), bolus$`Carb Size`,
                        bolus$`Insulin Delivered`, bolus$`Bolex Insulin Delivered`,
                        linked = bolus$`Carb Size` > 0)
 }

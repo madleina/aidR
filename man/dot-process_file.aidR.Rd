@@ -4,7 +4,7 @@
 \alias{.process_file.aidR}
 \title{Read a single file and dispatch it to the matching format}
 \usage{
-.process_file.aidR(filename, id, clean = TRUE)
+.process_file.aidR(filename, id, clean = TRUE, ...)
 }
 \arguments{
 \item{filename}{Character string with the filename to parse.}
@@ -12,6 +12,8 @@
 \item{id}{Character or numeric participant identifier.}
 
 \item{clean}{Logical, if \code{TRUE}, the data will be cleaned and standardized.}
+
+\item{...}{Additional arguments passed on to \code{clean()}.}
 }
 \value{
 A list with the data found in the file. \code{NULL} if the file was
