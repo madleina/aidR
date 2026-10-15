@@ -1,6 +1,13 @@
 ## Resubmission
 This is a resubmission. In this version I have:
 
+* Replaced cat() with message() in parse_data() so that console output can be suppressed
+* References: there are currently no publications describing the methods in this package
+* Added more functions for filtering data (filter_carbs() as well as the filtering near-duplicate step in parse_data()) 
+
+## Resubmission
+This is a resubmission. In this version I have:
+
 * Updated the man pages to effectively make use of the smaller example data set introduced previously
 
 ## Resubmission

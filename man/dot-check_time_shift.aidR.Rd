@@ -4,7 +4,16 @@
 \alias{.check_time_shift.aidR}
 \title{Warn if the entries of two formats are shifted by one hour}
 \usage{
-.check_time_shift.aidR(df, type, col, tol, max_minutes = 5, min_matches = 5)
+.check_time_shift.aidR(
+  df,
+  type,
+  col,
+  tol,
+  max_minutes = 5,
+  min_matches = 5,
+  col2 = NULL,
+  tol2 = NULL
+)
 }
 \arguments{
 \item{df}{A data frame with the cleaned data of one data type.}
@@ -20,6 +29,10 @@ near-duplicates.}
 
 \item{min_matches}{Minimum number of near-duplicates with the shift to give
 a warning.}
+
+\item{col2}{Optional name of a second column that must match as well, or \code{NULL}.}
+
+\item{tol2}{Maximum difference in \code{col2} between two near-duplicates.}
 }
 \value{
 \code{TRUE} (invisibly) if a warning was given, \code{FALSE} otherwise.

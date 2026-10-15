@@ -68,7 +68,13 @@ AID platforms differ in their file formats, variable names, units, timestamp con
 
 ## Installation
 
-Install `aidR` directly from github:
+Install `aidR` directly from CRAN:
+
+```r
+install.packages("aidR")
+```
+
+or get the latest version from github:
 
 ```r
 pak::pak("madleina/aidR")

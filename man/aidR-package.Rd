@@ -6,7 +6,7 @@
 \alias{aidR-package}
 \title{aidR: Reading and Standardizing Automated Insulin Delivery Data}
 \description{
-Parses the native exports of several automated insulin delivery (AID) platforms into a common, platform-independent format for continuous glucose monitoring (CGM), basal, bolus, carbohydrate, and self-monitored blood glucose (SMBG) data. Additional functions check completeness, produce visualizations, and convert the data to other formats.
+Parses the native exports of several automated insulin delivery (AID) platforms into a common, platform-independent format for continuous glucose monitoring (CGM), basal, bolus, carbohydrate, and self-monitored blood glucose (SMBG) data. Additional functions check completeness, filter, produce visualizations, and convert the data to other formats.
 }
 \seealso{
 Useful links:

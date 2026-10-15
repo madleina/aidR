@@ -1,7 +1,7 @@
 Package: aidR
 Type: Package
 Title: Reading and Standardizing Automated Insulin Delivery Data
-Version: 0.2.3
+Version: 0.2.4
 Authors@R: c(person("Madleina", "Caduff", 
                      role = c("aut", "cre"),
                      email = "madleina.caduff@dcberne.com",
@@ -19,7 +19,7 @@ Authors@R: c(person("Madleina", "Caduff",
 Description: Parses the native exports of several automated insulin delivery 
     (AID) platforms into a common, platform-independent format for continuous 
     glucose monitoring (CGM), basal, bolus, carbohydrate, and self-monitored 
-    blood glucose (SMBG) data. Additional functions check completeness, 
+    blood glucose (SMBG) data. Additional functions check completeness, filter,
     produce visualizations, and convert the data to other formats.
 License: GPL-3
 Encoding: UTF-8

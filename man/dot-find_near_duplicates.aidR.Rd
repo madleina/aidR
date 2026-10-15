@@ -4,7 +4,14 @@
 \alias{.find_near_duplicates.aidR}
 \title{Find near-duplicate entries from different formats}
 \usage{
-.find_near_duplicates.aidR(df, col, tol, max_minutes = 5)
+.find_near_duplicates.aidR(
+  df,
+  col,
+  tol,
+  max_minutes = 5,
+  col2 = NULL,
+  tol2 = NULL
+)
 }
 \arguments{
 \item{df}{A data frame with the cleaned data of one data type, sorted by
@@ -16,6 +23,11 @@
 
 \item{max_minutes}{Maximum time difference (in minutes) between two
 near-duplicates.}
+
+\item{col2}{Optional name of a second column that must match as well (e.g.
+the \code{duration} of basal entries), or \code{NULL}.}
+
+\item{tol2}{Maximum difference in \code{col2} between two near-duplicates.}
 }
 \value{
 A list with the row indices of the entries to remove

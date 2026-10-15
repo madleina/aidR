@@ -69,7 +69,17 @@ clean.dexcom_clarity <- function(data, id, ...) {
   # Try both ; and , as a separator (both can occur, depending on the language)
   for (sep in c(";", ",")) {
     ok <- tryCatch({
-      data <- read.csv(filename, sep = sep, nrows = 50)
+      data <- tryCatch(
+        read.csv(filename, sep = sep, nrows = 50),
+        error = function(e) {
+          return(NULL)
+        },
+        warning = function(e) {
+          return(NULL)
+        }
+      )
+      if (is.null(data)){ next }
+      
       ncol(data) == 14 &&
         grepl("Dexcom", data[4, 6], ignore.case = TRUE) &&
         any(grepl("EGV", data[, 3]))

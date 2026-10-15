@@ -118,8 +118,14 @@
 #'   \item have the same \code{unit}
 #'   \item lie at most \code{max_minutes} apart
 #'   \item differ in value by at most the tolerance of the data type
-#'     (\code{carbs}: 1 g, \code{SMBG}: 1 mg/dL, \code{bolus}: 0.05 U).
+#'     (\code{carbs}: 1 g, \code{SMBG}: 1 mg/dL, \code{bolus}: 0.05 U,
+#'     \code{basal}: 0.05 U/h).
 #' }
+#' Basal rates change frequently, so that neighbouring entries often have 
+#' similar rates. For \code{basal}, two entries must therefore lie at most 
+#' \code{max_minutes_basal} apart and their \code{duration} must differ by at 
+#' most \code{tolerance_basal_duration}. Entries with a missing \code{duration} 
+#' are never considered near-duplicates.
 #' Of each pair of duplicates, one entry is kept: the one with a \code{link_id},
 #' otherwise the one with more information. Its timestamp and value are used,
 #' and its missing information (e.g. a \code{label}) is filled from the other
@@ -136,6 +142,11 @@
 #' @param tolerance_carbs Tolerance for detecting duplicate carb entries, default 1 g.
 #' @param tolerance_SMBG Tolerance for detecting duplicate SMBG entries, default 1 mg/dL.
 #' @param tolerance_bolus Tolerance for detecting duplicate bolus entries, default 0.05 U.
+#' @param tolerance_basal Tolerance for detecting duplicate basal rates, default 0.05 U/h.
+#' @param tolerance_basal_duration Tolerance for the \code{duration} of duplicate
+#'   basal entries, in hours, default 1 minute.
+#' @param max_minutes_basal Maximum time difference (in minutes) between two
+#'   duplicate basal entries.
 #'
 #' @return \code{data_id} without the duplicates. Removed rows are logged
 #'   in the attribute \code{removed}, see \code{\link{removed_entries}}.
@@ -144,24 +155,31 @@
 .filter_near_duplicates.aidR <- function(data_id, max_minutes = 5,
                                          tolerance_carbs = 1,
                                          tolerance_SMBG = 1,
-                                         tolerance_bolus = 0.05
+                                         tolerance_bolus = 0.05,
+                                         tolerance_basal = 0.05,
+                                         tolerance_basal_duration = 1/60,
+                                         max_minutes_basal = 2
                                          ){
-  tolerances <- list(carbs = list(col = "value", tol = tolerance_carbs),
-                     SMBG  = list(col = "value", tol = tolerance_SMBG),
-                     bolus = list(col = "total", tol = tolerance_bolus))
+  # col/tol: value column and its tolerance; col2/tol2: optional second column that must match as well
+  tolerances <- list(carbs = list(col = "value", tol = tolerance_carbs, max_minutes = max_minutes),
+                     SMBG  = list(col = "value", tol = tolerance_SMBG,  max_minutes = max_minutes),
+                     bolus = list(col = "total", tol = tolerance_bolus, max_minutes = max_minutes),
+                     basal = list(col = "rate",  tol = tolerance_basal, max_minutes = max_minutes_basal,
+                                  col2 = "duration", tol2 = tolerance_basal_duration))
   
   for (type in intersect(names(tolerances), names(data_id))){
     df  <- data_id[[type]]
-    col <- tolerances[[type]]$col
+    tl  <- tolerances[[type]]
+    col <- tl$col
     
     # Only de-duplicate if data was cleaned
-    if (!all(c("format", "timestamp", col) %in% names(df))) { next }
+    if (!all(c("format", "timestamp", col, tl$col2) %in% names(df))) { next }
     
     # Warn if two formats seem to be shifted by one hour (e.g. daylight saving time)
-    .check_time_shift.aidR(df, type, col, tolerances[[type]]$tol, max_minutes)
+    .check_time_shift.aidR(df, type, col, tl$tol, tl$max_minutes, col2 = tl$col2, tol2 = tl$tol2)
     
     # Find indices of duplicates
-    ix <- .find_near_duplicates.aidR(df, col, tolerances[[type]]$tol, max_minutes)
+    ix <- .find_near_duplicates.aidR(df, col, tl$tol, tl$max_minutes, col2 = tl$col2, tol2 = tl$tol2)
     if (length(ix$remove) == 0) { next }
     
     # Log the entries to remove
@@ -208,11 +226,14 @@
 #'   near-duplicates.
 #' @param min_matches Minimum number of near-duplicates with the shift to give
 #'   a warning.
+#' @param col2 Optional name of a second column that must match as well, or \code{NULL}.
+#' @param tol2 Maximum difference in \code{col2} between two near-duplicates.
 #'
 #' @return \code{TRUE} (invisibly) if a warning was given, \code{FALSE} otherwise.
 #'
 #' @keywords internal
-.check_time_shift.aidR <- function(df, type, col, tol, max_minutes = 5, min_matches = 5){
+.check_time_shift.aidR <- function(df, type, col, tol, max_minutes = 5, min_matches = 5,
+                                   col2 = NULL, tol2 = NULL){
   formats <- unique(df$format)
   if (length(formats) < 2) { return(invisible(FALSE)) }
   
@@ -224,7 +245,7 @@
       is_second <- sub$format == pair[2]
       sub$timestamp[is_second] <- sub$timestamp[is_second] + shift * 60
       sub <- sub[order(sub$timestamp), , drop = FALSE]
-      length(.find_near_duplicates.aidR(sub, col, tol, max_minutes)$remove)
+      length(.find_near_duplicates.aidR(sub, col, tol, max_minutes, col2 = col2, tol2 = tol2)$remove)
     }
     n_0 <- n_matches(0)
     n_shift <- max(n_matches(-60), n_matches(60))
@@ -247,18 +268,24 @@
 #' @param tol Maximum difference in value between two near-duplicates.
 #' @param max_minutes Maximum time difference (in minutes) between two
 #'   near-duplicates.
+#' @param col2 Optional name of a second column that must match as well (e.g.
+#'   the \code{duration} of basal entries), or \code{NULL}.
+#' @param tol2 Maximum difference in \code{col2} between two near-duplicates.
 #'
 #' @return A list with the row indices of the entries to remove
 #'   (\code{remove}) and of the entry kept instead of each (\code{keep}).
 #'
 #' @keywords internal
-.find_near_duplicates.aidR <- function(df, col, tol, max_minutes = 5){
+.find_near_duplicates.aidR <- function(df, col, tol, max_minutes = 5, col2 = NULL, tol2 = NULL){
   n <- nrow(df)
   none <- list(remove = integer(0), keep = integer(0))
   if (n < 2 || length(unique(df$format)) < 2) return(none)
   
   value <- as.numeric(df[[col]])
   unit  <- if ("unit" %in% names(df)) df$unit else rep(NA, n)
+  # Second column: always matches if not given
+  value2 <- if (!is.null(col2)) as.numeric(df[[col2]]) else rep(0, n)
+  tol2   <- if (!is.null(col2)) tol2 else 0
   
   # Find all candidate pairs: look ahead while within max_minutes (df is sorted by time)
   pairs <- list()
@@ -267,9 +294,9 @@
     for (j in (i + 1):n){
       diff_time <- as.numeric(difftime(df$timestamp[j], df$timestamp[i], units = "mins"))
       if (is.na(diff_time) || diff_time > max_minutes) { break }
-      # Must be different format, same unit and (almost) the same value
+      # Must be different format, same unit and (almost) the same value (and second value, if given)
       if (df$format[i] != df$format[j] && identical(unit[i], unit[j]) &&
-          isTRUE(abs(value[i] - value[j]) <= tol)){
+          isTRUE(abs(value[i] - value[j]) <= tol) && isTRUE(abs(value2[i] - value2[j]) <= tol2)){
         pairs[[length(pairs) + 1]] <- c(i = i, j = j, diff_time = diff_time, diff_value = abs(value[i] - value[j]))
       }
     }

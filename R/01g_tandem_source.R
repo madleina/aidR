@@ -18,15 +18,14 @@
 #'
 #' @keywords internal
 read_tandem_source <- function(id, filename) {
-  # Get file type
-  file_type <- .get_tandem_source_file_type.aidR(filename)
-
   # Read file
-  data <- list()
-  data[[file_type]] <- .read_tandem_source_files.aidR(filename)
+  data <- .read_tandem_source_file.aidR(filename)
 
-  class(data) <- "tandem_source"
-
+  # Add class name
+  if (!is.null(data)) {
+    class(data) <- "tandem_source"
+  }
+  
   return(data)
 }
 
@@ -58,6 +57,7 @@ clean.tandem_source <- function(data, id, ...) {
     return(list(basal = .format_basal_tandem_source.aidR(id, data$basal)))
   } else if (names(data) == "bolus") {
     # Each row is a bolus and the carbs entered for it: link both
+    data$bolus <- .rename_bolus_tandem_source.aidR(data$bolus)
     link_id <- .link_bolus_carbs_tandem_source.aidR(id, data$bolus)
     bolus <- .format_bolus_tandem_source.aidR(id, data$bolus, link_id)
     return(list(bolus = bolus,
@@ -85,96 +85,184 @@ clean.tandem_source <- function(data, id, ...) {
 #'
 #' @keywords internal
 .is_tandem_source_format.aidR <- function(filename) {
-  file_type <- .get_tandem_source_file_type.aidR(filename)
-  return(!is.null(file_type))
-}
-
-#' A lookup with Tandem Source file characteristics
-#'
-#' @return A named list with data types and their expected headers. Each element
-#'   is a list of one or more alternative headers, as Tandem Source uses
-#'   different column names in different exports (e.g. \code{12 AM ... 11 PM}
-#'   versus \code{00 ... 23} for the hourly basal file).
-#'
-#' @keywords internal
-.get_tandem_source_file_lookup.aidR <- function() {
-  tandem_source_files <- list()
-
-  tandem_source_files$basal <- list(c("Device Type", "Serial Number",	"Event Date Time", "Commanded Basal Dose (units of insulin)"))
-  tandem_source_files$bolus <- list(c("Type", "Bolus Type", "Bolus Delivery Method", "BG", "Serial Number", "Completion Date Time", "Insulin Delivered", "Food Delivered", "Correction Delivered", "Completion Status Desc", "Bolex Start Date Time", "Bolex Completion Date Time", "Bolex Insulin Delivered", "Bolex Completion Status Desc", "Standard Percent", "Duration (mins)", "Carb Size", "Target BG", "Correction Factor",	"Carb Ratio"))
-  tandem_source_files$cgm <- list(c("Device Type", "Serial Number", "Description", "Event Date Time", "Readings"))
-  tandem_source_files$bg <- list(c("Device Type", "Serial Number", "Description", "Event Date Time", "BG", "Note"))
-  # The hourly basal file comes in two flavours: hours can either be named
-  # "12 AM" ... "11 PM" or "00" ... "23"
-  tandem_source_files$hourly_basal <- list(
-    c("Serial Number", "Event Date", "12 AM", "1 AM", "2 AM", "3 AM", "4 AM", "5 AM", "6 AM", "7 AM", "8 AM", "9 AM", "10 AM", "11 AM", "12 PM", "1 PM", "2 PM", "3 PM", "4 PM", "5 PM", "6 PM", "7 PM", "8 PM", "9 PM", "10 PM", "11 PM"),
-    c("Serial Number", "Event Date", "00", "01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20", "21", "22", "23")
-  )
-  
-  return(tandem_source_files)
-}
-
-#' Get the data type of a file from a Tandem Source export
-#'
-#' @param filename Character string with the filename to be checked.
-#'
-#' @return A character string with the data type, or \code{NULL} if there was no
-#'   match. Throws an error if multiple data types matched.
-#'
-#' @keywords internal
-.get_tandem_source_file_type.aidR <- function(filename) {
-  # Note: always in English
-  # Check number of columns and headers
-
   # Try opening file
   file <- tryCatch(
-    read.csv(filename, check.names = F),
+    read.csv(filename),
     error = function(e) {
       return(NULL)
     },
     warning = function(e) {
       return(NULL)
-    }
-  )
-  if (is.null(file)) {
-    return(NULL)
-  }
-  if (ncol(file) == 0) {
-    return(NULL)
-  }
-
-  lookup <- .get_tandem_source_file_lookup.aidR()
-
-  # Try to find appropriate file: a data type matches if any of its alternative
-  # headers matches
-  match <- which(sapply(lookup, function(headers) {
-    any(sapply(headers, function(x) {
-      if (length(x) != ncol(file)) return(FALSE)
-      all(mapply(function(pat, nm) startsWith(nm, pat), x, names(file)))
-    }))
-  }))
-
-  if (length(match) == 0) {
-    # no match
-    return(NULL)
-  } else if (length(match) == 1) {
-    return(names(match))
-  } else {
-    # more than one match -> should never happen as colnames are unique
-    stop("More than one match in Tandem Source files - should never happen, check lookup!")
-  }
+      }
+    )
+  if (is.null(file)){ return(FALSE) }
+   
+  tandem_files <- .get_tandem_source_file_lookup.aidR()
+   
+   # Loop over all file types in lookup
+   for (i in 1:length(tandem_files)) {
+     file_type <- tandem_files[[i]]
+     
+     # Check if it is this file type
+     if (.is_tandem_source_file_type.aidR(filename, file_type$expected_num_cols, file_type$numeric_cols, file_type$non_numeric_cols, file_type$expected_keyword)) {
+       return(TRUE)
+     }
+   }
+   return(FALSE)
 }
 
-#' Read a file from a Tandem Source export
+#' Check if a Tandem Source file corresponds to a particular data type
 #'
-#' @param filename Character string with the filename of the file to be read.
+#' @param filename Character string with the filename to be checked.
+#' @param expected_num_cols A numeric value with the expected number of columns of that file.
+#' @param numeric_cols A numeric vector corresponding to the column indices that contain numeric values.
+#' @param non_numeric_cols A numeric vector corresponding to the column indices that should not contain numeric values.
+#' @param expected_keyword A list with keys \code{name} and \code{col_ix}, corresponding to a keyword that should be present in a particular column.
+#'   If \code{name} holds several keywords, at least one of them must be present.
 #'
-#' @return A data frame containing the contents of the specified file.
+#' @return A logical value: \code{TRUE} if the file matches the data type format.
+#'   \code{FALSE} for empty files, whose columns can not be checked.
+#'
 #' @keywords internal
-.read_tandem_source_files.aidR <- function(filename) {
-  # Open file(s)
-  f <- read.csv(filename, check.names = F)
+.is_tandem_source_file_type.aidR <- function(filename, expected_num_cols, numeric_cols, non_numeric_cols = c(), expected_keyword = NULL) {
+  # Note: language may be different -> can not check headers directly
+  # Instead check if there are 'expected_num_cols' columns,
+  # if the expected numeric columns are indeed numeric
+  # and if a given column contains a particular keyword
+  
+  f <- read.csv(filename, check.names = FALSE)
+  
+  # Check if number of columns matches
+  if (ncol(f) != expected_num_cols) {
+    return(FALSE)
+  }
+  
+  # Check if a certain column contains a keyword (at least one of them, if several are given)
+  if (length(expected_keyword$name) > 0) {
+    values  <- unique(f[, expected_keyword$col_ix])
+    matches <- vapply(expected_keyword$name,
+                      \(keyword) any(grepl(keyword, values, ignore.case = TRUE)), logical(1))
+    if (!any(matches)) {
+      return(FALSE)
+    }
+  }
+  
+  # If file is empty: we can not check for values anyways
+  if (nrow(f) == 0) {
+    return(FALSE)
+  }
+  
+  # Check if numeric columns match
+  for (c in numeric_cols) {
+    is_numeric <- .is_numeric_col.aidR(f[, c])
+    if (!is_numeric) {
+      return(FALSE)
+    }
+  }
+  
+  # Check if non-numeric columns match
+  for (c in non_numeric_cols) {
+    if (all(is.na(f[, c]))) {
+      next
+    } # can not check
+    is_numeric <- .is_numeric_col.aidR(f[, c])
+    if (is_numeric) {
+      return(FALSE)
+    }
+  }
+  
+  return(TRUE)
+}
+
+#' A lookup with Tandem Source file characteristics
+#'
+#' @return A list with data types and their expected file formats, including the
+#' number of columns, the column indices of the time- and numeric columns and
+#' expected keywords in the header.
+#'
+#' @keywords internal
+.get_tandem_source_file_lookup.aidR <- function() {
+  # Note: tried to find keywords that are relatively common across languages (Bolus, Tandem, t:slim X2), but cannot exclude that there are languages
+  # where those are named differently
+  # In such cases, this lookup will fail!
+  
+  tandem_files <- list()
+  
+  # 4 columns
+  tandem_files$basal <- list(expected_num_cols = 4, time_cols = 3, date_cols = c(), numeric_cols = 4, expected_keyword = list(name = c("Tandem", "t:slim X2"), col_ix = 1), non_numeric_cols = 1)
+  
+  # 5 columns
+  tandem_files$cgm <- list(expected_num_cols = 5, time_cols = 4, date_cols = c(), numeric_cols = 5, expected_keyword = list(name = c("Tandem", "t:slim X2"), col_ix = 1), non_numeric_cols = c(1, 3))
+  
+  # 6 columns
+  tandem_files$bg <- list(expected_num_cols = 6, time_cols = 4, date_cols = c(), numeric_cols = 5, expected_keyword = list(name = c("Tandem", "t:slim X2"), col_ix = 1), non_numeric_cols = c(1, 3))
+  
+  # 20 columns
+  tandem_files$bolus <- list(expected_num_cols = 20, time_cols = 6, date_cols = c(), numeric_cols = c(4, 7:9, 15:20), expected_keyword = list(name = "Bolus", col_ix = 1), non_numeric_cols = c(1:3, 10))
+  
+  # 27 columns
+  tandem_files$hourly_basal <- list(expected_num_cols = 26, time_cols = c(), date_cols = 2, numeric_cols = c(3:26), expected_keyword = list(), non_numeric_cols = c())
+  
+  return(tandem_files)
+}
+
+#' Format any file from a Tandem Source export by configuring timestamps
+#'
+#' @param filename Character string with the filename to be formatted.
+#' @param time_cols A numeric vector corresponding to the column indices that contain timestamps to be formatted.
+#' @param date_cols A numeric vector corresponding to the column indices that contain dates to be formatted.
+#'
+#' @return A data frame with the content of the file and properly formatted time- and numeric columns.
+#'
+#' @keywords internal
+.format_tandem_source_file.aidR <- function(filename, time_cols, date_cols) {
+  # Open file
+  f <- read.csv(filename, check.names = FALSE)
+  
+  # Format timestamp
+  f <- f %>%
+    mutate(across(all_of(time_cols), ~ parse_date_time(.x, orders = c("Ymd HM", "Ymd HMS", "dmy HM", "dmy HMS"), tz = "UTC")))
+  
+  # Format date
+  f <- f %>%
+    mutate(across(all_of(date_cols), ~ as.Date(.x)))
+  
   return(f)
+}
+
+#' Read the data from a Tandem file
+#'
+#' @param filename Character string with the filename to be parsed.
+#'
+#' @return A named list with a single entry, named after the data type of the
+#'   file and holding a data frame with formatted timestamps and numeric columns.
+#'   \code{NULL} if the file is empty. Throws an error if the data type of a
+#'   non-empty file could not be determined.
+#'
+#' @keywords internal
+.read_tandem_source_file.aidR <- function(filename) {
+  # Get lookup
+  tandem_files <- .get_tandem_source_file_lookup.aidR()
+  
+  # Loop over all file types in lookup
+  for (i in 1:length(tandem_files)) {
+    file_type <- tandem_files[[i]]
+    
+    # Check if it is this file type
+    if (.is_tandem_source_file_type.aidR(filename, file_type$expected_num_cols, file_type$numeric_cols, file_type$non_numeric_cols, file_type$expected_keyword)) {
+      data <- list()
+      data[[names(tandem_files)[i]]] <- .format_tandem_source_file.aidR(filename, file_type$time_cols, file_type$date_cols)
+      return(data)
+    }
+  }
+  
+  # Could not match file type
+  # This is ok if the file is empty, otherwise throw
+  f <- read.csv(filename, check.names = FALSE)
+  if (nrow(f) == 0) {
+    return(NULL)
+  }
+  stop("Unrecognized file type for Tandem Source: ", filename)
 }
 
 #------------------------
@@ -192,9 +280,9 @@ clean.tandem_source <- function(data, id, ...) {
 
   # 5th column contains CGM readings
   # Convert units, if necessary
-  if (grepl("mmol/L", names(cgm)[5])){
+  if (grepl("mmol/L", names(cgm)[5], ignore.case = TRUE)){
     cgm$value <- cgm[,5] * 18.018
-  } else if (grepl("mg/dL", names(cgm)[5])){
+  } else if (grepl("mg/dL", names(cgm)[5], ignore.case = TRUE)){
     cgm$value <- cgm[,5]
   } else {
     stop(paste0("Unknown CGM units in column ", names(cgm)[5], "!"))
@@ -203,11 +291,11 @@ clean.tandem_source <- function(data, id, ...) {
   cgm <- data.frame(
     id = id, 
     format = "tandem_source",
-    timestamp = as_datetime(cgm$`Event Date Time`),
+    timestamp = as_datetime(cgm[,4]),
     timezone_offset = NA,
     value = cgm$value,
     unit = "mg/dL",
-    sensor_name = cgm$`Device Type`
+    sensor_name = cgm[,1] # Device Name
   )
 
   return(cgm)
@@ -230,15 +318,15 @@ clean.tandem_source <- function(data, id, ...) {
 .format_basal_tandem_source.aidR <- function(id, basal) {
   
   basal <- basal |> 
-    mutate(timestamp = as_datetime(.data$`Event Date Time`)) |> 
+    mutate(timestamp = as_datetime(.data[[names(basal)[3]]])) |> 
     arrange(timestamp) |> 
     mutate(id = id, 
            format = "tandem_source",
            timezone_offset = NA,
            duration = as.numeric(difftime(lead(timestamp), timestamp, units = "hours")),
-           rate = .data$`Commanded Basal Dose (units of insulin)` / .data$duration,
+           rate = .data[[names(basal)[4]]] / .data$duration,
            unit = "U/h") |> 
-    rename(pump_name = "Device Type") |> 
+    rename(pump_name = .data[[names(basal)[1]]]) |> 
     select("id", "format", "timestamp", "timezone_offset", "duration", "rate", "unit", "pump_name")
   
   return(basal)
@@ -268,7 +356,7 @@ clean.tandem_source <- function(data, id, ...) {
   res <- data.frame(
     id = id,
     format = "tandem_source",
-    date = date(as_datetime(hourly_basal$`Event Date`)),
+    date = date(as_datetime(hourly_basal[,2])),
     total_basal = apply(hours, 1, .sum_or_na.aidR),
     source = "reported"
   )
@@ -287,6 +375,24 @@ clean.tandem_source <- function(data, id, ...) {
 # Functions for bolus
 #------------------------------
 
+#' Rename bolus data from a Tandem Source export for easier handling
+#'
+#' @param bolus A data frame containing the bolus data from a Tandem Source file.
+#'
+#' @return A data frame containing the renamed bolus data.
+#' @keywords internal
+.rename_bolus_tandem_source.aidR <- function(bolus){
+  # rename, for easier use
+  names(bolus) <- c("Type", "Bolus Type", "Bolus Delivery Method", "BG (mg/dL)",
+                    "Serial Number", "Completion Date Time", "Insulin Delivered",
+                    "Food Delivered", "Correction Delivered", "Completion Status Desc",
+                    "Bolex Start Date Time", "Bolex Completion Date Time", 
+                    "Bolex Insulin Delivered", "Bolex Completion Status Desc",
+                    "Standard Percent", "Duration (mins)", "Carb Size",
+                    "Target BG (mg/dL)", "Correction Factor", "Carb Ratio")
+  return(bolus)
+}
+
 #' Format and clean bolus data from a Tandem Source export
 #'
 #' @param id Character or numeric participant identifier.
@@ -298,16 +404,15 @@ clean.tandem_source <- function(data, id, ...) {
 #' @return A data frame containing the formatted and cleaned bolus data.
 #' @keywords internal
 .format_bolus_tandem_source.aidR <- function(id, bolus, link_id = NA) {
-  
   # Decide if a bolus is normal / dual wave / square wave
   bolus <- bolus |> 
     mutate(type = case_when(
-      # normal if delivery method is not extended (can be Standard or Auto)
-      .data$`Bolus Delivery Method` != "Extended" ~ "normal",
-      # dual_wave if delivery method is extended and standard > 0
-      .data$`Bolus Delivery Method` == "Extended" & .data$`Standard Percent` > 0 ~ "dual_wave",
-      # square_wave if delivery method is extended and standard == 0
-      .data$`Bolus Delivery Method` == "Extended" & .data$`Standard Percent` == 0 ~ "square_wave",
+      # normal if duration is zero
+      .data$`Duration (mins)` == 0 ~ "normal",
+      # dual_wave if duration is > 0 and standard > 0
+      .data$`Duration (mins)` > 0 & .data$`Standard Percent` > 0 ~ "dual_wave",
+      # square_wave if duration > 0 and standard == 0
+      .data$`Duration (mins)` > 0 & .data$`Standard Percent` == 0 ~ "square_wave",
       # default: normal
       TRUE ~ "normal"
     ))
@@ -407,9 +512,9 @@ clean.tandem_source <- function(data, id, ...) {
   
   # 5th column contains BG readings
   # Convert units, if necessary
-  if (grepl("mmol/L", names(bg)[5])){
+  if (grepl("mmol/L", names(bg)[5], ignore.case = TRUE)){
     bg$value <- bg[,5] * 18.018
-  } else if (grepl("mg/dL", names(bg)[5])){
+  } else if (grepl("mg/dL", names(bg)[5], ignore.case = TRUE)){
     bg$value <- bg[,5]
   } else {
     stop(paste0("Unknown BG units in column ", names(bg)[5], "!"))
@@ -418,11 +523,11 @@ clean.tandem_source <- function(data, id, ...) {
   bg <- data.frame(
     id = id, 
     format = "tandem_source",
-    timestamp = as_datetime(bg$`Event Date Time`),
+    timestamp = as_datetime(bg[,4]),
     timezone_offset = NA,
     value = bg$value,
     unit = "mg/dL",
-    sensor_name = bg$`Device Type`
+    sensor_name = bg[,1]
   )
   
   return(bg)

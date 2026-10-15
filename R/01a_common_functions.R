@@ -45,7 +45,7 @@
 #'
 #' @export
 parse_data <- function(id, paths, clean = TRUE, ...) {
-  cat(paste0("Parsing data for id ", id, "...\n"))
+  message("Parsing data for id ", id, "...")
   data <- list()
   for (path in paths) {
     # Get all filenames contained within path

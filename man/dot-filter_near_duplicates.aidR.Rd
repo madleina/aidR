@@ -9,7 +9,10 @@
   max_minutes = 5,
   tolerance_carbs = 1,
   tolerance_SMBG = 1,
-  tolerance_bolus = 0.05
+  tolerance_bolus = 0.05,
+  tolerance_basal = 0.05,
+  tolerance_basal_duration = 1/60,
+  max_minutes_basal = 2
 )
 }
 \arguments{
@@ -24,6 +27,14 @@ duplicates.}
 \item{tolerance_SMBG}{Tolerance for detecting duplicate SMBG entries, default 1 mg/dL.}
 
 \item{tolerance_bolus}{Tolerance for detecting duplicate bolus entries, default 0.05 U.}
+
+\item{tolerance_basal}{Tolerance for detecting duplicate basal rates, default 0.05 U/h.}
+
+\item{tolerance_basal_duration}{Tolerance for the \code{duration} of duplicate
+basal entries, in hours, default 1 minute.}
+
+\item{max_minutes_basal}{Maximum time difference (in minutes) between two
+duplicate basal entries.}
 }
 \value{
 \code{data_id} without the duplicates. Removed rows are logged
@@ -39,8 +50,14 @@ type are near-duplicates if they
 \item have the same \code{unit}
 \item lie at most \code{max_minutes} apart
 \item differ in value by at most the tolerance of the data type
-(\code{carbs}: 1 g, \code{SMBG}: 1 mg/dL, \code{bolus}: 0.05 U).
+(\code{carbs}: 1 g, \code{SMBG}: 1 mg/dL, \code{bolus}: 0.05 U,
+\code{basal}: 0.05 U/h).
 }
+Basal rates change frequently, so that neighbouring entries often have
+similar rates. For \code{basal}, two entries must therefore lie at most
+\code{max_minutes_basal} apart and their \code{duration} must differ by at
+most \code{tolerance_basal_duration}. Entries with a missing \code{duration}
+are never considered near-duplicates.
 Of each pair of duplicates, one entry is kept: the one with a \code{link_id},
 otherwise the one with more information. Its timestamp and value are used,
 and its missing information (e.g. a \code{label}) is filled from the other

@@ -133,6 +133,7 @@ clean.yourloops <- function(data, id, ...) {
       return(NULL)
     }
   )
+  if (is.null(file)){ return(NULL) }
 
   lookup <- .get_yourloops_file_lookup.aidR()
 
