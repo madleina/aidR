@@ -36,7 +36,7 @@ writeLines(readLines(file.path(tmpdir, files[4]), n = 10))
 
 ## How aidR detects this format
 
-To our current knowledge the headers are always in English; if you have reason to believe otherwise, please let us know. `aidR` identifies each file by matching its column names against a lookup of the expected headers for each data type. For example, to be recognized as a CGM file, the header must match exactly the header shown in the example above.
+Because the headers in a Tandem Source export are language-specific, `aidR` cannot identify a file from its header names. It relies instead on the *structure* of the file, and distinguishes between data types by the expected number of columns, which columns are numeric, and, where available, a language-independent keyword such as `"Tandem"` or `"t:slim X2"` for the files containing CGM, SMBG and basal rates, as well as `"Bolus"` for the file containing the bolus data.
 
 ## Files and the data types they produce
 

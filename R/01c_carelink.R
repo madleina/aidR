@@ -878,7 +878,7 @@ clean.carelink <- function(data, id, ...) {
   # depending on the carbohydrate unit set on the pump
   variant <- .get_carelink_carb_variant.aidR(bwz)
   if (variant$unit != "g") {
-    message(
+    warning(
       "Id ", id, ": Carbohydrates are reported in ", variant$unit,
       " and not in grams - the exchange size is not part of the export, ",
       "so they are kept as is.

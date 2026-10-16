@@ -326,7 +326,7 @@ clean.tandem_source <- function(data, id, ...) {
            duration = as.numeric(difftime(lead(timestamp), timestamp, units = "hours")),
            rate = .data[[names(basal)[4]]] / .data$duration,
            unit = "U/h") |> 
-    rename(pump_name = .data[[names(basal)[1]]]) |> 
+    rename(pump_name = all_of(names(basal)[1])) |>
     select("id", "format", "timestamp", "timezone_offset", "duration", "rate", "unit", "pump_name")
   
   return(basal)

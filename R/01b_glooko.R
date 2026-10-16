@@ -143,19 +143,29 @@ clean.glooko <- function(data, id, merge_slow_carbs = TRUE, ...) {
 
   # Split at comma, expect two columns
   cols <- strsplit(first_line, ",")[[1]]
-  if (length(cols) != 2) {
+  if (!(length(cols) == 2 | length(cols) == 3)) {
     return(FALSE)
   }
+  
+  if (length(cols) == 2){
+    # 1. column = name, 2. column is date
+    name_col <- 1
+    date_col <- 2
+  } else {
+    # 1. column = patient number, 2. column = name, 3. column is date
+    name_col <- 2
+    date_col <- 3
+  }
 
-  # First col: anything:anything  (name field)
-  name_ok <- grepl("^.+:.+$", cols[1])
+  # Name col: anything:anything  (name field)
+  name_ok <- grepl("^.+:.+$", cols[name_col])
 
-  # Second col: anything:<date> - <date>
+  # Date col: anything:<date> - <date>
   # Dates can be dd/mm/yyyy, dd.mm.yyyy, or yyyy-mm-dd
   date_pattern <- "\\d{2}[./-]\\d{2}[./-]\\d{2,4}|\\d{4}-\\d{2}-\\d{2}"
   range_ok <- grepl(
     paste0("^.+:(", date_pattern, ") - (", date_pattern, ")$"),
-    cols[2]
+    cols[date_col]
   )
 
   return(name_ok && range_ok)
