@@ -363,6 +363,8 @@ input <- data.frame(id = c("1", "1", "1", "2", "3", "3", "4", "5"),
 ids <- unique(input$id)
 all_data <- list()
 
+options(warn = 1) # warn immediately
+
 for (id in ids) {
   all_data[[id]]          <- parse_data(id, input$paths[input$id == id])
   all_data[[id]]          <- filter_CGM(all_data[[id]])

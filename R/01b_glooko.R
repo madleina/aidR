@@ -184,9 +184,10 @@ clean.glooko <- function(data, id, merge_slow_carbs = TRUE, ...) {
   # Open file and skip first line (Glooko identifier)
   f <- read.csv(filename, skip = 1)
 
-  # Format timestamp
+  # Format timestamp and sort in time
   f <- f %>%
-    mutate(across(all_of(time_cols), ~ parse_date_time(.x, orders = c("Ymd HM", "Ymd HMS", "dmy HM", "dmy HMS"), tz = "UTC")))
+    mutate(across(all_of(time_cols), ~ parse_date_time(.x, orders = c("Ymd HM", "Ymd HMS", "dmy HM", "dmy HMS"), tz = "UTC"))) |> 
+    arrange(across(all_of(time_cols)))
 
   # Format numeric values
   for (c in numeric_cols) {
@@ -447,8 +448,6 @@ clean.glooko <- function(data, id, merge_slow_carbs = TRUE, ...) {
     "Initial Delivery (U)", "Extended Delivery (U)", "Serial number"
   )
 
-  data <- data |> arrange(timestamp)
-  
   # Decide if a bolus is normal / dual wave / square wave
   data <- data %>%
     mutate(
@@ -546,8 +545,6 @@ clean.glooko <- function(data, id, merge_slow_carbs = TRUE, ...) {
                      timezone_offset = NA,
                      value = data[, 4],
                      link_id = link_id)
-  
-  data <- data |> arrange(timestamp)
   
   data <- data %>%
     filter(.data$value > 0) %>%
