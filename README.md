@@ -37,7 +37,7 @@ AID platforms differ in their file formats, variable names, units, timestamp con
 
 - **Read** native exports from seven major diabetes management platforms
 - **Standardize** CGM, basal, bolus, carbohydrate, and SMBG data
-- **Filter** CGM data and duplicated streams
+- **Filter** CGM and carbohydrate data
 - **Check** data completeness and insulin totals
 - **Visualize** daily glucose, insulin, carbohydrate, and SMBG data
 - **Merge** data across participants and AID systems
