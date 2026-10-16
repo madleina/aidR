@@ -447,6 +447,8 @@ clean.glooko <- function(data, id, merge_slow_carbs = TRUE, ...) {
     "Initial Delivery (U)", "Extended Delivery (U)", "Serial number"
   )
 
+  data <- data |> arrange(timestamp)
+  
   # Decide if a bolus is normal / dual wave / square wave
   data <- data %>%
     mutate(
@@ -544,6 +546,8 @@ clean.glooko <- function(data, id, merge_slow_carbs = TRUE, ...) {
                      timezone_offset = NA,
                      value = data[, 4],
                      link_id = link_id)
+  
+  data <- data |> arrange(timestamp)
   
   data <- data %>%
     filter(.data$value > 0) %>%
