@@ -48,7 +48,11 @@ test_that("the iglu plotting functions draw the same data from the CSV and the c
   path <- system.file("extdata", "tidepool_example.xlsx", package = "aidR")
   data <- parse_data(id = "1", paths = path)
   converted <- get_iglu_format(data)
-
+  # Round timestamps to make sure comparison holds
+  converted$time <- as.POSIXct(round(as.numeric(converted$time)),
+                               origin = "1970-01-01",
+                               tz = attr(converted$time, "tzone"))
+  
   csv <- withr::local_tempfile(fileext = ".csv")
   write_dexcom_csv(converted$time, converted$gl, csv)
   from_file <- iglu::read_raw_data(csv, sensor = "dexcom", id = "1", tz = "UTC")
