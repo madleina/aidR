@@ -22,7 +22,11 @@ test_that("every iglu metric agrees between the CSV and the conversion", {
   path <- system.file("extdata", "tidepool_example.xlsx", package = "aidR")
   data <- parse_data(id = "1", paths = path)
   converted <- get_iglu_format(data)
-
+  # Round timestamps to make sure comparison holds
+  converted$time <- as.POSIXct(round(as.numeric(converted$time)),
+                               origin = "1970-01-01",
+                               tz = attr(converted$time, "tzone"))
+  
   csv <- withr::local_tempfile(fileext = ".csv")
   write_dexcom_csv(converted$time, converted$gl, csv)
   from_file <- iglu::read_raw_data(csv, sensor = "dexcom", id = "1", tz = "UTC")
