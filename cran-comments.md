@@ -1,6 +1,22 @@
 ## Resubmission
 This is a resubmission. In this version I have:
 
+* Fixed the unit tests that failed for CRAN build 'noLD' (fix needed before 2026-11-19)
+
+### R CMD check results
+
+0 errors | 0 warnings | 1 note
+
+* checking CRAN incoming feasibility ... [4s/47s] NOTE
+  Maintainer: ‘Madleina Caduff <madleina.caduff@dcberne.com>’
+  
+  Days since last update: 2
+  
+  Size of tarball: 6628426 bytes
+
+## Resubmission
+This is a resubmission. In this version I have:
+
 * Replaced cat() with message() in parse_data() so that console output can be suppressed
 * References: there are currently no publications describing the methods in this package, nothing added
 * Added more functions for filtering data (filter_carbs() as well as the filtering near-duplicate step in parse_data()) 

@@ -1,3 +1,7 @@
+# aidR 0.2.5
+
+* Fixed test that failed on CRAN build 'noLD'.
+
 # aidR 0.2.4
 
 * Addressing CRAN comments.
