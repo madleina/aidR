@@ -52,6 +52,9 @@ test_that("the iglu plotting functions draw the same data from the CSV and the c
   converted$time <- as.POSIXct(round(as.numeric(converted$time)),
                                origin = "1970-01-01",
                                tz = attr(converted$time, "tzone"))
+  # Parse glucose from text as read.csv() does, so both sides match bit for bit
+  # (without long doubles, text-to-number conversion can differ in the last bit)
+  converted$gl <- as.numeric(sprintf("%.17g", converted$gl))
   
   csv <- withr::local_tempfile(fileext = ".csv")
   write_dexcom_csv(converted$time, converted$gl, csv)
